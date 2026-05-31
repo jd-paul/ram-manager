@@ -6,6 +6,43 @@
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
+  <div class="popup-container">
+    <header class="popup-header">
+      <h1 class="popup-title">RAM Manager</h1>
+      <div class="current-tab" id="current-tab">
+        <span class="current-tab-title" id="current-tab-title">Loading…</span>
+        <span class="current-tab-status" id="current-tab-status">—</span>
+      </div>
+    </header>
+
+    <section class="status-section">
+      <h2 class="section-title">Tab Status</h2>
+      <div class="status-row">
+        <span class="status-label">Suspended</span>
+        <span class="status-value" id="suspended-count">0 / 0</span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Saved today</span>
+        <span class="status-value" id="saved-memory">0 B</span>
+      </div>
+      <p class="estimated-note" id="estimated-note" hidden>*Estimated*</p>
+    </section>
+
+    <section class="actions-section">
+      <button class="btn btn-primary" id="btn-suspend-all" type="button">Suspend All</button>
+      <button class="btn btn-secondary" id="btn-restore-all" type="button">Restore All</button>
+    </section>
+
+    <section class="links-section">
+      <a class="link" id="link-dashboard" href="#">Dashboard</a>
+      <a class="link" id="link-settings" href="#">Settings</a>
+    </section>
+
+    <footer class="popup-footer">
+      <p class="shortcut-hint" id="shortcut-hint">Keyboard shortcut: —</p>
+    </footer>
+  </div>
+
   <script type="module" src="popup.js"></script>
 </body>
 </html>
