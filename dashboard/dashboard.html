@@ -2,10 +2,78 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <title>RAM Manager — Dashboard</title>
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
+  <header class="dashboard-header">
+    <div class="header-left">
+      <h1>RAM Manager</h1>
+      <span class="header-subtitle">Dashboard</span>
+    </div>
+    <div class="header-right">
+      <a id="link-settings" class="header-link" href="#">Settings</a>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <!-- Summary Cards -->
+    <section class="summary-section" aria-label="Summary statistics">
+      <div class="card summary-card">
+        <div class="summary-label">Saved Today</div>
+        <div class="summary-value" id="stat-saved-today">—</div>
+      </div>
+      <div class="card summary-card">
+        <div class="summary-label">Saved All-Time</div>
+        <div class="summary-value" id="stat-saved-alltime">—</div>
+      </div>
+      <div class="card summary-card">
+        <div class="summary-label">Suspended Tabs</div>
+        <div class="summary-value" id="stat-suspended">—</div>
+      </div>
+      <div class="card summary-card">
+        <div class="summary-label">Total Tabs</div>
+        <div class="summary-value" id="stat-total-tabs">—</div>
+      </div>
+    </section>
+
+    <!-- Memory Info -->
+    <section class="memory-section" aria-label="Memory usage">
+      <div class="card memory-card">
+        <div class="memory-header">
+          <h2>Current Memory Usage</h2>
+          <span class="memory-badge" id="memory-badge" hidden>Estimated</span>
+        </div>
+        <div class="memory-value" id="stat-memory">—</div>
+      </div>
+    </section>
+
+    <!-- Top Memory Consumers -->
+    <section class="consumers-section" aria-label="Top memory consumers">
+      <div class="card">
+        <h2>Top Memory Consumers</h2>
+        <ul class="consumer-list" id="consumer-list">
+          <li class="consumer-empty">Loading…</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Recent Activity -->
+    <section class="activity-section" aria-label="Recent activity">
+      <div class="card">
+        <h2>Recent Activity</h2>
+        <ul class="activity-list" id="activity-list">
+          <li class="activity-empty">Loading…</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="dashboard-footer">
+    <span>Auto-refreshes every 30 seconds</span>
+  </footer>
+
   <script type="module" src="dashboard.js"></script>
 </body>
 </html>
