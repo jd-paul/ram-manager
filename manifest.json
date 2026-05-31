@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "RAM Manager",
+  "version": "1.0.0",
+  "description": "Suspend idle tabs to free memory. Lightweight, fast, and themeable.",
+  "permissions": [
+    "tabs",
+    "storage",
+    "processes",
+    "alarms",
+    "contextMenus"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "commands": {
+    "suspend-active-tab": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Suspend the currently active tab"
+    }
+  },
+  "options_page": "settings/settings.html",
+  "web_accessible_resources": [
+    {
+      "resources": ["dashboard/dashboard.html", "settings/settings.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

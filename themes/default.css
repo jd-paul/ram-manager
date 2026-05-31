@@ -1,0 +1,27 @@
+/* RAM Manager — Default (Light) Theme */
+
+:root {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f5f6f8;
+  --color-bg-tertiary: #e8eaed;
+  --color-bg-hover: #eef0f4;
+  --color-bg-active: #dde1e7;
+
+  --color-text-primary: #1f2328;
+  --color-text-secondary: #5e6670;
+  --color-text-muted: #8c959f;
+  --color-text-inverse: #ffffff;
+
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-light: #dbeafe;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-danger-light: #fee2e2;
+
+  --color-border: #d1d5db;
+  --color-border-light: #e5e7eb;
+  --color-shadow: rgba(0, 0, 0, 0.08);
+}
