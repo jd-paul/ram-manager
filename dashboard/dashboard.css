@@ -255,13 +255,23 @@ body {
   display: inline-block;
 }
 
-.legend-dot.used {
+.legend-dot.active {
   background-color: var(--interactive-accent);
 }
 
-.legend-dot.free {
-  background-color: var(--background-modifier-border);
+.legend-dot.suspended {
+  background-color: var(--color-success);
 }
+
+.donut-fill--active {
+  stroke: var(--interactive-accent);
+}
+
+.donut-fill--suspended {
+  stroke: var(--color-success);
+}
+
+/* offset is set via JS per segment */
 
 /* -------------------------------------------------------------------------- */
 /* Sparkline Chart                                                            */

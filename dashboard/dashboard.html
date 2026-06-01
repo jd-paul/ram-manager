@@ -45,16 +45,17 @@
 
     <!-- Charts Row -->
     <section class="charts-row" aria-label="Memory charts">
-      <!-- Donut Chart -->
+      <!-- Donut Chart — Active vs Suspended -->
       <div class="card chart-card">
         <div class="chart-header">
-          <h2>Memory Usage</h2>
+          <h2>Memory Breakdown</h2>
           <span class="memory-badge" id="memory-badge" hidden>Estimated</span>
         </div>
         <div class="donut-wrap">
           <svg class="donut-chart" viewBox="0 0 120 120" id="donut-chart">
             <circle class="donut-track" cx="60" cy="60" r="50" />
-            <circle class="donut-fill" cx="60" cy="60" r="50" id="donut-fill" />
+            <circle class="donut-fill donut-fill--active" cx="60" cy="60" r="50" id="donut-fill-active" />
+            <circle class="donut-fill donut-fill--suspended" cx="60" cy="60" r="50" id="donut-fill-suspended" />
           </svg>
           <div class="donut-label">
             <span class="donut-value" id="stat-memory">—</span>
@@ -62,23 +63,23 @@
           </div>
         </div>
         <div class="donut-legend" id="donut-legend">
-          <span class="legend-item"><span class="legend-dot used"></span> Used</span>
-          <span class="legend-item"><span class="legend-dot free"></span> Free</span>
+          <span class="legend-item"><span class="legend-dot active"></span> Active</span>
+          <span class="legend-item"><span class="legend-dot suspended"></span> Suspended</span>
         </div>
       </div>
 
-      <!-- Sparkline Chart -->
+      <!-- Sparkline Chart — Weekly Savings -->
       <div class="card chart-card chart-card--wide">
         <div class="chart-header">
-          <h2>Usage Over Time</h2>
-          <span class="chart-period">Last 10 readings</span>
+          <h2>Memory Saved This Week</h2>
+          <span class="chart-period">Last 7 days</span>
         </div>
         <div class="sparkline-wrap">
           <svg class="sparkline-chart" viewBox="0 0 400 120" preserveAspectRatio="none" id="sparkline-chart">
             <defs>
               <linearGradient id="sparkline-gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--interactive-accent)" stop-opacity="0.25" />
-                <stop offset="100%" stop-color="var(--interactive-accent)" stop-opacity="0" />
+                <stop offset="0%" stop-color="var(--color-success)" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="var(--color-success)" stop-opacity="0" />
               </linearGradient>
             </defs>
             <path class="sparkline-area" id="sparkline-area" d="" />

@@ -18,7 +18,8 @@ const els = {
   memory: document.getElementById('stat-memory'),
   memoryUnit: document.getElementById('stat-memory-unit'),
   memoryBadge: document.getElementById('memory-badge'),
-  donutFill: document.getElementById('donut-fill'),
+  donutFillActive: document.getElementById('donut-fill-active'),
+  donutFillSuspended: document.getElementById('donut-fill-suspended'),
   sparklineArea: document.getElementById('sparkline-area'),
   sparklineLine: document.getElementById('sparkline-line'),
   sparklineMin: document.getElementById('sparkline-min'),
@@ -61,15 +62,34 @@ function formatTimeAgo(timestamp) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Update the donut chart ring.
- * @param {number} percent — 0 to 100
+ * Update the donut chart with two segments: active tabs vs suspended tabs.
+ * @param {number} activeBytes — memory used by active tabs
+ * @param {number} suspendedBytes — memory saved by suspended tabs (estimated)
  */
-function updateDonut(percent) {
-  const circle = els.donutFill;
-  if (!circle) return;
+function updateDonut(activeBytes, suspendedBytes) {
+  const total = activeBytes + suspendedBytes || 1;
+  const activePct = Math.min(100, Math.max(0, (activeBytes / total) * 100));
+  const suspendedPct = Math.min(100, Math.max(0, (suspendedBytes / total) * 100));
+
   const circumference = 314.159; // 2 * PI * 50
-  const offset = circumference - (Math.min(100, Math.max(0, percent)) / 100) * circumference;
-  circle.style.strokeDashoffset = offset;
+
+  // Active segment starts at top, draws clockwise
+  const activeOffset = circumference - (activePct / 100) * circumference;
+  if (els.donutFillActive) {
+    els.donutFillActive.style.strokeDasharray = `${circumference} ${circumference}`;
+    els.donutFillActive.style.strokeDashoffset = activeOffset;
+  }
+
+  // Suspended segment starts where active ends
+  const suspendedOffset = circumference - (suspendedPct / 100) * circumference;
+  if (els.donutFillSuspended) {
+    els.donutFillSuspended.style.strokeDasharray = `${circumference} ${circumference}`;
+    els.donutFillSuspended.style.strokeDashoffset = suspendedOffset;
+    // Rotate to start after the active segment
+    const activeDeg = (activePct / 100) * 360;
+    els.donutFillSuspended.style.transform = `rotate(${activeDeg}deg)`;
+    els.donutFillSuspended.style.transformOrigin = '60px 60px';
+  }
 }
 
 /**
@@ -103,7 +123,7 @@ function buildSparklinePaths(data, width = 400, height = 120, padding = 4) {
 
 /**
  * Update the sparkline chart.
- * @param {number[]} history — array of memory values in bytes
+ * @param {number[]} history — array of savings values in bytes
  */
 function updateSparkline(history) {
   if (!history || history.length < 2) {
@@ -116,7 +136,10 @@ function updateSparkline(history) {
 
   const { lineD, areaD, min, max } = buildSparklinePaths(history);
 
-  if (els.sparklineLine) els.sparklineLine.setAttribute('d', lineD);
+  if (els.sparklineLine) {
+    els.sparklineLine.setAttribute('d', lineD);
+    els.sparklineLine.style.stroke = 'var(--color-success)';
+  }
   if (els.sparklineArea) els.sparklineArea.setAttribute('d', areaD);
   if (els.sparklineMin) els.sparklineMin.textContent = formatBytes(min);
   if (els.sparklineMax) els.sparklineMax.textContent = formatBytes(max);
@@ -150,16 +173,22 @@ async function loadSummary() {
 
 async function loadMemoryInfo() {
   try {
-    const info = await getMemoryInfo();
+    const [info, suspendedTabs] = await Promise.all([
+      getMemoryInfo(),
+      getSuspendedTabs()
+    ]);
 
-    // Update donut chart (assume 8GB total system RAM for percentage)
-    const assumedTotalRam = 8 * 1024 * 1024 * 1024;
-    const percent = Math.min(100, (info.totalRam / assumedTotalRam) * 100);
-    updateDonut(percent);
+    // Estimate memory saved by suspended tabs (75 MB each)
+    const avgBytesPerTab = 75 * 1024 * 1024;
+    const suspendedBytes = suspendedTabs.length * avgBytesPerTab;
+    const activeBytes = Math.max(0, info.totalRam - suspendedBytes);
 
-    // Update memory text
+    // Update donut chart: active vs suspended
+    updateDonut(activeBytes, suspendedBytes);
+
+    // Update memory text (show total active memory in centre)
     if (els.memory) {
-      const formatted = formatBytes(info.totalRam);
+      const formatted = formatBytes(activeBytes);
       const parts = formatted.split(' ');
       els.memory.textContent = parts[0];
       if (els.memoryUnit) els.memoryUnit.textContent = parts[1] || '';
@@ -168,18 +197,15 @@ async function loadMemoryInfo() {
       els.memoryBadge.hidden = !info.estimated;
     }
 
-    // Update sparkline
-    const history = await getMemoryHistory();
-    history.push(info.totalRam);
-    if (history.length > 20) history.shift();
-    await setMemoryHistory(history);
-    updateSparkline(history);
+    // Update sparkline with weekly savings data
+    const savingsHistory = await getWeeklySavings();
+    updateSparkline(savingsHistory);
 
     return info;
   } catch (err) {
     console.error('Dashboard: failed to load memory info:', err);
     if (els.memory) els.memory.textContent = '—';
-    updateDonut(0);
+    updateDonut(0, 0);
     return { totalRam: 0, tabs: [], estimated: true };
   }
 }
@@ -333,7 +359,49 @@ async function loadRecentActivity() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Memory History Storage                                                     */
+/* Weekly Savings Storage                                                     */
+/* -------------------------------------------------------------------------- */
+
+const WEEKLY_SAVINGS_KEY = 'weeklySavings';
+
+/**
+ * Get daily savings for the current week (last 7 days).
+ * Returns array of 7 numbers, one per day (oldest first).
+ */
+async function getWeeklySavings() {
+  try {
+    const stored = await localGet(WEEKLY_SAVINGS_KEY);
+    if (Array.isArray(stored) && stored.length === 7) {
+      return stored;
+    }
+  } catch (err) {
+    console.error('Dashboard: failed to read weekly savings:', err);
+  }
+  // Default: empty week
+  return [0, 0, 0, 0, 0, 0, 0];
+}
+
+/**
+ * Record today's savings amount. Called by background.js when tabs are suspended.
+ * For now, we estimate from suspended tab count.
+ */
+async function recordTodaySavings(savedBytes) {
+  try {
+    let savings = await getWeeklySavings();
+    // Ensure it's a 7-day array
+    while (savings.length < 7) savings.push(0);
+    if (savings.length > 7) savings = savings.slice(-7);
+
+    // Today is the last element
+    savings[6] += savedBytes;
+    await localSet(WEEKLY_SAVINGS_KEY, savings);
+  } catch (err) {
+    console.error('Dashboard: failed to record savings:', err);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Memory History Storage (legacy, kept for compat)                           */
 /* -------------------------------------------------------------------------- */
 
 const MEMORY_HISTORY_KEY = 'memoryHistory';
