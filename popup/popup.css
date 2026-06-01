@@ -101,11 +101,16 @@
 /* Actions */
 .actions-section {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-md);
 }
 
+.actions-section .btn {
+  flex: 1 1 calc(50% - var(--space-md) / 2);
+  min-width: 0;
+}
+
 .btn {
-  flex: 1 1 0;
   padding: var(--space-md) var(--space-lg);
   border-radius: var(--radius-md);
   font-size: var(--font-size-md);

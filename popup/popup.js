@@ -1,6 +1,6 @@
 // Popup logic
 
-import { getSettings } from "../js/storage.js";
+import { getSettings, syncGet } from "../js/storage.js";
 import {
   getAllTabs,
   getSuspendedTabs,
@@ -18,6 +18,7 @@ const els = {
   savedMemory: document.getElementById("saved-memory"),
   estimatedNote: document.getElementById("estimated-note"),
   btnSuspendCurrent: document.getElementById("btn-suspend-current"),
+  btnSuspendAll: document.getElementById("btn-suspend-all"),
   btnRestoreAll: document.getElementById("btn-restore-all"),
   linkDashboard: document.getElementById("link-dashboard"),
   linkSettings: document.getElementById("link-settings"),
@@ -133,6 +134,76 @@ async function handleRestoreAll() {
   }
 }
 
+function getDomain(url) {
+  try {
+    if (!url) return 'unknown';
+    const u = new URL(url);
+    return u.hostname || 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+function normalizeDomain(input) {
+  return input.trim().toLowerCase().replace(/^www\./, '');
+}
+
+function isWhitelisted(domain, whitelist) {
+  const d = normalizeDomain(domain);
+  for (const entry of whitelist) {
+    const e = normalizeDomain(entry);
+    if (d === e || d.endsWith('.' + e)) return true;
+  }
+  return false;
+}
+
+async function handleSuspendAll() {
+  try {
+    els.btnSuspendAll.disabled = true;
+
+    const [allTabs, settings, whitelistRaw, currentTab] = await Promise.all([
+      getAllTabs(),
+      getSettings(),
+      syncGet('whitelist'),
+      getCurrentTab(),
+    ]);
+
+    const currentTabId = currentTab ? currentTab.id : undefined;
+    const whitelist = (whitelistRaw || []).map(d => normalizeDomain(d));
+
+    const toSuspend = allTabs.filter((tab) => {
+      if (!canSuspend(tab, {
+        protectActive: settings.protectActive,
+        protectPinned: settings.protectPinned,
+        protectMedia: settings.protectMedia,
+        currentTabId,
+      })) {
+        return false;
+      }
+      const domain = getDomain(tab.url);
+      return !isWhitelisted(domain, whitelist);
+    });
+
+    let count = 0;
+    for (const tab of toSuspend) {
+      try {
+        await freezeTab(tab);
+        count++;
+      } catch (err) {
+        console.error(`Failed to freeze tab ${tab.id}:`, err);
+      }
+    }
+
+    console.log(`Frozen ${count} tabs`);
+    await loadTabStats();
+    await loadCurrentTabStatus();
+  } catch (err) {
+    console.error("Suspend all failed:", err);
+  } finally {
+    els.btnSuspendAll.disabled = false;
+  }
+}
+
 function openPage(path) {
   const url = chrome.runtime.getURL(path);
   chrome.tabs.create({ url });
@@ -173,6 +244,7 @@ async function init() {
 }
 
 els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
+els.btnSuspendAll.addEventListener("click", handleSuspendAll);
 els.btnRestoreAll.addEventListener("click", handleRestoreAll);
 els.linkDashboard.addEventListener("click", (e) => {
   e.preventDefault();
