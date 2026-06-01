@@ -65,12 +65,10 @@ async function loadCurrentTabStatus() {
     els.currentTabTitle.textContent = title;
 
     const settings = await getSettings();
-    const currentTabId = tab.id;
     const suspendable = canSuspend(tab, {
-      protectActive: settings.protectActive,
+      protectActive: false,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
-      currentTabId,
     });
 
     if (suspendable) {
