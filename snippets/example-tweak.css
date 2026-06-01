@@ -1,0 +1,14 @@
+/* Example RAM Manager snippet
+   Drop this file in the snippets/ folder, then register "example-tweak.css"
+   in Settings > CSS Snippets.
+
+   Override any semantic variable. Changes apply instantly across popup,
+   dashboard, and settings.
+*/
+
+.theme-dark {
+  --interactive-accent: #ff6b6b;
+  --interactive-accent-hover: #ff8585;
+  --radius-m: 16px;
+  --radius-l: 20px;
+}

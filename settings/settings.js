@@ -1,7 +1,14 @@
 // Settings page logic — auto-saves on change, manages whitelist, themes, and shortcuts
 
 import { getSettings, setSettings, syncGet, syncSet } from '../js/storage.js';
-import { getAvailableThemes, applyTheme, initTheme } from '../js/themes.js';
+import {
+  getAvailableThemes,
+  applyTheme,
+  initTheme,
+  getRegisteredSnippets,
+  registerSnippet,
+  unregisterSnippet,
+} from '../js/theme.js';
 
 /* -------------------------------------------------------------------------- */
 /* DOM refs                                                                   */
@@ -22,6 +29,11 @@ const els = {
   themeSelect: document.getElementById('theme-select'),
   shortcutDisplay: document.getElementById('shortcut-display'),
   autoRestoreToggle: document.getElementById('auto-restore-toggle'),
+  snippetInput: document.getElementById('snippet-input'),
+  snippetAdd: document.getElementById('snippet-add'),
+  snippetHint: document.getElementById('snippet-hint'),
+  snippetList: document.getElementById('snippet-list'),
+  snippetEmpty: document.getElementById('snippet-empty'),
 };
 
 let currentSettings = {};
@@ -60,6 +72,9 @@ async function loadSettings() {
   const savedTheme = currentSettings.theme ?? 'system';
   populateThemeSelect();
   els.themeSelect.value = savedTheme;
+
+  // Snippets
+  await loadSnippetList();
 
   // Auto-restore
   els.autoRestoreToggle.checked = currentSettings.autoRestore ?? false;
@@ -187,6 +202,64 @@ function showHint(message) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Snippets                                                                   */
+/* -------------------------------------------------------------------------- */
+
+async function loadSnippetList() {
+  const snippets = await getRegisteredSnippets();
+  els.snippetList.innerHTML = '';
+  if (snippets.length === 0) {
+    els.snippetEmpty.style.display = 'block';
+    return;
+  }
+  els.snippetEmpty.style.display = 'none';
+
+  for (const filename of snippets) {
+    const li = document.createElement('li');
+    li.className = 'whitelist-item';
+
+    const span = document.createElement('span');
+    span.textContent = filename;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn--danger';
+    btn.textContent = 'Remove';
+    btn.addEventListener('click', () => removeSnippet(filename));
+
+    li.appendChild(span);
+    li.appendChild(btn);
+    els.snippetList.appendChild(li);
+  }
+}
+
+async function addSnippet() {
+  const raw = els.snippetInput.value;
+  if (!raw || typeof raw !== 'string' || !raw.trim()) {
+    showSnippetHint('Enter a filename (e.g. my-tweak.css)');
+    return;
+  }
+  const filename = raw.trim();
+  if (!filename.endsWith('.css')) {
+    showSnippetHint('File must end with .css');
+    return;
+  }
+  await registerSnippet(filename);
+  els.snippetInput.value = '';
+  showSnippetHint('');
+  await loadSnippetList();
+}
+
+async function removeSnippet(filename) {
+  await unregisterSnippet(filename);
+  await loadSnippetList();
+}
+
+function showSnippetHint(message) {
+  els.snippetHint.textContent = message;
+}
+
+/* -------------------------------------------------------------------------- */
 /* UI helpers                                                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -231,6 +304,15 @@ function bindEvents() {
   // Auto-restore
   els.autoRestoreToggle.addEventListener('change', async (e) => {
     await saveSetting('autoRestore', e.target.checked);
+  });
+
+  // Snippets
+  els.snippetAdd.addEventListener('click', addSnippet);
+  els.snippetInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addSnippet();
+    }
   });
 
   // Whitelist

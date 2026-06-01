@@ -1,27 +1,50 @@
-/* RAM Manager — Default (Light) Theme */
+/* RAM Manager — Light Theme */
 
-:root {
-  --color-bg-primary: #ffffff;
-  --color-bg-secondary: #f5f6f8;
-  --color-bg-tertiary: #e8eaed;
-  --color-bg-hover: #eef0f4;
-  --color-bg-active: #dde1e7;
+.theme-light {
+  /* --- Backgrounds --- */
+  --background-primary: #ffffff;
+  --background-secondary: #f5f6f8;
+  --background-tertiary: #e8eaed;
+  --background-modifier-hover: #eef0f4;
+  --background-modifier-active: #dde1e7;
+  --background-modifier-border: #d1d5db;
+  --background-modifier-border-hover: #b0b5bd;
 
-  --color-text-primary: #1f2328;
-  --color-text-secondary: #5e6670;
-  --color-text-muted: #8c959f;
-  --color-text-inverse: #ffffff;
+  /* --- Text --- */
+  --text-normal: #1f2328;
+  --text-muted: #5e6670;
+  --text-faint: #8c959f;
+  --text-on-accent: #ffffff;
 
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
-  --color-accent-light: #dbeafe;
+  /* --- Accent / Interactive --- */
+  --interactive-accent: #2563eb;
+  --interactive-accent-hover: #1d4ed8;
+  --interactive-accent-light: #dbeafe;
+  --interactive-normal: #f5f6f8;
+  --interactive-hover: #eef0f4;
 
+  /* --- Functional colours --- */
   --color-success: #16a34a;
   --color-warning: #d97706;
   --color-danger: #dc2626;
   --color-danger-light: #fee2e2;
 
-  --color-border: #d1d5db;
-  --color-border-light: #e5e7eb;
-  --color-shadow: rgba(0, 0, 0, 0.08);
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.08);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
 }

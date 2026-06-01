@@ -1,7 +1,7 @@
 // Dashboard page logic
 // Imports shared modules and renders stats, top consumers, and activity feed.
 
-import { initTheme } from '../js/themes.js';
+import { initTheme } from '../js/theme.js';
 import { localGet, localSet } from '../js/storage.js';
 import { getAllTabs, getSuspendedTabs } from '../js/tabs.js';
 import { getMemoryInfo, formatBytes, getSavedMemoryToday } from '../js/memory.js';

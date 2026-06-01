@@ -10,7 +10,7 @@ import {
   canSuspend,
 } from "../js/tabs.js";
 import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
-import { initTheme } from "../js/themes.js";
+import { initTheme } from "../js/theme.js";
 
 const els = {
   currentTabTitle: document.getElementById("current-tab-title"),
