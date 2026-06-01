@@ -43,23 +43,70 @@
       </div>
     </section>
 
-    <!-- Memory Info -->
-    <section class="memory-section" aria-label="Memory usage">
-      <div class="card memory-card">
-        <div class="memory-header">
-          <h2>Current Memory Usage</h2>
+    <!-- Charts Row -->
+    <section class="charts-row" aria-label="Memory charts">
+      <!-- Donut Chart -->
+      <div class="card chart-card">
+        <div class="chart-header">
+          <h2>Memory Usage</h2>
           <span class="memory-badge" id="memory-badge" hidden>Estimated</span>
         </div>
-        <div class="memory-value" id="stat-memory">—</div>
+        <div class="donut-wrap">
+          <svg class="donut-chart" viewBox="0 0 120 120" id="donut-chart">
+            <circle class="donut-track" cx="60" cy="60" r="50" />
+            <circle class="donut-fill" cx="60" cy="60" r="50" id="donut-fill" />
+          </svg>
+          <div class="donut-label">
+            <span class="donut-value" id="stat-memory">—</span>
+            <span class="donut-unit" id="stat-memory-unit"></span>
+          </div>
+        </div>
+        <div class="donut-legend" id="donut-legend">
+          <span class="legend-item"><span class="legend-dot used"></span> Used</span>
+          <span class="legend-item"><span class="legend-dot free"></span> Free</span>
+        </div>
+      </div>
+
+      <!-- Sparkline Chart -->
+      <div class="card chart-card chart-card--wide">
+        <div class="chart-header">
+          <h2>Usage Over Time</h2>
+          <span class="chart-period">Last 10 readings</span>
+        </div>
+        <div class="sparkline-wrap">
+          <svg class="sparkline-chart" viewBox="0 0 400 120" preserveAspectRatio="none" id="sparkline-chart">
+            <defs>
+              <linearGradient id="sparkline-gradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--interactive-accent)" stop-opacity="0.25" />
+                <stop offset="100%" stop-color="var(--interactive-accent)" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <path class="sparkline-area" id="sparkline-area" d="" />
+            <path class="sparkline-line" id="sparkline-line" d="" />
+          </svg>
+          <div class="sparkline-labels">
+            <span class="sparkline-min" id="sparkline-min">—</span>
+            <span class="sparkline-max" id="sparkline-max">—</span>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- Top Memory Consumers -->
-    <section class="consumers-section" aria-label="Top memory consumers">
-      <div class="card">
+    <!-- Two-column layout for consumers + timeline -->
+    <section class="two-col" aria-label="Details">
+      <!-- Top Memory Consumers -->
+      <div class="card consumers-card">
         <h2>Top Memory Consumers</h2>
         <ul class="consumer-list" id="consumer-list">
-          <li class="consumer-empty">Don't have current file yet.</li>
+          <li class="consumer-empty">No tab memory data available.</li>
+        </ul>
+      </div>
+
+      <!-- Session Timeline -->
+      <div class="card timeline-card">
+        <h2>Session Timeline</h2>
+        <ul class="timeline-list" id="timeline-list">
+          <li class="timeline-empty">No recent activity.</li>
         </ul>
       </div>
     </section>
@@ -69,7 +116,7 @@
       <div class="card">
         <h2>Recent Activity</h2>
         <ul class="activity-list" id="activity-list">
-          <li class="activity-empty">Don't have current file yet.</li>
+          <li class="activity-empty">No recent activity.</li>
         </ul>
       </div>
     </section>
