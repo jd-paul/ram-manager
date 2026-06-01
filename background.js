@@ -4,11 +4,10 @@ import { getSettings, localGet, localSet, syncGet } from './js/storage.js';
 import {
   getAllTabs,
   getSuspendedTabs,
-  suspendTab,
-  restoreTab,
   canSuspend,
   getCurrentTab
 } from './js/tabs.js';
+import { freezeTab, restoreTab } from './js/suspension.js';
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -156,7 +155,7 @@ async function handleAutoSuspend() {
     if (now - last < thresholdMs) continue;
 
     try {
-      await suspendTab(tab.id);
+      await freezeTab(tab);
       await logHistory('suspend', tab);
       suspendedCount++;
     } catch (err) {
@@ -217,7 +216,7 @@ async function handleContextMenuClick(info, tab) {
     }
 
     try {
-      await suspendTab(targetTab.id);
+      await freezeTab(targetTab);
       await logHistory('suspend', targetTab);
       await updateBadge();
     } catch (err) {
@@ -237,7 +236,7 @@ async function handleContextMenuClick(info, tab) {
 
     for (const t of toSuspend) {
       try {
-        await suspendTab(t.id);
+        await freezeTab(t);
         await logHistory('suspend', t);
       } catch (err) {
         console.error('Suspend all other tabs failed for tab', t.id, err);
@@ -271,7 +270,7 @@ async function handleSuspendActiveTab() {
   }
 
   try {
-    await suspendTab(tab.id);
+    await freezeTab(tab);
     await logHistory('suspend', tab);
     await updateBadge();
   } catch (err) {

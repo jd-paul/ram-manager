@@ -1,5 +1,7 @@
-// Tab querying, suspension, and restoration utilities
+// Tab querying and protection rule utilities
 // Chrome Extension Manifest V3 APIs only
+
+import { isFrozen } from './suspension.js';
 
 /**
  * Returns all tabs across all windows.
@@ -18,46 +20,12 @@ export function getAllTabs() {
 }
 
 /**
- * Returns tabs where tab.discarded === true.
+ * Returns tabs that are currently frozen (on suspended page).
  * @returns {Promise<chrome.tabs.Tab[]>}
  */
 export async function getSuspendedTabs() {
   const tabs = await getAllTabs();
-  return tabs.filter((tab) => tab.discarded === true);
-}
-
-/**
- * Suspends a single tab via chrome.tabs.discard.
- * @param {number} tabId
- * @returns {Promise<chrome.tabs.Tab>}
- */
-export function suspendTab(tabId) {
-  return new Promise((resolve, reject) => {
-    chrome.tabs.discard(tabId, (tab) => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-      } else {
-        resolve(tab);
-      }
-    });
-  });
-}
-
-/**
- * Reloads a suspended tab via chrome.tabs.reload.
- * @param {number} tabId
- * @returns {Promise<void>}
- */
-export function restoreTab(tabId) {
-  return new Promise((resolve, reject) => {
-    chrome.tabs.reload(tabId, {}, () => {
-      if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message));
-      } else {
-        resolve();
-      }
-    });
-  });
+  return tabs.filter((tab) => isFrozen(tab));
 }
 
 /**
@@ -77,7 +45,7 @@ export function getCurrentTab() {
 }
 
 /**
- * Checks if a tab can be suspended based on protection rules.
+ * Checks if a tab can be frozen based on protection rules.
  * @param {chrome.tabs.Tab} tab
  * @param {Object} options
  * @param {boolean} [options.protectActive=true]
@@ -89,13 +57,13 @@ export function getCurrentTab() {
 export function canSuspend(tab, options = {}) {
   if (!tab || !tab.id) return false;
 
-  // Already discarded
-  if (tab.discarded === true) return false;
+  // Already frozen
+  if (isFrozen(tab)) return false;
 
   // Chrome internal URLs
   if (tab.url && tab.url.startsWith('chrome://')) return false;
 
-  // Chrome extension URLs
+  // Chrome extension URLs (including our own suspended page)
   if (tab.url && tab.url.startsWith('chrome-extension://')) return false;
 
   // File URLs (optional safeguard)
@@ -124,48 +92,4 @@ export function canSuspend(tab, options = {}) {
   }
 
   return true;
-}
-
-/**
- * Suspends all tabs except protected ones.
- * @param {Object} options — passed through to canSuspend
- * @returns {Promise<number>} count of tabs suspended
- */
-export async function suspendAll(options = {}) {
-  const tabs = await getAllTabs();
-  const currentTab = await getCurrentTab();
-  const currentTabId = currentTab ? currentTab.id : undefined;
-
-  const mergedOptions = {
-    ...options,
-    currentTabId: options.currentTabId !== undefined ? options.currentTabId : currentTabId
-  };
-
-  const toSuspend = tabs.filter((tab) => canSuspend(tab, mergedOptions));
-    
-  // If no tabs can be suspended, return 0
-  if (toSuspend.length === 0) {
-    return 0;
-  }
-    
-  const results = await Promise.allSettled(
-    toSuspend.map((tab) => suspendTab(tab.id))
-  );
-
-  const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-  return succeeded;
-}
-
-/**
- * Restores all suspended tabs.
- * @returns {Promise<number>} count of tabs restored
- */
-export async function restoreAll() {
-  const suspended = await getSuspendedTabs();
-  const results = await Promise.allSettled(
-    suspended.map((tab) => restoreTab(tab.id))
-  );
-
-  const succeeded = results.filter((r) => r.status === 'fulfilled').length;
-  return succeeded;
 }

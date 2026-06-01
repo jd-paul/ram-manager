@@ -4,11 +4,10 @@ import { getSettings } from "../js/storage.js";
 import {
   getAllTabs,
   getSuspendedTabs,
-  suspendTab,
-  restoreAll,
   getCurrentTab,
   canSuspend,
 } from "../js/tabs.js";
+import { freezeTab, restoreAll } from "../js/suspension.js";
 import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 
@@ -111,8 +110,8 @@ async function handleSuspendCurrent() {
       return;
     }
 
-    await suspendTab(tab.id);
-    console.log(`Suspended tab ${tab.id}`);
+    await freezeTab(tab);
+    console.log(`Frozen tab ${tab.id}`);
     await loadTabStats();
     await loadCurrentTabStatus();
   } catch (err) {

@@ -38,7 +38,7 @@
   "options_page": "settings/settings.html",
   "web_accessible_resources": [
     {
-      "resources": ["dashboard/*", "settings/*", "css/*", "js/*", "themes/*"],
+      "resources": ["dashboard/*", "settings/*", "css/*", "js/*", "themes/*", "suspended.html", "suspended/*"],
       "matches": ["<all_urls>"]
     }
   ]

@@ -1,0 +1,62 @@
+/* Suspended page styles — frozen tab UI */
+
+.frozen-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--space-lg);
+  background-color: var(--color-bg-secondary);
+}
+
+.frozen-card {
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  padding: var(--space-2xl);
+  background-color: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.frozen-favicon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--space-lg);
+  border-radius: var(--radius-sm);
+}
+
+.frozen-title {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
+  word-break: break-word;
+}
+
+.frozen-url {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-xl);
+  word-break: break-all;
+}
+
+.frozen-message {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xl);
+}
+
+#btn-restore {
+  padding: var(--space-md) var(--space-xl);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-md);
+  background-color: var(--color-accent);
+  color: var(--color-text-inverse);
+  transition: background-color 0.2s ease;
+}
+
+#btn-restore:hover {
+  background-color: var(--color-accent-hover);
+}
