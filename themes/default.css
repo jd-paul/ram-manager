@@ -1,36 +1,36 @@
-/* RAM Manager — Light Theme */
+/* RAM Manager — Notion Light Theme (from AnuPpuccin Extended) */
 
 .theme-light {
   /* --- Backgrounds --- */
   --background-primary: #ffffff;
-  --background-secondary: #f5f6f8;
-  --background-tertiary: #e8eaed;
-  --background-modifier-hover: #eef0f4;
-  --background-modifier-active: #dde1e7;
-  --background-modifier-border: #d1d5db;
-  --background-modifier-border-hover: #b0b5bd;
+  --background-secondary: #f4f5f6;
+  --background-tertiary: #e3e6e8;
+  --background-modifier-hover: #f1f1f0;
+  --background-modifier-active: #e8e8e8;
+  --background-modifier-border: #e3e6e8;
+  --background-modifier-border-hover: #d0d4d7;
 
   /* --- Text --- */
-  --text-normal: #1f2328;
-  --text-muted: #5e6670;
-  --text-faint: #8c959f;
+  --text-normal: #37352f;
+  --text-muted: #6e6d66;
+  --text-faint: #9f9584;
   --text-on-accent: #ffffff;
 
   /* --- Accent / Interactive --- */
-  --interactive-accent: #2563eb;
-  --interactive-accent-hover: #1d4ed8;
-  --interactive-accent-light: #dbeafe;
-  --interactive-normal: #f5f6f8;
-  --interactive-hover: #eef0f4;
+  --interactive-accent: #0b6e99;
+  --interactive-accent-hover: #0a5a7d;
+  --interactive-accent-light: rgba(11, 110, 153, 0.12);
+  --interactive-normal: #f4f5f6;
+  --interactive-hover: #e8e8e8;
 
   /* --- Functional colours --- */
-  --color-success: #16a34a;
+  --color-success: #15a380;
   --color-warning: #d97706;
-  --color-danger: #dc2626;
-  --color-danger-light: #fee2e2;
+  --color-danger: #e03e3e;
+  --color-danger-light: #fde2e2;
 
   /* --- Shadows --- */
-  --shadow-color: rgba(0, 0, 0, 0.08);
+  --shadow-color: rgba(0, 0, 0, 0.06);
 
   /* --- Legacy aliases --- */
   --color-bg-primary: var(--background-primary);
