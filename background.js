@@ -263,6 +263,23 @@ chrome.runtime.onInstalled.addListener(() => {
   setupAlarm();
   initTabLastActive();
   updateBadge();
+
+  // Ensure keyboard shortcut is set if empty
+  chrome.commands.getAll((commands) => {
+    const cmd = commands.find(c => c.name === 'suspend-active-tab');
+    if (cmd && !cmd.shortcut) {
+      chrome.commands.update({
+        name: 'suspend-active-tab',
+        shortcut: 'Alt+Shift+T'
+      }, () => {
+        if (chrome.runtime.lastError) {
+          console.error('[RAM Manager] Failed to set shortcut:', chrome.runtime.lastError.message);
+        } else {
+          console.log('[RAM Manager] Shortcut set to Alt+Shift+T');
+        }
+      });
+    }
+  });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
