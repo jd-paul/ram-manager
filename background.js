@@ -319,15 +319,36 @@ async function handleContextMenuClick(info, tab) {
 /* Keyboard shortcut                                                          */
 /* -------------------------------------------------------------------------- */
 
+// Register command listener at top level for Manifest V3 service worker
 chrome.commands.onCommand.addListener((command) => {
+  console.log('[RAM Manager] Command received:', command);
   if (command === 'suspend-active-tab') {
     handleSuspendActiveTab().catch(err => console.error('commands error:', err));
   }
 });
 
+// Also check what shortcuts are registered on startup
+chrome.runtime.onStartup.addListener(() => {
+  chrome.commands.getAll((commands) => {
+    console.log('[RAM Manager] Registered commands:', commands);
+  });
+});
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.commands.getAll((commands) => {
+    console.log('[RAM Manager] Registered commands after install:', commands);
+  });
+});
+
 async function handleSuspendActiveTab() {
+  console.log('[RAM Manager] Handling suspend-active-tab command');
   const tab = await getCurrentTab();
-  if (!tab || !tab.id) return;
+  if (!tab || !tab.id) {
+    console.log('[RAM Manager] No active tab found');
+    return;
+  }
+
+  console.log('[RAM Manager] Active tab:', tab.id, tab.url);
 
   const settings = await getSettings();
   if (!canSuspend(tab, {
@@ -335,6 +356,7 @@ async function handleSuspendActiveTab() {
     protectPinned: settings.protectPinned,
     protectMedia: settings.protectMedia
   })) {
+    console.log('[RAM Manager] Tab cannot be suspended');
     return;
   }
 
@@ -342,6 +364,7 @@ async function handleSuspendActiveTab() {
     await freezeTab(tab);
     await logHistory('suspend', tab);
     await updateBadge();
+    console.log('[RAM Manager] Tab suspended successfully');
   } catch (err) {
     console.error('Keyboard suspend failed:', err);
   }
