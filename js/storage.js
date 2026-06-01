@@ -7,8 +7,11 @@ const DEFAULT_SETTINGS = {
   protectMedia: true,
   protectPinned: true,
   protectActive: true,
+  warnFormData: true,
   theme: 'system',
-  autoRestore: false
+  autoRestore: false,
+  badgeCountEnabled: true,
+  changeTabIconWhenSuspended: true
 };
 
 function wrapStorageArea(storage) {

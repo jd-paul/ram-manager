@@ -68,26 +68,23 @@
         </div>
       </div>
 
-      <!-- Sparkline Chart — Weekly Savings -->
+      <!-- Weekly Bar Chart — Memory Saved -->
       <div class="card chart-card chart-card--wide">
         <div class="chart-header">
           <h2>Memory Saved This Week</h2>
-          <span class="chart-period">Last 7 days</span>
+          <span class="chart-period" id="chart-week-label"></span>
         </div>
-        <div class="sparkline-wrap">
-          <svg class="sparkline-chart" viewBox="0 0 400 120" preserveAspectRatio="none" id="sparkline-chart">
-            <defs>
-              <linearGradient id="sparkline-gradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--color-success)" stop-opacity="0.25" />
-                <stop offset="100%" stop-color="var(--color-success)" stop-opacity="0" />
-              </linearGradient>
-            </defs>
-            <path class="sparkline-area" id="sparkline-area" d="" />
-            <path class="sparkline-line" id="sparkline-line" d="" />
+        <div class="bar-chart-wrap">
+          <svg class="bar-chart" viewBox="0 0 560 180" id="bar-chart">
+            <!-- Grid lines -->
+            <line x1="0" y1="45" x2="560" y2="45" class="bar-grid" />
+            <line x1="0" y1="90" x2="560" y2="90" class="bar-grid" />
+            <line x1="0" y1="135" x2="560" y2="135" class="bar-grid" />
+            <!-- Bars will be injected by JS -->
+            <g id="bar-chart-bars"></g>
           </svg>
-          <div class="sparkline-labels">
-            <span class="sparkline-min" id="sparkline-min">—</span>
-            <span class="sparkline-max" id="sparkline-max">—</span>
+          <div class="bar-chart-labels" id="bar-chart-labels">
+            <!-- Day labels injected by JS -->
           </div>
         </div>
       </div>

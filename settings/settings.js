@@ -1,6 +1,6 @@
-// Settings page logic — auto-saves on change, manages whitelist, themes, and shortcuts
+// Settings page logic — auto-saves on change, manages whitelist, themes, shortcuts, and data
 
-import { getSettings, setSettings, syncGet, syncSet } from '../js/storage.js';
+import { getSettings, setSettings, syncGet, syncSet, localGetAll, localSet, localRemove } from '../js/storage.js';
 import {
   getAvailableThemes,
   applyTheme,
@@ -18,6 +18,7 @@ const els = {
   protectMedia: document.getElementById('protect-media'),
   protectPinned: document.getElementById('protect-pinned'),
   protectActive: document.getElementById('protect-active'),
+  warnFormData: document.getElementById('warn-form-data'),
   whitelistInput: document.getElementById('whitelist-input'),
   whitelistAdd: document.getElementById('whitelist-add'),
   whitelistHint: document.getElementById('whitelist-hint'),
@@ -25,7 +26,13 @@ const els = {
   whitelistEmpty: document.getElementById('whitelist-empty'),
   themeSelect: document.getElementById('theme-select'),
   shortcutDisplay: document.getElementById('shortcut-display'),
+  badgeCountToggle: document.getElementById('badge-count-toggle'),
+  tabIconToggle: document.getElementById('tab-icon-toggle'),
   autoRestoreToggle: document.getElementById('auto-restore-toggle'),
+  exportData: document.getElementById('export-data'),
+  importData: document.getElementById('import-data'),
+  clearStats: document.getElementById('clear-stats'),
+  dataHint: document.getElementById('data-hint'),
 };
 
 let currentSettings = {};
@@ -40,6 +47,7 @@ async function init() {
   await loadSettings();
   await loadShortcut();
   bindEvents();
+  lucide.createIcons();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -59,13 +67,14 @@ async function loadSettings() {
   els.protectMedia.checked = currentSettings.protectMedia ?? true;
   els.protectPinned.checked = currentSettings.protectPinned ?? true;
   els.protectActive.checked = currentSettings.protectActive ?? true;
+  els.warnFormData.checked = currentSettings.warnFormData ?? true;
 
-  // Theme
+  // Display
   const savedTheme = currentSettings.theme ?? 'system';
   populateThemeSelect();
   els.themeSelect.value = savedTheme;
-
-  // Auto-restore
+  els.badgeCountToggle.checked = currentSettings.badgeCountEnabled ?? true;
+  els.tabIconToggle.checked = currentSettings.changeTabIconWhenSuspended ?? true;
   els.autoRestoreToggle.checked = currentSettings.autoRestore ?? false;
 
   // Whitelist
@@ -76,7 +85,7 @@ async function loadSettings() {
 function populateThemeSelect() {
   const available = getAvailableThemes(); // ['default', 'dark']
   const options = [
-    { value: 'system', label: 'System' },
+    { value: 'system', label: 'Auto (System)' },
     ...available.map((t) => ({
       value: t,
       label: t === 'default' ? 'Light' : t.charAt(0).toUpperCase() + t.slice(1),
@@ -93,18 +102,34 @@ function populateThemeSelect() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Shortcut display                                                           */
+/* Shortcut display — visual key pills                                        */
 /* -------------------------------------------------------------------------- */
 
 async function loadShortcut() {
   try {
     const commands = await chrome.commands.getAll();
     const cmd = commands.find((c) => c.name === 'suspend-active-tab');
-    els.shortcutDisplay.textContent = cmd?.shortcut || '—';
+    const shortcut = cmd?.shortcut || '—';
+
+    if (shortcut === '—') {
+      els.shortcutDisplay.innerHTML = '<span class="key-pill">—</span>';
+      return;
+    }
+
+    // Split shortcut into individual keys for pill display
+    // e.g. "Alt+Shift+S" -> ["Alt", "Shift", "S"]
+    const keys = shortcut.split(/\+/).map(k => k.trim());
+    els.shortcutDisplay.innerHTML = keys.map(k => `<span class="key-pill">${escapeHtml(k)}</span>`).join('<span class="key-plus">+</span>');
   } catch (err) {
     console.error('Failed to load shortcut:', err);
-    els.shortcutDisplay.textContent = '—';
+    els.shortcutDisplay.innerHTML = '<span class="key-pill">—</span>';
   }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -177,17 +202,110 @@ function renderWhitelist() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn btn--danger';
-    btn.textContent = 'Remove';
+    btn.innerHTML = '<i data-lucide="x" class="lucide btn-icon"></i> Remove';
     btn.addEventListener('click', () => removeWhitelistDomain(domain));
 
     li.appendChild(span);
     li.appendChild(btn);
     els.whitelistList.appendChild(li);
   }
+
+  // Re-init lucide icons for dynamically added content
+  lucide.createIcons();
 }
 
 function showHint(message) {
   els.whitelistHint.textContent = message;
+}
+
+function showDataHint(message, isError = false) {
+  els.dataHint.textContent = message;
+  els.dataHint.style.color = isError ? 'var(--color-danger)' : 'var(--color-success)';
+}
+
+/* -------------------------------------------------------------------------- */
+/* Data Management                                                            */
+/* -------------------------------------------------------------------------- */
+
+async function exportData() {
+  try {
+    const data = await localGetAll();
+    // Also include sync settings
+    const syncData = await syncGet(null);
+    const exportPayload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      local: data,
+      sync: syncData || {},
+    };
+
+    const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const date = new Date().toISOString().split('T')[0];
+    await chrome.downloads.download({
+      url,
+      filename: `ram-manager-backup-${date}.json`,
+      saveAs: true,
+    });
+    showDataHint('Data exported successfully');
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('Export failed:', err);
+    showDataHint('Export failed: ' + err.message, true);
+  }
+}
+
+async function importData(file) {
+  try {
+    const text = await file.text();
+    const payload = JSON.parse(text);
+
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Invalid file format');
+    }
+
+    // Validate version
+    if (payload.version !== 1) {
+      throw new Error('Unsupported backup version');
+    }
+
+    // Merge local data
+    if (payload.local && typeof payload.local === 'object') {
+      for (const [key, value] of Object.entries(payload.local)) {
+        await localSet(key, value);
+      }
+    }
+
+    // Merge sync data (settings)
+    if (payload.sync && typeof payload.sync === 'object') {
+      for (const [key, value] of Object.entries(payload.sync)) {
+        await syncSet(key, value);
+      }
+    }
+
+    showDataHint('Data imported successfully. Reloading...');
+    setTimeout(() => window.location.reload(), 1200);
+  } catch (err) {
+    console.error('Import failed:', err);
+    showDataHint('Import failed: ' + err.message, true);
+  }
+}
+
+async function clearStatistics() {
+  if (!confirm('Are you sure you want to clear all statistics? This will reset your suspension history and memory saved counters. Your settings and whitelist will be preserved.')) {
+    return;
+  }
+
+  try {
+    await localRemove('suspensionHistory');
+    await localRemove('savedMemoryAllTime');
+    await localRemove('savedMemoryToday');
+    await localRemove('tabLastActive');
+    showDataHint('Statistics cleared successfully');
+  } catch (err) {
+    console.error('Clear stats failed:', err);
+    showDataHint('Failed to clear statistics: ' + err.message, true);
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -224,15 +342,22 @@ function bindEvents() {
   els.protectActive.addEventListener('change', async (e) => {
     await saveSetting('protectActive', e.target.checked);
   });
+  els.warnFormData.addEventListener('change', async (e) => {
+    await saveSetting('warnFormData', e.target.checked);
+  });
 
-  // Theme
+  // Display
   els.themeSelect.addEventListener('change', async (e) => {
     const theme = e.target.value;
     await applyTheme(theme);
     currentSettings.theme = theme;
   });
-
-  // Auto-restore
+  els.badgeCountToggle.addEventListener('change', async (e) => {
+    await saveSetting('badgeCountEnabled', e.target.checked);
+  });
+  els.tabIconToggle.addEventListener('change', async (e) => {
+    await saveSetting('changeTabIconWhenSuspended', e.target.checked);
+  });
   els.autoRestoreToggle.addEventListener('change', async (e) => {
     await saveSetting('autoRestore', e.target.checked);
   });
@@ -245,6 +370,17 @@ function bindEvents() {
       addWhitelistDomain();
     }
   });
+
+  // Data Management
+  els.exportData.addEventListener('click', exportData);
+  els.importData.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      importData(file);
+      e.target.value = ''; // reset so same file can be selected again
+    }
+  });
+  els.clearStats.addEventListener('click', clearStatistics);
 }
 
 /* -------------------------------------------------------------------------- */
