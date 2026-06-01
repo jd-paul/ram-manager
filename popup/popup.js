@@ -1,42 +1,42 @@
 // Popup logic
 
-import { getSettings } from '../js/storage.js';
+import { getSettings } from "../js/storage.js";
 import {
   getAllTabs,
   getSuspendedTabs,
-  suspendAll,
+  suspendTab,
   restoreAll,
   getCurrentTab,
-  canSuspend
-} from '../js/tabs.js';
-import { formatBytes, getSavedMemoryToday } from '../js/memory.js';
-import { initTheme } from '../js/themes.js';
+  canSuspend,
+} from "../js/tabs.js";
+import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
+import { initTheme } from "../js/themes.js";
 
 const els = {
-  currentTabTitle: document.getElementById('current-tab-title'),
-  currentTabStatus: document.getElementById('current-tab-status'),
-  suspendedCount: document.getElementById('suspended-count'),
-  savedMemory: document.getElementById('saved-memory'),
-  estimatedNote: document.getElementById('estimated-note'),
-  btnSuspendAll: document.getElementById('btn-suspend-all'),
-  btnRestoreAll: document.getElementById('btn-restore-all'),
-  linkDashboard: document.getElementById('link-dashboard'),
-  linkSettings: document.getElementById('link-settings'),
-  shortcutHint: document.getElementById('shortcut-hint')
+  currentTabTitle: document.getElementById("current-tab-title"),
+  currentTabStatus: document.getElementById("current-tab-status"),
+  suspendedCount: document.getElementById("suspended-count"),
+  savedMemory: document.getElementById("saved-memory"),
+  estimatedNote: document.getElementById("estimated-note"),
+  btnSuspendCurrent: document.getElementById("btn-suspend-current"),
+  btnRestoreAll: document.getElementById("btn-restore-all"),
+  linkDashboard: document.getElementById("link-dashboard"),
+  linkSettings: document.getElementById("link-settings"),
+  shortcutHint: document.getElementById("shortcut-hint"),
 };
 
 async function loadTabStats() {
   try {
     const [allTabs, suspendedTabs] = await Promise.all([
       getAllTabs(),
-      getSuspendedTabs()
+      getSuspendedTabs(),
     ]);
     const total = allTabs.length;
     const suspended = suspendedTabs.length;
     els.suspendedCount.textContent = `${suspended} / ${total}`;
   } catch (err) {
-    console.error('Failed to load tab stats:', err);
-    els.suspendedCount.textContent = '— / —';
+    console.error("Failed to load tab stats:", err);
+    els.suspendedCount.textContent = "— / —";
   }
 }
 
@@ -44,13 +44,10 @@ async function loadMemoryInfo() {
   try {
     const savedBytes = await getSavedMemoryToday();
     els.savedMemory.textContent = formatBytes(savedBytes);
-    // Show estimated note if using fallback (getSavedMemoryToday returns 0 placeholder for now)
-    // When history tracking is implemented, we can pass an estimated flag.
-    // For now, keep it hidden since getSavedMemoryToday is a placeholder.
     els.estimatedNote.hidden = true;
   } catch (err) {
-    console.error('Failed to load memory info:', err);
-    els.savedMemory.textContent = '—';
+    console.error("Failed to load memory info:", err);
+    els.savedMemory.textContent = "—";
     els.estimatedNote.hidden = true;
   }
 }
@@ -59,13 +56,13 @@ async function loadCurrentTabStatus() {
   try {
     const tab = await getCurrentTab();
     if (!tab) {
-      els.currentTabTitle.textContent = 'No active tab';
-      els.currentTabStatus.textContent = '—';
-      els.currentTabStatus.className = 'current-tab-status';
+      els.currentTabTitle.textContent = "No active tab";
+      els.currentTabStatus.textContent = "—";
+      els.currentTabStatus.className = "current-tab-status";
       return;
     }
 
-    const title = tab.title || 'Untitled';
+    const title = tab.title || "Untitled";
     els.currentTabTitle.textContent = title;
 
     const settings = await getSettings();
@@ -74,40 +71,54 @@ async function loadCurrentTabStatus() {
       protectActive: settings.protectActive,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
-      currentTabId
+      currentTabId,
     });
 
     if (suspendable) {
-      els.currentTabStatus.textContent = 'can suspend';
-      els.currentTabStatus.className = 'current-tab-status can-suspend';
+      els.currentTabStatus.textContent = "can suspend";
+      els.currentTabStatus.className = "current-tab-status can-suspend";
     } else {
-      els.currentTabStatus.textContent = 'cannot suspend';
-      els.currentTabStatus.className = 'current-tab-status cannot-suspend';
+      els.currentTabStatus.textContent = "cannot suspend";
+      els.currentTabStatus.className = "current-tab-status cannot-suspend";
     }
   } catch (err) {
-    console.error('Failed to load current tab status:', err);
-    els.currentTabTitle.textContent = '—';
-    els.currentTabStatus.textContent = '—';
-    els.currentTabStatus.className = 'current-tab-status';
+    console.error("Failed to load current tab status:", err);
+    els.currentTabTitle.textContent = "—";
+    els.currentTabStatus.textContent = "—";
+    els.currentTabStatus.className = "current-tab-status";
   }
 }
 
-async function handleSuspendAll() {
+async function handleSuspendCurrent() {
   try {
-    els.btnSuspendAll.disabled = true;
+    els.btnSuspendCurrent.disabled = true;
+    const tab = await getCurrentTab();
+    if (!tab || !tab.id) {
+      console.log("No current tab to suspend");
+      return;
+    }
+
     const settings = await getSettings();
-    const count = await suspendAll({
-      protectActive: settings.protectActive,
+    const suspendable = canSuspend(tab, {
+      protectActive: false,
       protectPinned: settings.protectPinned,
-      protectMedia: settings.protectMedia
+      protectMedia: settings.protectMedia,
+      currentTabId: tab.id,
     });
-    console.log(`Suspended ${count} tabs`);
+
+    if (!suspendable) {
+      console.log("Current tab cannot be suspended");
+      return;
+    }
+
+    await suspendTab(tab.id);
+    console.log(`Suspended tab ${tab.id}`);
     await loadTabStats();
     await loadCurrentTabStatus();
   } catch (err) {
-    console.error('Suspend all failed:', err);
+    console.error("Suspend current tab failed:", err);
   } finally {
-    els.btnSuspendAll.disabled = false;
+    els.btnSuspendCurrent.disabled = false;
   }
 }
 
@@ -119,7 +130,7 @@ async function handleRestoreAll() {
     await loadTabStats();
     await loadCurrentTabStatus();
   } catch (err) {
-    console.error('Restore all failed:', err);
+    console.error("Restore all failed:", err);
   } finally {
     els.btnRestoreAll.disabled = false;
   }
@@ -140,15 +151,17 @@ async function loadShortcutHint() {
         resolve([]);
       }
     });
-    const suspendCommand = commands.find((c) => c.name === 'suspend-active-tab');
+    const suspendCommand = commands.find(
+      (c) => c.name === "suspend-active-tab",
+    );
     if (suspendCommand && suspendCommand.shortcut) {
       els.shortcutHint.textContent = `Keyboard shortcut: ${suspendCommand.shortcut}`;
     } else {
-      els.shortcutHint.textContent = 'Keyboard shortcut: not set';
+      els.shortcutHint.textContent = "Keyboard shortcut: not set";
     }
   } catch (err) {
-    console.error('Failed to load shortcut hint:', err);
-    els.shortcutHint.textContent = 'Keyboard shortcut: —';
+    console.error("Failed to load shortcut hint:", err);
+    els.shortcutHint.textContent = "Keyboard shortcut: —";
   }
 }
 
@@ -158,19 +171,19 @@ async function init() {
     loadTabStats(),
     loadMemoryInfo(),
     loadCurrentTabStatus(),
-    loadShortcutHint()
+    loadShortcutHint(),
   ]);
 }
 
-els.btnSuspendAll.addEventListener('click', handleSuspendAll);
-els.btnRestoreAll.addEventListener('click', handleRestoreAll);
-els.linkDashboard.addEventListener('click', (e) => {
+els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
+els.btnRestoreAll.addEventListener("click", handleRestoreAll);
+els.linkDashboard.addEventListener("click", (e) => {
   e.preventDefault();
-  openPage('dashboard/dashboard.html');
+  openPage("dashboard/dashboard.html");
 });
-els.linkSettings.addEventListener('click', (e) => {
+els.linkSettings.addEventListener("click", (e) => {
   e.preventDefault();
-  openPage('settings/settings.html');
+  openPage("settings/settings.html");
 });
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener("DOMContentLoaded", init);

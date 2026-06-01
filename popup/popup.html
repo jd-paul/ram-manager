@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
   <div class="popup-container">
     <header class="popup-header">
       <h1 class="popup-title">RAM Manager</h1>
       <div class="current-tab" id="current-tab">
-        <span class="current-tab-title" id="current-tab-title">Loading…</span>
+        <span class="current-tab-title" id="current-tab-title">Don't have current file yet.</span>
         <span class="current-tab-status" id="current-tab-status">—</span>
       </div>
     </header>
@@ -29,7 +31,7 @@
     </section>
 
     <section class="actions-section">
-      <button class="btn btn-primary" id="btn-suspend-all" type="button">Suspend All</button>
+      <button class="btn btn-primary" id="btn-suspend-current" type="button">Suspend Current Tab</button>
       <button class="btn btn-secondary" id="btn-restore-all" type="button">Restore All</button>
     </section>
 
@@ -39,10 +41,11 @@
     </section>
 
     <footer class="popup-footer">
-      <p class="shortcut-hint" id="shortcut-hint">Keyboard shortcut: —</p>
+      <p class="shortcut-hint" id="shortcut-hint">Keyboard shortcut here</p>
     </footer>
   </div>
 
   <script type="module" src="popup.js"></script>
 </body>
+
 </html>
