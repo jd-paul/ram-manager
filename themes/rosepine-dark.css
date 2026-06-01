@@ -1,0 +1,50 @@
+/* RAM Manager — Rosepine Dark Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.rosepine-dark {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(25, 23, 36);
+  --background-secondary: rgb(17, 16, 25);
+  --background-tertiary: rgb(11, 10, 16);
+  --background-modifier-hover: rgb(31, 29, 46);
+  --background-modifier-active: rgb(33, 32, 46);
+  --background-modifier-border: rgb(46, 42, 70);
+  --background-modifier-border-hover: rgb(54, 50, 83);
+
+  /* --- Text --- */
+  --text-normal: rgb(224, 222, 244);
+  --text-muted: rgb(144, 140, 170);
+  --text-faint: rgb(110, 106, 134);
+  --text-on-accent: rgb(224, 222, 244);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(76, 127, 169);
+  --interactive-accent-hover: color-mix(in srgb, rgb(76, 127, 169), white 15%);
+  --interactive-accent-light: rgba(76, 127, 169, 0.18);
+  --interactive-normal: rgb(31, 29, 46);
+  --interactive-hover: rgb(33, 32, 46);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(114, 182, 156);
+  --color-warning: rgb(246, 193, 119);
+  --color-danger: rgb(235, 111, 146);
+  --color-danger-light: rgba(235, 111, 146, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

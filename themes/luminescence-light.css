@@ -1,0 +1,50 @@
+/* RAM Manager — Luminescence Light Theme (from AnuPpuccin Extended) */
+
+body.theme-light.luminescence-light {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(242, 238, 232);
+  --background-secondary: rgb(236, 231, 223);
+  --background-tertiary: rgb(236, 231, 223);
+  --background-modifier-hover: rgb(205, 183, 177);
+  --background-modifier-active: rgb(225, 212, 208);
+  --background-modifier-border: rgb(246, 243, 239);
+  --background-modifier-border-hover: rgb(223, 219, 200);
+
+  /* --- Text --- */
+  --text-normal: rgb(101, 73, 65);
+  --text-muted: rgb(122, 91, 82);
+  --text-faint: rgb(122, 91, 82);
+  --text-on-accent: rgb(236, 231, 223);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(130, 146, 201);
+  --interactive-accent-hover: color-mix(in srgb, rgb(130, 146, 201), black 15%);
+  --interactive-accent-light: rgba(130, 146, 201, 0.12);
+  --interactive-normal: rgb(205, 183, 177);
+  --interactive-hover: rgb(225, 212, 208);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(148, 189, 117);
+  --color-warning: rgb(242, 203, 140);
+  --color-danger: rgb(232, 152, 151);
+  --color-danger-light: rgba(232, 152, 151, 0.12);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.06);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

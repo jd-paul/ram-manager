@@ -1,0 +1,50 @@
+/* RAM Manager — Rosebox Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.rosebox {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(35, 35, 35);
+  --background-secondary: rgb(30, 30, 30);
+  --background-tertiary: rgb(25, 25, 25);
+  --background-modifier-hover: rgb(40, 40, 40);
+  --background-modifier-active: rgb(51, 51, 51);
+  --background-modifier-border: rgb(61, 61, 61);
+  --background-modifier-border-hover: rgb(71, 71, 71);
+
+  /* --- Text --- */
+  --text-normal: rgb(163, 165, 170);
+  --text-muted: rgb(135, 137, 145);
+  --text-faint: rgb(110, 113, 119);
+  --text-on-accent: rgb(163, 165, 170);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(165, 117, 98);
+  --interactive-accent-hover: color-mix(in srgb, rgb(165, 117, 98), white 15%);
+  --interactive-accent-light: rgba(165, 117, 98, 0.18);
+  --interactive-normal: rgb(40, 40, 40);
+  --interactive-hover: rgb(51, 51, 51);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(163, 190, 140);
+  --color-warning: rgb(235, 203, 139);
+  --color-danger: rgb(191, 97, 106);
+  --color-danger-light: rgba(191, 97, 106, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

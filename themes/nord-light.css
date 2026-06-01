@@ -1,0 +1,50 @@
+/* RAM Manager — Nord Light Theme (from AnuPpuccin Extended) */
+
+body.theme-light.nord-light {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(236, 239, 244);
+  --background-secondary: rgb(231, 235, 241);
+  --background-tertiary: rgb(229, 233, 240);
+  --background-modifier-hover: rgb(229, 233, 240);
+  --background-modifier-active: rgb(216, 222, 233);
+  --background-modifier-border: rgb(216, 222, 233);
+  --background-modifier-border-hover: rgb(143, 188, 187);
+
+  /* --- Text --- */
+  --text-normal: rgb(46, 52, 64);
+  --text-muted: rgb(59, 66, 82);
+  --text-faint: rgb(67, 76, 94);
+  --text-on-accent: rgb(229, 233, 240);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(136, 192, 208);
+  --interactive-accent-hover: color-mix(in srgb, rgb(136, 192, 208), black 15%);
+  --interactive-accent-light: rgba(136, 192, 208, 0.12);
+  --interactive-normal: rgb(229, 233, 240);
+  --interactive-hover: rgb(216, 222, 233);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(136, 167, 108);
+  --color-warning: rgb(216, 172, 84);
+  --color-danger: rgb(191, 97, 106);
+  --color-danger-light: rgba(191, 97, 106, 0.12);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.06);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

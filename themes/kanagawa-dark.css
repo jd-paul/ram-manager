@@ -1,0 +1,50 @@
+/* RAM Manager — Kanagawa Dark Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.kanagawa-dark {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(31, 31, 40);
+  --background-secondary: rgb(22, 22, 29);
+  --background-tertiary: rgb(11, 11, 15);
+  --background-modifier-hover: rgb(42, 42, 55);
+  --background-modifier-active: rgb(54, 54, 69);
+  --background-modifier-border: rgb(62, 62, 81);
+  --background-modifier-border-hover: rgb(73, 73, 95);
+
+  /* --- Text --- */
+  --text-normal: rgb(220, 215, 186);
+  --text-muted: rgb(212, 206, 170);
+  --text-faint: rgb(200, 192, 147);
+  --text-on-accent: rgb(220, 215, 186);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(126, 156, 216);
+  --interactive-accent-hover: color-mix(in srgb, rgb(126, 156, 216), white 15%);
+  --interactive-accent-light: rgba(126, 156, 216, 0.18);
+  --interactive-normal: rgb(42, 42, 55);
+  --interactive-hover: rgb(54, 54, 69);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(152, 187, 108);
+  --color-warning: rgb(230, 195, 132);
+  --color-danger: rgb(255, 93, 98);
+  --color-danger-light: rgba(255, 93, 98, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

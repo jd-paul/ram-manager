@@ -2,9 +2,14 @@
 
 import { getSettings, setSettings, syncGet, syncSet, localGetAll, localSet, localRemove } from '../js/storage.js';
 import {
-  getAvailableThemes,
+  getLightThemes,
+  getDarkThemes,
   applyTheme,
   initTheme,
+  saveLightThemeFlavor,
+  saveDarkThemeFlavor,
+  getSavedLightThemeAsync,
+  getSavedDarkThemeAsync,
 } from '../js/theme.js';
 
 /* -------------------------------------------------------------------------- */
@@ -24,8 +29,11 @@ const els = {
   whitelistHint: document.getElementById('whitelist-hint'),
   whitelistList: document.getElementById('whitelist-list'),
   whitelistEmpty: document.getElementById('whitelist-empty'),
-  themeSelect: document.getElementById('theme-select'),
-  shortcutDisplay: document.getElementById('shortcut-display'),
+  themeModeSelect: document.getElementById('theme-mode-select'),
+  lightFlavorRow: document.getElementById('light-flavor-row'),
+  lightFlavorSelect: document.getElementById('light-flavor-select'),
+  darkFlavorRow: document.getElementById('dark-flavor-row'),
+  darkFlavorSelect: document.getElementById('dark-flavor-select'),
   badgeCountToggle: document.getElementById('badge-count-toggle'),
   tabIconToggle: document.getElementById('tab-icon-toggle'),
   autoRestoreToggle: document.getElementById('auto-restore-toggle'),
@@ -45,7 +53,6 @@ let whitelist = [];
 async function init() {
   await initTheme();
   await loadSettings();
-  await loadShortcut();
   bindEvents();
   lucide.createIcons();
 }
@@ -69,10 +76,18 @@ async function loadSettings() {
   els.protectActive.checked = currentSettings.protectActive ?? true;
   els.warnFormData.checked = currentSettings.warnFormData ?? true;
 
-  // Display
-  const savedTheme = currentSettings.theme ?? 'system';
-  populateThemeSelect();
-  els.themeSelect.value = savedTheme;
+  // Display — theme mode + flavours
+  populateFlavorSelects();
+
+  const savedMode = currentSettings.theme ?? 'system';
+  els.themeModeSelect.value = savedMode;
+  updateFlavorVisibility(savedMode);
+
+  const savedLight = await getSavedLightThemeAsync();
+  const savedDark = await getSavedDarkThemeAsync();
+  els.lightFlavorSelect.value = savedLight;
+  els.darkFlavorSelect.value = savedDark;
+
   els.badgeCountToggle.checked = currentSettings.badgeCountEnabled ?? true;
   els.tabIconToggle.checked = currentSettings.changeTabIconWhenSuspended ?? true;
   els.autoRestoreToggle.checked = currentSettings.autoRestore ?? false;
@@ -82,96 +97,42 @@ async function loadSettings() {
   renderWhitelist();
 }
 
-function populateThemeSelect() {
-  const available = getAvailableThemes(); // ['default', 'dark']
-  const options = [
-    { value: 'system', label: 'Auto (System)' },
-    ...available.map((t) => ({
-      value: t,
-      label: t === 'default' ? 'Light' : t.charAt(0).toUpperCase() + t.slice(1),
-    })),
-  ];
+function populateFlavorSelects() {
+  const lightThemes = getLightThemes();
+  const darkThemes = getDarkThemes();
 
-  els.themeSelect.innerHTML = '';
-  for (const opt of options) {
-    const option = document.createElement('option');
-    option.value = opt.value;
-    option.textContent = opt.label;
-    els.themeSelect.appendChild(option);
+  els.lightFlavorSelect.innerHTML = '';
+  for (const t of lightThemes) {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.label;
+    els.lightFlavorSelect.appendChild(opt);
+  }
+
+  els.darkFlavorSelect.innerHTML = '';
+  for (const t of darkThemes) {
+    const opt = document.createElement('option');
+    opt.value = t.id;
+    opt.textContent = t.label;
+    els.darkFlavorSelect.appendChild(opt);
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Shortcut display — visual key pills                                        */
-/* -------------------------------------------------------------------------- */
-
-function isMac() {
-  return navigator.platform?.toLowerCase().includes('mac') ||
-         navigator.userAgent?.toLowerCase().includes('mac');
-}
-
-function formatShortcutForDisplay(shortcut) {
-  if (shortcut === '—') return [{ label: '—', symbol: '—' }];
-
-  const isMacOS = isMac();
-  const keys = shortcut.split(/\+/).map(k => k.trim());
-
-  return keys.map(key => {
-    const lower = key.toLowerCase();
-
-    if (lower === 'alt') {
-      return isMacOS
-        ? { label: 'Option', symbol: '⌥' }
-        : { label: 'Alt', symbol: 'Alt' };
-    }
-
-    if (lower === 'ctrl') {
-      return isMacOS
-        ? { label: 'Control', symbol: '⌃' }
-        : { label: 'Ctrl', symbol: 'Ctrl' };
-    }
-
-    if (lower === 'shift') {
-      return isMacOS
-        ? { label: 'Shift', symbol: '⇧' }
-        : { label: 'Shift', symbol: 'Shift' };
-    }
-
-    if (lower === 'command' || lower === 'cmd' || lower === 'meta') {
-      return { label: 'Command', symbol: '⌘' };
-    }
-
-    // Single letter or other key
-    return { label: key.toUpperCase(), symbol: key.toUpperCase() };
-  });
-}
-
-async function loadShortcut() {
-  try {
-    const commands = await chrome.commands.getAll();
-    console.log('[RAM Manager Settings] All commands:', commands);
-    const cmd = commands.find((c) => c.name === 'suspend-active-tab');
-    console.log('[RAM Manager Settings] Found command:', cmd);
-    const shortcut = cmd?.shortcut || '—';
-    console.log('[RAM Manager Settings] Shortcut:', shortcut);
-
-    const keys = formatShortcutForDisplay(shortcut);
-
-    els.shortcutDisplay.innerHTML = keys.map((k, i) => {
-      const pill = `<span class="key-pill" title="${escapeHtml(k.label)}">${escapeHtml(k.symbol)}</span>`;
-      const plus = i < keys.length - 1 ? '<span class="key-plus">+</span>' : '';
-      return pill + plus;
-    }).join('');
-  } catch (err) {
-    console.error('Failed to load shortcut:', err);
-    els.shortcutDisplay.innerHTML = '<span class="key-pill">—</span>';
+function updateFlavorVisibility(mode) {
+  if (mode === 'system') {
+    els.lightFlavorRow.style.display = '';
+    els.darkFlavorRow.style.display = '';
+    els.lightFlavorRow.style.opacity = '1';
+    els.darkFlavorRow.style.opacity = '1';
+    els.lightFlavorRow.style.pointerEvents = 'auto';
+    els.darkFlavorRow.style.pointerEvents = 'auto';
+  } else if (mode === 'light') {
+    els.lightFlavorRow.style.display = '';
+    els.darkFlavorRow.style.display = 'none';
+  } else if (mode === 'dark') {
+    els.lightFlavorRow.style.display = 'none';
+    els.darkFlavorRow.style.display = '';
   }
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -191,9 +152,7 @@ function isValidDomain(input) {
   if (!input || typeof input !== 'string') return false;
   const trimmed = input.trim();
   if (!trimmed) return false;
-  // Reject protocols, paths, queries
   if (/[\/\?:#@]/.test(trimmed)) return false;
-  // Must contain at least one dot (e.g. example.com)
   if (!trimmed.includes('.')) return false;
   return true;
 }
@@ -252,7 +211,6 @@ function renderWhitelist() {
     els.whitelistList.appendChild(li);
   }
 
-  // Re-init lucide icons for dynamically added content
   lucide.createIcons();
 }
 
@@ -272,7 +230,6 @@ function showDataHint(message, isError = false) {
 async function exportData() {
   try {
     const data = await localGetAll();
-    // Also include sync settings
     const syncData = await syncGet(null);
     const exportPayload = {
       version: 1,
@@ -306,19 +263,16 @@ async function importData(file) {
       throw new Error('Invalid file format');
     }
 
-    // Validate version
     if (payload.version !== 1) {
       throw new Error('Unsupported backup version');
     }
 
-    // Merge local data
     if (payload.local && typeof payload.local === 'object') {
       for (const [key, value] of Object.entries(payload.local)) {
         await localSet(key, value);
       }
     }
 
-    // Merge sync data (settings)
     if (payload.sync && typeof payload.sync === 'object') {
       for (const [key, value] of Object.entries(payload.sync)) {
         await syncSet(key, value);
@@ -388,12 +342,42 @@ function bindEvents() {
     await saveSetting('warnFormData', e.target.checked);
   });
 
-  // Display
-  els.themeSelect.addEventListener('change', async (e) => {
-    const theme = e.target.value;
-    await applyTheme(theme);
-    currentSettings.theme = theme;
+  // Display — theme mode
+  els.themeModeSelect.addEventListener('change', async (e) => {
+    const mode = e.target.value;
+    updateFlavorVisibility(mode);
+    await saveSetting('theme', mode);
+
+    if (mode === 'system') {
+      // Re-apply using saved flavours
+      await applyTheme('system');
+    } else if (mode === 'light') {
+      const flavor = els.lightFlavorSelect.value;
+      await applyTheme(flavor);
+    } else if (mode === 'dark') {
+      const flavor = els.darkFlavorSelect.value;
+      await applyTheme(flavor);
+    }
   });
+
+  // Light flavour
+  els.lightFlavorSelect.addEventListener('change', async (e) => {
+    const flavor = e.target.value;
+    await saveLightThemeFlavor(flavor);
+    if (els.themeModeSelect.value === 'light' || els.themeModeSelect.value === 'system') {
+      await applyTheme(flavor);
+    }
+  });
+
+  // Dark flavour
+  els.darkFlavorSelect.addEventListener('change', async (e) => {
+    const flavor = e.target.value;
+    await saveDarkThemeFlavor(flavor);
+    if (els.themeModeSelect.value === 'dark' || els.themeModeSelect.value === 'system') {
+      await applyTheme(flavor);
+    }
+  });
+
   els.badgeCountToggle.addEventListener('change', async (e) => {
     await saveSetting('badgeCountEnabled', e.target.checked);
   });
@@ -419,7 +403,7 @@ function bindEvents() {
     const file = e.target.files[0];
     if (file) {
       importData(file);
-      e.target.value = ''; // reset so same file can be selected again
+      e.target.value = '';
     }
   });
   els.clearStats.addEventListener('click', clearStatistics);

@@ -1,0 +1,50 @@
+/* RAM Manager — Everforest Dark Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.everforest-dark {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(47, 56, 62);
+  --background-secondary: rgb(39, 47, 52);
+  --background-tertiary: rgb(34, 40, 44);
+  --background-modifier-hover: rgb(55, 66, 71);
+  --background-modifier-active: rgb(64, 76, 81);
+  --background-modifier-border: rgb(74, 85, 91);
+  --background-modifier-border-hover: rgb(81, 91, 97);
+
+  /* --- Text --- */
+  --text-normal: rgb(211, 198, 170);
+  --text-muted: rgb(182, 192, 180);
+  --text-faint: rgb(154, 167, 157);
+  --text-on-accent: rgb(211, 198, 170);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(90, 147, 162);
+  --interactive-accent-hover: color-mix(in srgb, rgb(90, 147, 162), white 15%);
+  --interactive-accent-light: rgba(90, 147, 162, 0.18);
+  --interactive-normal: rgb(55, 66, 71);
+  --interactive-hover: rgb(64, 76, 81);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(137, 156, 64);
+  --color-warning: rgb(191, 152, 61);
+  --color-danger: rgb(218, 99, 98);
+  --color-danger-light: rgba(218, 99, 98, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

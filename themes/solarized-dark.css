@@ -1,0 +1,50 @@
+/* RAM Manager — Solarized Dark Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.solarized-dark {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(7, 54, 66);
+  --background-secondary: rgb(0, 43, 54);
+  --background-tertiary: rgb(0, 33, 41);
+  --background-modifier-hover: rgb(10, 76, 92);
+  --background-modifier-active: rgb(38, 97, 115);
+  --background-modifier-border: rgb(51, 129, 153);
+  --background-modifier-border-hover: rgb(106, 168, 175);
+
+  /* --- Text --- */
+  --text-normal: rgb(253, 246, 227);
+  --text-muted: rgb(237, 232, 214);
+  --text-faint: rgb(225, 215, 183);
+  --text-on-accent: rgb(253, 246, 227);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(38, 139, 210);
+  --interactive-accent-hover: color-mix(in srgb, rgb(38, 139, 210), white 15%);
+  --interactive-accent-light: rgba(38, 139, 210, 0.18);
+  --interactive-normal: rgb(10, 76, 92);
+  --interactive-hover: rgb(38, 97, 115);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(133, 153, 0);
+  --color-warning: rgb(181, 137, 0);
+  --color-danger: rgb(220, 50, 47);
+  --color-danger-light: rgba(220, 50, 47, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

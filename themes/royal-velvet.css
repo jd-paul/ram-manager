@@ -1,0 +1,50 @@
+/* RAM Manager — Royal Velvet Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.royal-velvet {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(30, 30, 36);
+  --background-secondary: rgb(25, 25, 30);
+  --background-tertiary: rgb(20, 20, 25);
+  --background-modifier-hover: rgb(48, 50, 65);
+  --background-modifier-active: rgb(56, 59, 76);
+  --background-modifier-border: rgb(68, 71, 90);
+  --background-modifier-border-hover: rgb(88, 92, 116);
+
+  /* --- Text --- */
+  --text-normal: rgb(248, 248, 242);
+  --text-muted: rgb(211, 211, 197);
+  --text-faint: rgb(191, 191, 181);
+  --text-on-accent: rgb(248, 248, 242);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(95, 126, 222);
+  --interactive-accent-hover: color-mix(in srgb, rgb(95, 126, 222), white 15%);
+  --interactive-accent-light: rgba(95, 126, 222, 0.18);
+  --interactive-normal: rgb(48, 50, 65);
+  --interactive-hover: rgb(56, 59, 76);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(130, 235, 130);
+  --color-warning: rgb(241, 250, 140);
+  --color-danger: rgb(240, 120, 160);
+  --color-danger-light: rgba(240, 120, 160, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

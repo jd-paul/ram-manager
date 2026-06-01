@@ -140,12 +140,20 @@
           </div>
         </div>
         <div class="setting-row setting-row--inline">
-          <label for="theme-select">Theme</label>
-          <select id="theme-select">
+          <label for="theme-mode-select">Theme mode</label>
+          <select id="theme-mode-select">
             <option value="system">Auto (System)</option>
-            <option value="default">Light</option>
-            <option value="dark">Dark</option>
+            <option value="light">Light only</option>
+            <option value="dark">Dark only</option>
           </select>
+        </div>
+        <div class="setting-row setting-row--inline" id="light-flavor-row">
+          <label for="light-flavor-select">Light flavour</label>
+          <select id="light-flavor-select"></select>
+        </div>
+        <div class="setting-row setting-row--inline" id="dark-flavor-row">
+          <label for="dark-flavor-select">Dark flavour</label>
+          <select id="dark-flavor-select"></select>
         </div>
         <div class="setting-row setting-row--toggle">
           <div class="setting-info">
@@ -179,7 +187,8 @@
         </div>
       </section>
 
-      <!-- Keyboard Shortcut -->
+      <!-- Keyboard Shortcut — DISABLED for now -->
+      <!--
       <section class="setting-section" id="section-shortcut">
         <div class="section-header">
           <i data-lucide="keyboard" class="lucide section-icon"></i>
@@ -201,6 +210,7 @@
           </a>
         </div>
       </section>
+      -->
 
       <!-- Data Management -->
       <section class="setting-section" id="section-data">

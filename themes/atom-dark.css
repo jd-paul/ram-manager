@@ -1,0 +1,50 @@
+/* RAM Manager — Atom Dark Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.atom-dark {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(39, 43, 52);
+  --background-secondary: rgb(33, 37, 43);
+  --background-tertiary: rgb(26, 30, 36);
+  --background-modifier-hover: rgb(48, 53, 64);
+  --background-modifier-active: rgb(57, 63, 76);
+  --background-modifier-border: rgb(66, 73, 88);
+  --background-modifier-border-hover: rgb(80, 85, 98);
+
+  /* --- Text --- */
+  --text-normal: rgb(221, 222, 223);
+  --text-muted: rgb(171, 171, 171);
+  --text-faint: rgb(135, 135, 135);
+  --text-on-accent: rgb(221, 222, 223);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(97, 175, 239);
+  --interactive-accent-hover: color-mix(in srgb, rgb(97, 175, 239), white 15%);
+  --interactive-accent-light: rgba(97, 175, 239, 0.18);
+  --interactive-normal: rgb(48, 53, 64);
+  --interactive-hover: rgb(57, 63, 76);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(152, 195, 121);
+  --color-warning: rgb(229, 192, 123);
+  --color-danger: rgb(224, 108, 117);
+  --color-danger-light: rgba(224, 108, 117, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

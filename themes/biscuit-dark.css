@@ -1,0 +1,50 @@
+/* RAM Manager — Biscuit Dark Theme (from AnuPpuccin Extended) */
+
+body.theme-dark.biscuit-dark {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(69, 54, 54);
+  --background-secondary: rgb(45, 36, 36);
+  --background-tertiary: rgb(26, 21, 21);
+  --background-modifier-hover: rgb(83, 65, 65);
+  --background-modifier-active: rgb(100, 79, 79);
+  --background-modifier-border: rgb(114, 90, 90);
+  --background-modifier-border-hover: rgb(140, 110, 110);
+
+  /* --- Text --- */
+  --text-normal: rgb(255, 233, 199);
+  --text-muted: rgb(220, 201, 188);
+  --text-faint: rgb(194, 178, 178);
+  --text-on-accent: rgb(255, 233, 199);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(97, 79, 118);
+  --interactive-accent-hover: color-mix(in srgb, rgb(97, 79, 118), white 15%);
+  --interactive-accent-light: rgba(97, 79, 118, 0.18);
+  --interactive-normal: rgb(83, 65, 65);
+  --interactive-hover: rgb(100, 79, 79);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(149, 154, 107);
+  --color-warning: rgb(227, 187, 69);
+  --color-danger: rgb(207, 34, 62);
+  --color-danger-light: rgba(207, 34, 62, 0.15);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.25);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

@@ -1,0 +1,50 @@
+/* RAM Manager — Material Mint Light Theme (from AnuPpuccin Extended) */
+
+body.theme-light.material-mint-light {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(189, 214, 219);
+  --background-secondary: rgb(162, 198, 205);
+  --background-tertiary: rgb(136, 182, 191);
+  --background-modifier-hover: rgb(109, 165, 176);
+  --background-modifier-active: rgb(86, 147, 159);
+  --background-modifier-border: rgb(71, 122, 133);
+  --background-modifier-border-hover: rgb(57, 98, 106);
+
+  /* --- Text --- */
+  --text-normal: rgb(5, 9, 10);
+  --text-muted: rgb(11, 18, 20);
+  --text-faint: rgb(18, 31, 33);
+  --text-on-accent: rgb(136, 182, 191);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(71, 123, 133);
+  --interactive-accent-hover: color-mix(in srgb, rgb(71, 123, 133), black 15%);
+  --interactive-accent-light: rgba(71, 123, 133, 0.12);
+  --interactive-normal: rgb(109, 165, 176);
+  --interactive-hover: rgb(86, 147, 159);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(51, 107, 46);
+  --color-warning: rgb(184, 164, 123);
+  --color-danger: rgb(146, 62, 86);
+  --color-danger-light: rgba(146, 62, 86, 0.12);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.06);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}

@@ -1,0 +1,50 @@
+/* RAM Manager — Gruvbox Light Theme (from AnuPpuccin Extended) */
+
+body.theme-light.gruvbox-light {
+  /* --- Backgrounds --- */
+  --background-primary: rgb(249, 245, 215);
+  --background-secondary: rgb(236, 225, 196);
+  --background-tertiary: rgb(230, 215, 178);
+  --background-modifier-hover: rgb(242, 229, 188);
+  --background-modifier-active: rgb(235, 219, 179);
+  --background-modifier-border: rgb(214, 196, 161);
+  --background-modifier-border-hover: rgb(189, 174, 147);
+
+  /* --- Text --- */
+  --text-normal: rgb(40, 40, 40);
+  --text-muted: rgb(80, 73, 69);
+  --text-faint: rgb(102, 92, 84);
+  --text-on-accent: rgb(230, 215, 178);
+
+  /* --- Accent / Interactive --- */
+  --interactive-accent: rgb(69, 133, 136);
+  --interactive-accent-hover: color-mix(in srgb, rgb(69, 133, 136), black 15%);
+  --interactive-accent-light: rgba(69, 133, 136, 0.12);
+  --interactive-normal: rgb(242, 229, 188);
+  --interactive-hover: rgb(235, 219, 179);
+
+  /* --- Functional colours --- */
+  --color-success: rgb(152, 151, 26);
+  --color-warning: rgb(215, 153, 33);
+  --color-danger: rgb(204, 36, 29);
+  --color-danger-light: rgba(204, 36, 29, 0.12);
+
+  /* --- Shadows --- */
+  --shadow-color: rgba(0, 0, 0, 0.06);
+
+  /* --- Legacy aliases --- */
+  --color-bg-primary: var(--background-primary);
+  --color-bg-secondary: var(--background-secondary);
+  --color-bg-tertiary: var(--background-tertiary);
+  --color-bg-hover: var(--background-modifier-hover);
+  --color-bg-active: var(--background-modifier-active);
+  --color-text-primary: var(--text-normal);
+  --color-text-secondary: var(--text-muted);
+  --color-text-muted: var(--text-faint);
+  --color-text-inverse: var(--text-on-accent);
+  --color-accent: var(--interactive-accent);
+  --color-accent-hover: var(--interactive-accent-hover);
+  --color-accent-light: var(--interactive-accent-light);
+  --color-border: var(--background-modifier-border);
+  --color-border-light: var(--background-secondary);
+}
