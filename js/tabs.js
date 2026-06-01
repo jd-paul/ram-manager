@@ -142,6 +142,12 @@ export async function suspendAll(options = {}) {
   };
 
   const toSuspend = tabs.filter((tab) => canSuspend(tab, mergedOptions));
+    
+  // If no tabs can be suspended, return 0
+  if (toSuspend.length === 0) {
+    return 0;
+  }
+    
   const results = await Promise.allSettled(
     toSuspend.map((tab) => suspendTab(tab.id))
   );
