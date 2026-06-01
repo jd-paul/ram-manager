@@ -138,10 +138,28 @@ export async function getMemoryInfo() {
 
 /**
  * Calculate saved memory today from suspension history.
- * Placeholder — returns 0 until history tracking is implemented.
  * @returns {Promise<number>}
  */
 export async function getSavedMemoryToday() {
-  // TODO: read suspension history from storage and compute memory saved today
-  return 0;
+  try {
+    const history = await new Promise((resolve) => {
+      chrome.storage.local.get('suspensionHistory', (result) => {
+        resolve(result.suspensionHistory || []);
+      });
+    });
+
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
+
+    const todayEntries = history.filter((entry) => {
+      return entry.action === 'suspend' && entry.timestamp >= startOfDay && entry.timestamp < endOfDay;
+    });
+
+    const estimate = 75 * 1024 * 1024; // 75 MB per tab
+    return todayEntries.length * estimate;
+  } catch (err) {
+    console.error('getSavedMemoryToday error:', err);
+    return 0;
+  }
 }

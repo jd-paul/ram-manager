@@ -57,8 +57,11 @@ export function getCurrentTab() {
 export function canSuspend(tab, options = {}) {
   if (!tab || !tab.id) return false;
 
-  // Already frozen
+  // Already frozen (on our suspended page)
   if (isFrozen(tab)) return false;
+
+  // Already discarded by Chrome
+  if (tab.discarded === true) return false;
 
   // Chrome internal URLs
   if (tab.url && tab.url.startsWith('chrome://')) return false;

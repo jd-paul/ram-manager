@@ -185,7 +185,7 @@ async function loadMemoryInfo() {
 }
 
 async function loadTopConsumers() {
-  const info = await loadMemoryInfo();
+  const info = await getMemoryInfo();
   const list = els.consumerList;
   if (!list) return;
 
