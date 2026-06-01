@@ -140,7 +140,7 @@ async function loadShortcutHint() {
         resolve([]);
       }
     });
-    const suspendCommand = commands.find((c) => c.name === 'suspend-all');
+    const suspendCommand = commands.find((c) => c.name === 'suspend-active-tab');
     if (suspendCommand && suspendCommand.shortcut) {
       els.shortcutHint.textContent = `Keyboard shortcut: ${suspendCommand.shortcut}`;
     } else {
