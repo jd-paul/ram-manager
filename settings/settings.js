@@ -105,21 +105,60 @@ function populateThemeSelect() {
 /* Shortcut display — visual key pills                                        */
 /* -------------------------------------------------------------------------- */
 
+function isMac() {
+  return navigator.platform?.toLowerCase().includes('mac') ||
+         navigator.userAgent?.toLowerCase().includes('mac');
+}
+
+function formatShortcutForDisplay(shortcut) {
+  if (shortcut === '—') return [{ label: '—', symbol: '—' }];
+
+  const isMacOS = isMac();
+  const keys = shortcut.split(/\+/).map(k => k.trim());
+
+  return keys.map(key => {
+    const lower = key.toLowerCase();
+
+    if (lower === 'alt') {
+      return isMacOS
+        ? { label: 'Option', symbol: '⌥' }
+        : { label: 'Alt', symbol: 'Alt' };
+    }
+
+    if (lower === 'ctrl') {
+      return isMacOS
+        ? { label: 'Control', symbol: '⌃' }
+        : { label: 'Ctrl', symbol: 'Ctrl' };
+    }
+
+    if (lower === 'shift') {
+      return isMacOS
+        ? { label: 'Shift', symbol: '⇧' }
+        : { label: 'Shift', symbol: 'Shift' };
+    }
+
+    if (lower === 'command' || lower === 'cmd' || lower === 'meta') {
+      return { label: 'Command', symbol: '⌘' };
+    }
+
+    // Single letter or other key
+    return { label: key.toUpperCase(), symbol: key.toUpperCase() };
+  });
+}
+
 async function loadShortcut() {
   try {
     const commands = await chrome.commands.getAll();
     const cmd = commands.find((c) => c.name === 'suspend-active-tab');
     const shortcut = cmd?.shortcut || '—';
 
-    if (shortcut === '—') {
-      els.shortcutDisplay.innerHTML = '<span class="key-pill">—</span>';
-      return;
-    }
+    const keys = formatShortcutForDisplay(shortcut);
 
-    // Split shortcut into individual keys for pill display
-    // e.g. "Alt+Shift+S" -> ["Alt", "Shift", "S"]
-    const keys = shortcut.split(/\+/).map(k => k.trim());
-    els.shortcutDisplay.innerHTML = keys.map(k => `<span class="key-pill">${escapeHtml(k)}</span>`).join('<span class="key-plus">+</span>');
+    els.shortcutDisplay.innerHTML = keys.map((k, i) => {
+      const pill = `<span class="key-pill" title="${escapeHtml(k.label)}">${escapeHtml(k.symbol)}</span>`;
+      const plus = i < keys.length - 1 ? '<span class="key-plus">+</span>' : '';
+      return pill + plus;
+    }).join('');
   } catch (err) {
     console.error('Failed to load shortcut:', err);
     els.shortcutDisplay.innerHTML = '<span class="key-pill">—</span>';

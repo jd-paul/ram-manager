@@ -30,7 +30,7 @@
   "commands": {
     "suspend-active-tab": {
       "suggested_key": {
-        "default": "Alt+Shift+S"
+        "default": "Alt+Shift+T"
       },
       "description": "Suspend the currently active tab"
     }
