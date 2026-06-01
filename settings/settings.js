@@ -149,8 +149,11 @@ function formatShortcutForDisplay(shortcut) {
 async function loadShortcut() {
   try {
     const commands = await chrome.commands.getAll();
+    console.log('[RAM Manager Settings] All commands:', commands);
     const cmd = commands.find((c) => c.name === 'suspend-active-tab');
+    console.log('[RAM Manager Settings] Found command:', cmd);
     const shortcut = cmd?.shortcut || '—';
+    console.log('[RAM Manager Settings] Shortcut:', shortcut);
 
     const keys = formatShortcutForDisplay(shortcut);
 
