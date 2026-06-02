@@ -216,54 +216,36 @@ async function handleContextMenuClick(info, tab) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Keyboard shortcut — DISABLED for now                                       */
+/* Keyboard shortcut                                                          */
 /* -------------------------------------------------------------------------- */
 
-// chrome.commands.onCommand.addListener((command) => {
-//   console.log('[RAM Manager] Command received:', command);
-//   if (command === 'suspend-active-tab') {
-//     handleSuspendActiveTab().catch(err => console.error('commands error:', err));
-//   }
-// });
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'suspend-active-tab') {
+    handleSuspendActiveTab().catch(err => console.error('commands error:', err));
+  }
+});
 
-// chrome.runtime.onStartup.addListener(() => {
-//   chrome.commands.getAll((commands) => {
-//     console.log('[RAM Manager] Registered commands:', commands);
-//   });
-// });
-
-// chrome.runtime.onInstalled.addListener(() => {
-//   chrome.commands.getAll((commands) => {
-//     console.log('[RAM Manager] Registered commands after install:', commands);
-//   });
-// });
-
-// async function handleSuspendActiveTab() {
-//   console.log('[RAM Manager] Handling suspend-active-tab command');
-//   const tab = await getCurrentTab();
-//   if (!tab || !tab.id) {
-//     console.log('[RAM Manager] No active tab found');
-//     return;
-//   }
-//   console.log('[RAM Manager] Active tab:', tab.id, tab.url);
-//   const settings = await getSettings();
-//   if (!canSuspend(tab, {
-//     protectActive: false,
-//     protectPinned: settings.protectPinned,
-//     protectMedia: settings.protectMedia
-//   })) {
-//     console.log('[RAM Manager] Tab cannot be suspended');
-//     return;
-//   }
-//   try {
-//     await freezeTab(tab);
-//     await logHistory('suspend', tab);
-//     await updateBadge();
-//     console.log('[RAM Manager] Tab suspended successfully');
-//   } catch (err) {
-//     console.error('Keyboard suspend failed:', err);
-//   }
-// }
+async function handleSuspendActiveTab() {
+  const tab = await getCurrentTab();
+  if (!tab || !tab.id) {
+    return;
+  }
+  const settings = await getSettings();
+  if (!canSuspend(tab, {
+    protectActive: false,
+    protectPinned: settings.protectPinned,
+    protectMedia: settings.protectMedia
+  })) {
+    return;
+  }
+  try {
+    await freezeTab(tab);
+    await logHistory('suspend', tab);
+    await updateBadge();
+  } catch (err) {
+    console.error('Keyboard suspend failed:', err);
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Tab activation listener (auto-restore)                                     */

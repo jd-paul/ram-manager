@@ -3,6 +3,9 @@
   "name": "RAM Manager",
   "version": "1.0.0",
   "description": "Suspend idle tabs to free memory. Lightweight, fast, and themeable.",
+  "minimum_chrome_version": "109",
+  "author": "RAM Manager",
+  "homepage_url": "https://github.com/jp/ram-manager",
   "permissions": [
     "tabs",
     "storage",
@@ -18,7 +21,9 @@
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
-      "32": "icons/icon32.png"
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
     }
   },
   "icons": {
@@ -27,11 +32,25 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
-  "options_page": "settings/settings.html",
+  "options_ui": {
+    "page": "settings/settings.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "suspend-active-tab": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "Suspend the currently active tab"
+    }
+  },
   "web_accessible_resources": [
     {
-      "resources": ["dashboard/*", "settings/*", "css/*", "js/*", "themes/*", "images/*", "suspended.html", "suspended/*"],
+      "resources": ["suspended.html", "suspended/*", "css/*", "images/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }

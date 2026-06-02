@@ -28,7 +28,7 @@ async function init() {
 
   if (title) els.title.textContent = title;
   if (originalUrl) els.url.textContent = originalUrl;
-  if (favicon) {
+  if (favicon && (favicon.startsWith('http://') || favicon.startsWith('https://') || favicon.startsWith('data:'))) {
     els.favicon.src = favicon;
     els.favicon.hidden = false;
   } else {
