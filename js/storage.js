@@ -50,6 +50,22 @@ function wrapStorageArea(storage) {
       });
     },
 
+    setMultiple(items) {
+      return new Promise((resolve) => {
+        try {
+          storage.set(items, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Storage setMultiple error:', chrome.runtime.lastError.message);
+            }
+            resolve();
+          });
+        } catch (err) {
+          console.error('Storage setMultiple exception:', err);
+          resolve();
+        }
+      });
+    },
+
     remove(key) {
       return new Promise((resolve) => {
         try {
@@ -97,6 +113,7 @@ export const localGetAll = () => local.getAll();
 export const syncGet = (key) => sync.get(key);
 export const syncSet = (key, value) => sync.set(key, value);
 export const syncRemove = (key) => sync.remove(key);
+export const syncSetMultiple = (items) => sync.setMultiple(items);
 export const syncGetAll = () => sync.getAll();
 
 export async function getSettings() {
@@ -115,9 +132,7 @@ export async function getSettings() {
 
 export async function setSettings(settings) {
   try {
-    for (const [key, value] of Object.entries(settings)) {
-      await sync.set(key, value);
-    }
+    await sync.setMultiple(settings);
   } catch (err) {
     console.error('setSettings error:', err);
   }

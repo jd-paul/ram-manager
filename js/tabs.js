@@ -51,6 +51,7 @@ export function getCurrentTab() {
  * @param {boolean} [options.protectActive=true]
  * @param {boolean} [options.protectPinned=true]
  * @param {boolean} [options.protectMedia=true]
+ * @param {boolean} [options.warnFormData=true]
  * @param {number} [options.currentTabId]
  * @returns {boolean}
  */
@@ -85,6 +86,7 @@ export function canSuspend(tab, options = {}) {
     protectActive = true,
     protectPinned = true,
     protectMedia = true,
+    warnFormData = true,
     currentTabId
   } = options;
 
@@ -101,6 +103,15 @@ export function canSuspend(tab, options = {}) {
   // Protect tabs with audible media
   if (protectMedia && tab.audible === true) {
     return false;
+  }
+
+  // Lightweight heuristic: protect likely form pages when warnFormData is enabled
+  if (warnFormData && tab.url) {
+    const path = new URL(tab.url).pathname.toLowerCase();
+    const formPaths = ['/login', '/signin', '/checkout', '/cart', '/payment'];
+    if (formPaths.some((p) => path.includes(p))) {
+      return false;
+    }
   }
 
   return true;

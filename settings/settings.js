@@ -54,7 +54,9 @@ async function init() {
   await initTheme();
   await loadSettings();
   bindEvents();
-  lucide.createIcons();
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -149,6 +151,7 @@ async function saveSetting(key, value) {
 /* -------------------------------------------------------------------------- */
 
 function isValidDomain(input) {
+  // Allows IP addresses and localhost intentionally — useful for local dev whitelisting
   if (!input || typeof input !== 'string') return false;
   const trimmed = input.trim();
   if (!trimmed) return false;
@@ -211,7 +214,9 @@ function renderWhitelist() {
     els.whitelistList.appendChild(li);
   }
 
-  lucide.createIcons();
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
 }
 
 function showHint(message) {
@@ -228,6 +233,7 @@ function showDataHint(message, isError = false) {
 /* -------------------------------------------------------------------------- */
 
 async function exportData() {
+  let url;
   try {
     const data = await localGetAll();
     const syncData = await syncGet(null);
@@ -239,7 +245,7 @@ async function exportData() {
     };
 
     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
+    url = URL.createObjectURL(blob);
     const date = new Date().toISOString().split('T')[0];
     await chrome.downloads.download({
       url,
@@ -247,10 +253,11 @@ async function exportData() {
       saveAs: true,
     });
     showDataHint('Data exported successfully');
-    URL.revokeObjectURL(url);
   } catch (err) {
     console.error('Export failed:', err);
     showDataHint('Export failed: ' + err.message, true);
+  } finally {
+    if (url) URL.revokeObjectURL(url);
   }
 }
 
@@ -265,6 +272,41 @@ async function importData(file) {
 
     if (payload.version !== 1) {
       throw new Error('Unsupported backup version');
+    }
+
+    // Basic schema validation
+    if (payload.local !== undefined && (typeof payload.local !== 'object' || payload.local === null)) {
+      throw new Error('Invalid local data');
+    }
+    if (payload.sync !== undefined && (typeof payload.sync !== 'object' || payload.sync === null)) {
+      throw new Error('Invalid sync data');
+    }
+
+    // Known/expected keys whitelist
+    const knownSyncKeys = new Set([
+      'autoSuspendEnabled', 'suspendAfterMinutes', 'protectMedia', 'protectPinned',
+      'protectActive', 'warnFormData', 'theme', 'autoRestore', 'badgeCountEnabled',
+      'changeTabIconWhenSuspended', 'whitelist'
+    ]);
+    const knownLocalKeys = new Set([
+      'suspensionHistory', 'savedMemoryAllTime', 'savedMemoryToday', 'tabLastActive',
+      'lightThemeFlavor', 'darkThemeFlavor'
+    ]);
+
+    function validateKeys(obj, allowed) {
+      for (const key of Object.keys(obj)) {
+        if (!allowed.has(key)) {
+          throw new Error(`Unexpected key in backup: ${key}`);
+        }
+      }
+    }
+
+    if (payload.local) validateKeys(payload.local, knownLocalKeys);
+    if (payload.sync) validateKeys(payload.sync, knownSyncKeys);
+
+    // Rough size guard (< 5 MB total string length)
+    if (text.length > 5 * 1024 * 1024) {
+      throw new Error('Backup file is too large');
     }
 
     if (payload.local && typeof payload.local === 'object') {
@@ -295,7 +337,6 @@ async function clearStatistics() {
   try {
     await localRemove('suspensionHistory');
     await localRemove('savedMemoryAllTime');
-    await localRemove('savedMemoryToday');
     await localRemove('tabLastActive');
     showDataHint('Statistics cleared successfully');
   } catch (err) {

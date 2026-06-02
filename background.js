@@ -107,6 +107,7 @@ async function handleAutoSuspend() {
       protectActive: settings.protectActive,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      warnFormData: settings.warnFormData,
       currentTabId
     })) {
       continue;
@@ -175,7 +176,8 @@ async function handleContextMenuClick(info, tab) {
     if (!canSuspend(targetTab, {
       protectActive: false,
       protectPinned: settings.protectPinned,
-      protectMedia: settings.protectMedia
+      protectMedia: settings.protectMedia,
+      warnFormData: settings.warnFormData
     })) {
       return;
     }
@@ -190,12 +192,14 @@ async function handleContextMenuClick(info, tab) {
   } else if (info.menuItemId === 'suspend-all-other-tabs') {
     const allTabs = await getAllTabs();
     const targetTab = tab || await getCurrentTab();
-    const targetTabId = targetTab ? targetTab.id : undefined;
+    if (!targetTab || !targetTab.id) return;
+    const targetTabId = targetTab.id;
 
     const toSuspend = allTabs.filter(t => t.id !== targetTabId && canSuspend(t, {
       protectActive: settings.protectActive,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      warnFormData: settings.warnFormData,
       currentTabId: targetTabId
     }));
 

@@ -12,19 +12,21 @@ import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 import { logHistory, updateBadge } from "../js/history.js";
 
-const els = {
-  currentTabTitle: document.getElementById("current-tab-title"),
-  currentTabStatus: document.getElementById("current-tab-status"),
-  suspendedCount: document.getElementById("suspended-count"),
-  savedMemory: document.getElementById("saved-memory"),
-  estimatedNote: document.getElementById("estimated-note"),
-  btnSuspendCurrent: document.getElementById("btn-suspend-current"),
-  btnSuspendAll: document.getElementById("btn-suspend-all"),
-  btnRestoreAll: document.getElementById("btn-restore-all"),
-  linkDashboard: document.getElementById("link-dashboard"),
-  linkSettings: document.getElementById("link-settings"),
-  shortcutHint: document.getElementById("shortcut-hint"),
-};
+const els = {};
+
+function initElements() {
+  els.currentTabTitle = document.getElementById("current-tab-title");
+  els.currentTabStatus = document.getElementById("current-tab-status");
+  els.suspendedCount = document.getElementById("suspended-count");
+  els.savedMemory = document.getElementById("saved-memory");
+  els.estimatedNote = document.getElementById("estimated-note");
+  els.btnSuspendCurrent = document.getElementById("btn-suspend-current");
+  els.btnSuspendAll = document.getElementById("btn-suspend-all");
+  els.btnRestoreAll = document.getElementById("btn-restore-all");
+  els.linkDashboard = document.getElementById("link-dashboard");
+  els.linkSettings = document.getElementById("link-settings");
+  els.shortcutHint = document.getElementById("shortcut-hint");
+}
 
 async function loadTabStats() {
   try {
@@ -71,6 +73,7 @@ async function loadCurrentTabStatus() {
       protectActive: false,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      warnFormData: settings.warnFormData,
     });
 
     if (suspendable) {
@@ -102,6 +105,7 @@ async function handleSuspendCurrent() {
       protectActive: false,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      warnFormData: settings.warnFormData,
       currentTabId: tab.id,
     });
 
@@ -179,6 +183,7 @@ async function handleSuspendAll() {
         protectActive: settings.protectActive,
         protectPinned: settings.protectPinned,
         protectMedia: settings.protectMedia,
+        warnFormData: settings.warnFormData,
         currentTabId,
       })) {
         return false;
@@ -239,6 +244,7 @@ async function loadShortcutHint() {
 }
 
 async function init() {
+  initElements();
   await initTheme();
   await Promise.all([
     loadTabStats(),
@@ -248,14 +254,14 @@ async function init() {
   ]);
 }
 
-els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
-els.btnSuspendAll.addEventListener("click", handleSuspendAll);
-els.btnRestoreAll.addEventListener("click", handleRestoreAll);
-els.linkDashboard.addEventListener("click", (e) => {
+if (els.btnSuspendCurrent) els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
+if (els.btnSuspendAll) els.btnSuspendAll.addEventListener("click", handleSuspendAll);
+if (els.btnRestoreAll) els.btnRestoreAll.addEventListener("click", handleRestoreAll);
+if (els.linkDashboard) els.linkDashboard.addEventListener("click", (e) => {
   e.preventDefault();
   openPage("dashboard/dashboard.html");
 });
-els.linkSettings.addEventListener("click", (e) => {
+if (els.linkSettings) els.linkSettings.addEventListener("click", (e) => {
   e.preventDefault();
   openPage("settings/settings.html");
 });

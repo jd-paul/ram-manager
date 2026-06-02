@@ -18,6 +18,14 @@ const els = {
 
 async function init() {
   await initTheme();
+  if (!tabId || isNaN(tabId) || tabId <= 0) {
+    console.error('Invalid tabId in suspended page');
+    els.title.textContent = 'Invalid tab';
+    els.url.textContent = '—';
+    els.btnRestore.disabled = true;
+    return;
+  }
+
   if (title) els.title.textContent = title;
   if (originalUrl) els.url.textContent = originalUrl;
   if (favicon) {
@@ -33,8 +41,12 @@ async function handleRestore() {
     els.btnRestore.disabled = true;
     els.btnRestore.textContent = 'Restoring…';
 
-    if (!tabId || !originalUrl) {
-      throw new Error('Missing tab ID or original URL');
+    if (!tabId || isNaN(tabId) || tabId <= 0) {
+      throw new Error('Missing or invalid tab ID');
+    }
+
+    if (!originalUrl) {
+      throw new Error('Missing original URL');
     }
 
     await restoreTab(tabId);
