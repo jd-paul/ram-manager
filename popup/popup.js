@@ -10,6 +10,7 @@ import {
 import { freezeTab, restoreAll } from "../js/suspension.js";
 import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
+import { logHistory, updateBadge } from "../js/history.js";
 
 const els = {
   currentTabTitle: document.getElementById("current-tab-title"),
@@ -110,6 +111,8 @@ async function handleSuspendCurrent() {
     }
 
     await freezeTab(tab);
+    await logHistory('suspend', tab);
+    await updateBadge();
     console.log(`Frozen tab ${tab.id}`);
     await loadTabStats();
     await loadCurrentTabStatus();
@@ -188,12 +191,14 @@ async function handleSuspendAll() {
     for (const tab of toSuspend) {
       try {
         await freezeTab(tab);
+        await logHistory('suspend', tab);
         count++;
       } catch (err) {
         console.error(`Failed to freeze tab ${tab.id}:`, err);
       }
     }
 
+    await updateBadge();
     console.log(`Frozen ${count} tabs`);
     await loadTabStats();
     await loadCurrentTabStatus();

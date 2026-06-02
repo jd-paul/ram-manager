@@ -44,74 +44,11 @@ export function estimateMemory(tabCount) {
 }
 
 /**
- * Get memory info using chrome.processes, falling back to estimation.
+ * Get memory info using estimation (chrome.processes is unavailable in MV3).
  * Returns object: { totalRam, tabs: [{tabId, domain, memory}], estimated }
  * @returns {Promise<{totalRam: number, tabs: Array<{tabId: number, domain: string, memory: number}>, estimated: boolean}>}
  */
 export async function getMemoryInfo() {
-  // Try chrome.processes first
-  if (typeof chrome !== 'undefined' && chrome.processes && chrome.processes.getProcessInfo) {
-    try {
-      const processes = await new Promise((resolve, reject) => {
-        chrome.processes.getProcessInfo([], ['memory'], (result) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(result || []);
-          }
-        });
-      });
-
-      const tabMap = new Map();
-      let totalRam = 0;
-
-      for (const proc of processes) {
-        if (proc && proc.tabs && Array.isArray(proc.tabs)) {
-          const procMemory = proc.memory?.privateMemory || proc.memory?.jsMemory || 0;
-          // Distribute process memory across its tabs evenly
-          const perTabMemory = Math.floor(procMemory / proc.tabs.length);
-          for (const tabId of proc.tabs) {
-            const existing = tabMap.get(tabId) || 0;
-            tabMap.set(tabId, existing + perTabMemory);
-            totalRam += perTabMemory;
-          }
-        }
-      }
-
-      // Fetch tab info to pair with memory data
-      const tabs = await new Promise((resolve, reject) => {
-        chrome.tabs.query({}, (result) => {
-          if (chrome.runtime.lastError) {
-            reject(new Error(chrome.runtime.lastError.message));
-          } else {
-            resolve(result || []);
-          }
-        });
-      });
-
-      const tabMemoryList = tabs.map((tab) => {
-        const memory = tabMap.get(tab.id) || 0;
-        return {
-          tabId: tab.id,
-          domain: getDomain(tab.url),
-          memory
-        };
-      });
-
-      // Recalculate totalRam from tab list to ensure consistency
-      totalRam = tabMemoryList.reduce((sum, t) => sum + t.memory, 0);
-
-      return {
-        totalRam,
-        tabs: tabMemoryList,
-        estimated: false
-      };
-    } catch (err) {
-      console.warn('chrome.processes.getProcessInfo failed, falling back to estimation:', err.message);
-    }
-  }
-
-  // Fallback: estimate based on tab count
   const tabs = await new Promise((resolve, reject) => {
     chrome.tabs.query({}, (result) => {
       if (chrome.runtime.lastError) {

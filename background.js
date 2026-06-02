@@ -8,6 +8,7 @@ import {
   getCurrentTab
 } from './js/tabs.js';
 import { freezeTab, restoreTab } from './js/suspension.js';
+import { logHistory, updateBadge } from './js/history.js';
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -34,111 +35,6 @@ function isWhitelisted(domain, whitelist) {
     if (d === e || d.endsWith('.' + e)) return true;
   }
   return false;
-}
-
-async function logHistory(action, tab) {
-  try {
-    const history = (await localGet('suspensionHistory')) || [];
-    history.push({
-      action,
-      tabId: tab.id,
-      url: tab.url,
-      domain: getDomain(tab.url),
-      title: tab.title,
-      timestamp: Date.now()
-    });
-    if (history.length > 500) {
-      history.splice(0, history.length - 500);
-    }
-    await localSet('suspensionHistory', history);
-
-    if (action === 'suspend') {
-      const estimate = 75 * 1024 * 1024; // 75 MB per tab
-
-      // Update all-time saved
-      const saved = (await localGet('savedMemoryAllTime')) || 0;
-      await localSet('savedMemoryAllTime', saved + estimate);
-
-      // Update today's savings in weekly array
-      await recordDailySavings(estimate);
-    }
-  } catch (err) {
-    console.error('logHistory error:', err);
-  }
-}
-
-async function recordDailySavings(savedBytes) {
-  try {
-    const weekStart = getWeekStartDay(); // 0 = Sunday, 1 = Monday
-    const now = new Date();
-    const todayIndex = getDayIndex(now, weekStart); // 0-6 relative to week start
-
-    let weekly = (await localGet('weeklySavings')) || {};
-    if (!weekly.values || !Array.isArray(weekly.values) || weekly.values.length !== 7) {
-      weekly = { values: [0, 0, 0, 0, 0, 0, 0], weekStart, lastUpdated: Date.now() };
-    }
-
-    // If week start changed or it's a new week, reset
-    const currentWeekStart = getWeekStartTimestamp(now, weekStart);
-    const storedWeekStart = weekly.lastUpdated ? getWeekStartTimestamp(new Date(weekly.lastUpdated), weekStart) : currentWeekStart;
-
-    if (currentWeekStart !== storedWeekStart) {
-      weekly.values = [0, 0, 0, 0, 0, 0, 0];
-    }
-
-    weekly.values[todayIndex] += savedBytes;
-    weekly.weekStart = weekStart;
-    weekly.lastUpdated = Date.now();
-
-    await localSet('weeklySavings', weekly);
-  } catch (err) {
-    console.error('recordDailySavings error:', err);
-  }
-}
-
-function getWeekStartDay() {
-  try {
-    const locale = navigator.language || 'en-US';
-    // US/Canada/Mexico/Japan start on Sunday; most others on Monday
-    const sundayStartLocales = ['en-US', 'en-CA', 'es-MX', 'ja-JP', 'zh-CN'];
-    if (sundayStartLocales.some(l => locale.startsWith(l))) return 0;
-    return 1; // Monday default
-  } catch {
-    return 1;
-  }
-}
-
-function getDayIndex(date, weekStart) {
-  const day = date.getDay(); // 0=Sun, 1=Mon...
-  let idx = day - weekStart;
-  if (idx < 0) idx += 7;
-  return idx;
-}
-
-function getWeekStartTimestamp(date, weekStart) {
-  const d = new Date(date);
-  const day = d.getDay();
-  let diff = day - weekStart;
-  if (diff < 0) diff += 7;
-  d.setDate(d.getDate() - diff);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-}
-
-async function updateBadge() {
-  try {
-    const settings = await getSettings();
-    if (!settings.badgeCountEnabled) {
-      chrome.action.setBadgeText({ text: '' });
-      return;
-    }
-    const suspended = await getSuspendedTabs();
-    const count = suspended.length;
-    chrome.action.setBadgeText({ text: count > 0 ? String(count) : '' });
-    chrome.action.setBadgeBackgroundColor({ color: '#e74c3c' });
-  } catch (err) {
-    console.error('updateBadge error:', err);
-  }
 }
 
 async function updateTabLastActive(tabId) {

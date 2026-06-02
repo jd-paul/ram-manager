@@ -1,6 +1,7 @@
 // Suspended page logic — reads query params and handles restore
 
 import { restoreTab } from '../js/suspension.js';
+import { initTheme } from '../js/theme.js';
 
 const params = new URLSearchParams(window.location.search);
 const tabId = Number(params.get('tabId'));
@@ -15,7 +16,8 @@ const els = {
   btnRestore: document.getElementById('btn-restore')
 };
 
-function init() {
+async function init() {
+  await initTheme();
   if (title) els.title.textContent = title;
   if (originalUrl) els.url.textContent = originalUrl;
   if (favicon) {

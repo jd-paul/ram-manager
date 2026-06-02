@@ -60,3 +60,30 @@
 #btn-restore:hover {
   background-color: var(--color-accent-hover);
 }
+
+/* Generic button classes used by suspended.html */
+.btn {
+  display: inline-block;
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.btn-primary:hover {
+  background-color: var(--interactive-accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

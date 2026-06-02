@@ -65,10 +65,10 @@ export function getAvailableThemes() {
  * Resolves a theme name to the actual CSS file name.
  * 'system' resolves based on prefers-color-scheme and the user's saved flavours.
  */
-export function resolveThemeName(themeName) {
+export async function resolveThemeName(themeName) {
   if (themeName === 'system') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return prefersDark ? getSavedDarkTheme() : getSavedLightTheme();
+    return prefersDark ? await getSavedDarkThemeAsync() : await getSavedLightThemeAsync();
   }
   return themeName;
 }
@@ -90,8 +90,8 @@ function getThemeClass(themeFileName) {
  * Applies the theme class to <body> and injects the theme CSS <link>.
  * Also adds the palette-specific body class (e.g. 'dracula', 'nord-light').
  */
-export function loadTheme(themeName) {
-  const resolved = resolveThemeName(themeName);
+export async function loadTheme(themeName) {
+  const resolved = await resolveThemeName(themeName);
   const themeClass = getThemeClass(resolved);
   const paletteClass = resolved; // e.g. 'dracula', 'nord-light'
 
@@ -256,7 +256,8 @@ export async function applyTheme(themeName) {
   } catch (err) {
     console.error('theme: failed to save theme preference:', err);
   }
-  loadTheme(themeName);
+  const resolved = await resolveThemeName(themeName);
+  await loadTheme(resolved);
 }
 
 export async function initTheme() {
@@ -274,9 +275,9 @@ export async function initTheme() {
     const flavor = prefersDark
       ? await getSavedDarkThemeAsync()
       : await getSavedLightThemeAsync();
-    loadTheme(flavor);
+    await loadTheme(flavor);
   } else {
-    loadTheme(themeName);
+    await loadTheme(themeName);
   }
 
   await loadSnippets();
@@ -289,7 +290,7 @@ export async function initTheme() {
       const flavor = prefersDark
         ? await getSavedDarkThemeAsync()
         : await getSavedLightThemeAsync();
-      loadTheme(flavor);
+      await loadTheme(flavor);
     };
     if (mq.addEventListener) {
       mq.addEventListener('change', handler);

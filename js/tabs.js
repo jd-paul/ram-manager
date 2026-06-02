@@ -69,6 +69,15 @@ export function canSuspend(tab, options = {}) {
   // Chrome extension URLs (including our own suspended page)
   if (tab.url && tab.url.startsWith('chrome-extension://')) return false;
 
+  // Edge internal URLs
+  if (tab.url && tab.url.startsWith('edge://')) return false;
+
+  // DevTools URLs
+  if (tab.url && tab.url.startsWith('devtools://')) return false;
+
+  // about: URLs
+  if (tab.url && tab.url.startsWith('about:')) return false;
+
   // File URLs (optional safeguard)
   if (tab.url && tab.url.startsWith('file://')) return false;
 

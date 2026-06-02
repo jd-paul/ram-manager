@@ -35,6 +35,10 @@ export async function freezeTab(tab) {
     throw new Error('Invalid tab');
   }
 
+  if (tab.status === 'loading') {
+    throw new Error('Tab is loading, skipping suspension');
+  }
+
   const suspendedUrl = buildSuspendedUrl({
     url: tab.url,
     title: tab.title,
@@ -69,9 +73,13 @@ export async function restoreTab(tabId) {
     throw new Error(`No frozen info found for tab ${tabId}`);
   }
 
-  await chrome.tabs.update(tabId, { url: info.originalUrl });
+  try {
+    await chrome.tabs.update(tabId, { url: info.originalUrl });
+  } catch (err) {
+    throw new Error(`Failed to restore tab ${tabId}: ${err.message}`);
+  }
 
-  // Clean up
+  // Clean up only after successful update
   delete frozenTabs[tabId];
   await localSet('frozenTabs', frozenTabs);
 }

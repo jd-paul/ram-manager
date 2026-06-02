@@ -167,7 +167,7 @@ function updateBarChart(values, weekStart) {
       text.setAttribute('x', x + barW / 2);
       text.setAttribute('y', Math.max(14, y - 6));
       text.setAttribute('class', 'bar-value-label');
-      text.textContent = formatBytes(val).replace(' ', '\n');
+      text.textContent = formatBytes(val);
       svg.appendChild(text);
     }
 
@@ -212,14 +212,15 @@ async function loadSummary() {
 
 async function loadMemoryInfo() {
   try {
-    const [info, suspendedTabs] = await Promise.all([
-      getMemoryInfo(),
+    const [allTabs, suspendedTabs] = await Promise.all([
+      getAllTabs(),
       getSuspendedTabs()
     ]);
 
     const avgBytesPerTab = 75 * 1024 * 1024;
+    const activeCount = Math.max(0, allTabs.length - suspendedTabs.length);
+    const activeBytes = activeCount * avgBytesPerTab;
     const suspendedBytes = suspendedTabs.length * avgBytesPerTab;
-    const activeBytes = Math.max(0, info.totalRam - suspendedBytes);
 
     updateDonut(activeBytes, suspendedBytes);
 
@@ -230,7 +231,7 @@ async function loadMemoryInfo() {
       if (els.memoryUnit) els.memoryUnit.textContent = parts[1] || '';
     }
     if (els.memoryBadge) {
-      els.memoryBadge.hidden = !info.estimated;
+      els.memoryBadge.hidden = false;
     }
 
     // Update weekly bar chart
@@ -238,7 +239,7 @@ async function loadMemoryInfo() {
     const weekly = await getWeeklySavings();
     updateBarChart(weekly.values || [0,0,0,0,0,0,0], weekStart);
 
-    return info;
+    return { totalRam: activeBytes + suspendedBytes, tabs: [], estimated: true };
   } catch (err) {
     console.error('Dashboard: failed to load memory info:', err);
     if (els.memory) els.memory.textContent = '—';
@@ -248,57 +249,68 @@ async function loadMemoryInfo() {
 }
 
 async function loadTopConsumers() {
-  const info = await loadMemoryInfo();
-  const list = els.consumerList;
-  if (!list) return;
+  try {
+    const info = await getMemoryInfo();
+    const list = els.consumerList;
+    if (!list) return;
 
-  const sorted = info.tabs
-    .slice()
-    .sort((a, b) => b.memory - a.memory)
-    .slice(0, 5);
+    const sorted = info.tabs
+      .slice()
+      .sort((a, b) => b.memory - a.memory)
+      .slice(0, 5);
 
-  list.innerHTML = '';
+    list.innerHTML = '';
 
-  if (sorted.length === 0) {
-    const empty = document.createElement('li');
-    empty.className = 'consumer-empty';
-    empty.textContent = 'No tab memory data available.';
-    list.appendChild(empty);
-    return;
-  }
+    if (sorted.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'consumer-empty';
+      empty.textContent = 'No tab memory data available.';
+      list.appendChild(empty);
+      return;
+    }
 
-  const maxMemory = sorted[0].memory || 1;
+    const maxMemory = sorted[0].memory || 1;
 
-  for (const tab of sorted) {
-    const li = document.createElement('li');
-    li.className = 'consumer-item';
+    for (const tab of sorted) {
+      const li = document.createElement('li');
+      li.className = 'consumer-item';
 
-    const row = document.createElement('div');
-    row.className = 'consumer-row';
+      const row = document.createElement('div');
+      row.className = 'consumer-row';
 
-    const domain = document.createElement('span');
-    domain.className = 'consumer-domain';
-    domain.textContent = tab.domain || 'unknown';
-    domain.title = tab.domain || 'unknown';
+      const domain = document.createElement('span');
+      domain.className = 'consumer-domain';
+      domain.textContent = tab.domain || 'unknown';
+      domain.title = tab.domain || 'unknown';
 
-    const memory = document.createElement('span');
-    memory.className = 'consumer-memory';
-    memory.textContent = formatBytes(tab.memory);
+      const memory = document.createElement('span');
+      memory.className = 'consumer-memory';
+      memory.textContent = formatBytes(tab.memory);
 
-    row.appendChild(domain);
-    row.appendChild(memory);
+      row.appendChild(domain);
+      row.appendChild(memory);
 
-    const barWrap = document.createElement('div');
-    barWrap.className = 'consumer-bar-wrap';
+      const barWrap = document.createElement('div');
+      barWrap.className = 'consumer-bar-wrap';
 
-    const bar = document.createElement('div');
-    bar.className = 'consumer-bar';
-    bar.style.width = `${Math.max(2, (tab.memory / maxMemory) * 100)}%`;
+      const bar = document.createElement('div');
+      bar.className = 'consumer-bar';
+      bar.style.width = `${Math.max(2, (tab.memory / maxMemory) * 100)}%`;
 
-    barWrap.appendChild(bar);
-    li.appendChild(row);
-    li.appendChild(barWrap);
-    list.appendChild(li);
+      barWrap.appendChild(bar);
+      li.appendChild(row);
+      li.appendChild(barWrap);
+      list.appendChild(li);
+    }
+  } catch (err) {
+    console.error('Dashboard: failed to load top consumers:', err);
+    if (els.consumerList) {
+      els.consumerList.innerHTML = '';
+      const empty = document.createElement('li');
+      empty.className = 'consumer-empty';
+      empty.textContent = 'No tab memory data available.';
+      els.consumerList.appendChild(empty);
+    }
   }
 }
 
