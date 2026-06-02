@@ -16,12 +16,11 @@
   margin-bottom: var(--space-xl);
 }
 
-.popup-title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
+.popup-logo {
+  display: block;
+  max-height: 36px;
+  width: auto;
   margin-bottom: var(--space-sm);
-  letter-spacing: -0.2px;
 }
 
 .current-tab {

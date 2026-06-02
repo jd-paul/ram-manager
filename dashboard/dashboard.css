@@ -23,14 +23,14 @@ body {
 
 .header-left {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-md);
 }
 
-.header-left h1 {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-normal);
+.dashboard-logo {
+  display: block;
+  max-height: 36px;
+  width: auto;
 }
 
 .header-subtitle {

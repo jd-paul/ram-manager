@@ -12,35 +12,18 @@
 
 .settings-header {
   display: flex;
-  align-items: center;
-  gap: var(--space-lg);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
   margin-bottom: var(--space-2xl);
   padding-bottom: var(--space-lg);
   border-bottom: 1px solid var(--color-border-light);
 }
 
-.header-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  background-color: var(--color-accent-light);
-  border-radius: var(--radius-lg);
-  flex-shrink: 0;
-}
-
-.header-icon .lucide {
-  width: 24px;
-  height: 24px;
-  color: var(--color-accent);
-}
-
-.header-text h1 {
-  font-size: var(--font-size-2xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--space-xs);
+.settings-logo {
+  display: block;
+  max-height: 44px;
+  width: auto;
 }
 
 .settings-subtitle {
