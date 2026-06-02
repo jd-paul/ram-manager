@@ -5,7 +5,7 @@ body.theme-light.nord-light {
   --background-primary: rgb(236, 239, 244);
   --background-secondary: rgb(231, 235, 241);
   --background-tertiary: rgb(229, 233, 240);
-  --background-modifier-hover: rgb(229, 233, 240);
+  --background-modifier-hover: rgb(220, 225, 235);
   --background-modifier-active: rgb(216, 222, 233);
   --background-modifier-border: rgb(216, 222, 233);
   --background-modifier-border-hover: rgb(143, 188, 187);
@@ -14,10 +14,12 @@ body.theme-light.nord-light {
   --text-normal: rgb(46, 52, 64);
   --text-muted: rgb(59, 66, 82);
   --text-faint: rgb(67, 76, 94);
-  --text-on-accent: rgb(229, 233, 240);
+  --text-on-accent: rgb(255, 255, 255);
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(136, 192, 208);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(136, 192, 208);
   --interactive-accent-hover: color-mix(in srgb, rgb(136, 192, 208), black 15%);
   --interactive-accent-light: rgba(136, 192, 208, 0.12);
   --interactive-normal: rgb(229, 233, 240);

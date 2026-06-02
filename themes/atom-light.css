@@ -18,6 +18,8 @@ body.theme-light.atom-light {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(61, 116, 246);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(61, 116, 246);
   --interactive-accent-hover: color-mix(in srgb, rgb(61, 116, 246), black 15%);
   --interactive-accent-light: rgba(61, 116, 246, 0.12);
   --interactive-normal: rgb(237, 237, 237);

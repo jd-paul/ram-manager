@@ -5,7 +5,7 @@ body.theme-light.everforest-light {
   --background-primary: rgb(253, 246, 227);
   --background-secondary: rgb(246, 241, 221);
   --background-tertiary: rgb(240, 237, 216);
-  --background-modifier-hover: rgb(243, 239, 218);
+  --background-modifier-hover: rgb(235, 230, 205);
   --background-modifier-active: rgb(237, 234, 213);
   --background-modifier-border: rgb(227, 224, 204);
   --background-modifier-border-hover: rgb(223, 219, 200);
@@ -14,10 +14,12 @@ body.theme-light.everforest-light {
   --text-normal: rgb(92, 106, 114);
   --text-muted: rgb(114, 125, 132);
   --text-faint: rgb(135, 150, 134);
-  --text-on-accent: rgb(240, 237, 216);
+  --text-on-accent: rgb(255, 255, 255);
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(90, 147, 162);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(90, 147, 162);
   --interactive-accent-hover: color-mix(in srgb, rgb(90, 147, 162), black 15%);
   --interactive-accent-light: rgba(90, 147, 162, 0.12);
   --interactive-normal: rgb(243, 239, 218);

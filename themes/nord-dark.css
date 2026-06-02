@@ -18,6 +18,8 @@ body.theme-dark.nord-dark {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(136, 192, 208);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(136, 192, 208);
   --interactive-accent-hover: color-mix(in srgb, rgb(136, 192, 208), white 15%);
   --interactive-accent-light: rgba(136, 192, 208, 0.18);
   --interactive-normal: rgb(77, 87, 106);

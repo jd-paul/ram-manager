@@ -18,6 +18,8 @@ body.theme-light.luminescence-light {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(130, 146, 201);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(130, 146, 201);
   --interactive-accent-hover: color-mix(in srgb, rgb(130, 146, 201), black 15%);
   --interactive-accent-light: rgba(130, 146, 201, 0.12);
   --interactive-normal: rgb(205, 183, 177);

@@ -22,8 +22,9 @@
 .frozen-favicon {
   width: 48px;
   height: 48px;
-  margin-bottom: var(--space-lg);
+  margin: 0 auto var(--space-lg);
   border-radius: var(--radius-sm);
+  display: block;
 }
 
 .frozen-title {
@@ -81,6 +82,11 @@
 
 .btn-primary:hover {
   background-color: var(--interactive-accent-hover);
+}
+
+.btn-primary:active {
+  background-color: var(--interactive-accent);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary:disabled {

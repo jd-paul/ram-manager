@@ -18,6 +18,8 @@ body.theme-dark.rosebox {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(165, 117, 98);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(165, 117, 98);
   --interactive-accent-hover: color-mix(in srgb, rgb(165, 117, 98), white 15%);
   --interactive-accent-light: rgba(165, 117, 98, 0.18);
   --interactive-normal: rgb(40, 40, 40);

@@ -11,13 +11,15 @@ body.theme-light.sandy-beaches-light {
   --background-modifier-border-hover: rgb(130, 117, 110);
 
   /* --- Text --- */
-  --text-normal: rgb(104, 88, 80);
-  --text-muted: rgb(108, 92, 84);
-  --text-faint: rgb(111, 96, 88);
-  --text-on-accent: rgb(230, 223, 216);
+  --text-normal: rgb(80, 65, 55);
+  --text-muted: rgb(95, 80, 70);
+  --text-faint: rgb(120, 105, 95);
+  --text-on-accent: rgb(255, 255, 255);
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(109, 111, 123);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(109, 111, 123);
   --interactive-accent-hover: color-mix(in srgb, rgb(109, 111, 123), black 15%);
   --interactive-accent-light: rgba(109, 111, 123, 0.12);
   --interactive-normal: rgb(222, 216, 209);

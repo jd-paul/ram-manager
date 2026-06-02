@@ -18,6 +18,8 @@ body.theme-light.gruvbox-light {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(69, 133, 136);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(69, 133, 136);
   --interactive-accent-hover: color-mix(in srgb, rgb(69, 133, 136), black 15%);
   --interactive-accent-light: rgba(69, 133, 136, 0.12);
   --interactive-normal: rgb(242, 229, 188);

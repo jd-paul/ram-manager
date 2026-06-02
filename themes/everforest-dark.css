@@ -18,6 +18,8 @@ body.theme-dark.everforest-dark {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(90, 147, 162);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(90, 147, 162);
   --interactive-accent-hover: color-mix(in srgb, rgb(90, 147, 162), white 15%);
   --interactive-accent-light: rgba(90, 147, 162, 0.18);
   --interactive-normal: rgb(55, 66, 71);

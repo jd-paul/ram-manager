@@ -18,6 +18,8 @@ body.theme-dark.rosepine-dark {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(76, 127, 169);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(76, 127, 169);
   --interactive-accent-hover: color-mix(in srgb, rgb(76, 127, 169), white 15%);
   --interactive-accent-light: rgba(76, 127, 169, 0.18);
   --interactive-normal: rgb(31, 29, 46);

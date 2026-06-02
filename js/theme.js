@@ -187,18 +187,13 @@ export async function loadSnippets() {
   if (container) container.remove();
   if (snippetFiles.length === 0) return;
 
-  container = document.createElement('div');
-  container.id = SNIPPET_CONTAINER_ID;
-  container.style.display = 'none';
-  document.head.appendChild(container);
-
   for (const filename of snippetFiles) {
     const href = chrome.runtime.getURL(`${SNIPPET_DIR}${filename}`);
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.type = 'text/css';
     link.href = href;
-    container.appendChild(link);
+    document.head.appendChild(link);
   }
 }
 

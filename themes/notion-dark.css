@@ -18,6 +18,8 @@ body.theme-dark.notion-dark {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(82, 156, 202);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(82, 156, 202);
   --interactive-accent-hover: color-mix(in srgb, rgb(82, 156, 202), white 15%);
   --interactive-accent-light: rgba(82, 156, 202, 0.18);
   --interactive-normal: rgb(75, 83, 88);

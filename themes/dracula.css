@@ -18,6 +18,8 @@ body.theme-dark.dracula {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(95, 126, 222);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(95, 126, 222);
   --interactive-accent-hover: color-mix(in srgb, rgb(95, 126, 222), white 15%);
   --interactive-accent-light: rgba(95, 126, 222, 0.18);
   --interactive-normal: rgb(48, 50, 65);

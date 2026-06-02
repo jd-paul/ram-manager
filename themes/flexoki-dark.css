@@ -18,6 +18,8 @@ body.theme-dark.flexoki-dark {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(135, 176, 249);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(135, 176, 249);
   --interactive-accent-hover: color-mix(in srgb, rgb(135, 176, 249), white 15%);
   --interactive-accent-light: rgba(135, 176, 249, 0.18);
   --interactive-normal: rgb(52, 51, 49);

@@ -18,6 +18,8 @@ body.theme-dark.kanagawa-dark {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(126, 156, 216);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(126, 156, 216);
   --interactive-accent-hover: color-mix(in srgb, rgb(126, 156, 216), white 15%);
   --interactive-accent-light: rgba(126, 156, 216, 0.18);
   --interactive-normal: rgb(42, 42, 55);

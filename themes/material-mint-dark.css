@@ -18,6 +18,8 @@ body.theme-dark.material-mint-dark {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(189, 214, 219);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(189, 214, 219);
   --interactive-accent-hover: color-mix(in srgb, rgb(189, 214, 219), white 15%);
   --interactive-accent-light: rgba(189, 214, 219, 0.18);
   --interactive-normal: rgb(29, 49, 53);

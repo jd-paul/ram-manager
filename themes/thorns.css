@@ -18,6 +18,8 @@ body.theme-dark.thorns {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(151, 154, 232);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(151, 154, 232);
   --interactive-accent-hover: color-mix(in srgb, rgb(151, 154, 232), white 15%);
   --interactive-accent-light: rgba(151, 154, 232, 0.18);
   --interactive-normal: rgb(46, 46, 46);

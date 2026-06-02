@@ -18,6 +18,8 @@ body.theme-light.solarized-light {
 
   /* --- Accent / Interactive --- */
   --interactive-accent: rgb(38, 139, 210);
+  /* Fallback for Chrome < 111 */
+  --interactive-accent-hover: rgb(38, 139, 210);
   --interactive-accent-hover: color-mix(in srgb, rgb(38, 139, 210), black 15%);
   --interactive-accent-light: rgba(38, 139, 210, 0.12);
   --interactive-normal: rgb(173, 184, 184);
