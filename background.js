@@ -9,33 +9,11 @@ import {
 } from './js/tabs.js';
 import { freezeTab, restoreTab } from './js/suspension.js';
 import { logHistory, updateBadge } from './js/history.js';
+import { getDomain, normalizeDomain, isWhitelisted } from './js/utils.js';
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
-
-function getDomain(url) {
-  try {
-    if (!url) return 'unknown';
-    const u = new URL(url);
-    return u.hostname || 'unknown';
-  } catch {
-    return 'unknown';
-  }
-}
-
-function normalizeDomain(input) {
-  return input.trim().toLowerCase().replace(/^www\./, '');
-}
-
-function isWhitelisted(domain, whitelist) {
-  const d = normalizeDomain(domain);
-  for (const entry of whitelist) {
-    const e = normalizeDomain(entry);
-    if (d === e || d.endsWith('.' + e)) return true;
-  }
-  return false;
-}
 
 async function updateTabLastActive(tabId) {
   try {
@@ -99,6 +77,7 @@ async function handleAutoSuspend() {
   const whitelist = (whitelistRaw || []).map(d => normalizeDomain(d));
 
   let suspendedCount = 0;
+  const toSuspend = [];
 
   for (const tab of allTabs) {
     if (!tab.id || tab.discarded) continue;
@@ -120,13 +99,18 @@ async function handleAutoSuspend() {
     if (!last) continue;
     if (now - last < thresholdMs) continue;
 
-    try {
-      await freezeTab(tab);
-      await logHistory('suspend', tab);
-      suspendedCount++;
-    } catch (err) {
-      console.error('Failed to suspend tab', tab.id, err);
-    }
+    toSuspend.push(tab);
+  }
+
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
+    const batch = toSuspend.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(tab =>
+      freezeTab(tab)
+        .then(() => logHistory('suspend', tab))
+        .catch(err => console.error('Failed to suspend tab', tab.id, err))
+    ));
+    suspendedCount += batch.length;
   }
 
   if (suspendedCount > 0) {
@@ -203,13 +187,14 @@ async function handleContextMenuClick(info, tab) {
       currentTabId: targetTabId
     }));
 
-    for (const t of toSuspend) {
-      try {
-        await freezeTab(t);
-        await logHistory('suspend', t);
-      } catch (err) {
-        console.error('Suspend all other tabs failed for tab', t.id, err);
-      }
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
+      const batch = toSuspend.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(t =>
+        freezeTab(t)
+          .then(() => logHistory('suspend', t))
+          .catch(err => console.error('Suspend all other tabs failed for tab', t.id, err))
+      ));
     }
     await updateBadge();
   }

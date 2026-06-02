@@ -16,6 +16,8 @@ function getDomain(url) {
   }
 }
 
+import { ESTIMATED_BYTES_PER_TAB } from './utils.js';
+
 /**
  * Format bytes into a human-readable string.
  * @param {number} bytes
@@ -38,9 +40,8 @@ export function formatBytes(bytes) {
  * @returns {number} estimated bytes
  */
 export function estimateMemory(tabCount) {
-  const avgBytesPerTab = 75 * 1024 * 1024; // 75 MB
   const count = Math.max(0, Number(tabCount) || 0);
-  return count * avgBytesPerTab;
+  return count * ESTIMATED_BYTES_PER_TAB;
 }
 
 /**
@@ -93,7 +94,7 @@ export async function getSavedMemoryToday() {
       return entry.action === 'suspend' && entry.timestamp >= startOfDay && entry.timestamp < endOfDay;
     });
 
-    const estimate = 75 * 1024 * 1024; // 75 MB per tab
+    const estimate = ESTIMATED_BYTES_PER_TAB;
     return todayEntries.length * estimate;
   } catch (err) {
     console.error('getSavedMemoryToday error:', err);

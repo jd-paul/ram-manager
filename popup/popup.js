@@ -11,6 +11,7 @@ import { freezeTab, restoreAll } from "../js/suspension.js";
 import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 import { logHistory, updateBadge } from "../js/history.js";
+import { getDomain, normalizeDomain, isWhitelisted } from "../js/utils.js";
 
 const els = {};
 
@@ -141,29 +142,6 @@ async function handleRestoreAll() {
   }
 }
 
-function getDomain(url) {
-  try {
-    if (!url) return 'unknown';
-    const u = new URL(url);
-    return u.hostname || 'unknown';
-  } catch {
-    return 'unknown';
-  }
-}
-
-function normalizeDomain(input) {
-  return input.trim().toLowerCase().replace(/^www\./, '');
-}
-
-function isWhitelisted(domain, whitelist) {
-  const d = normalizeDomain(domain);
-  for (const entry of whitelist) {
-    const e = normalizeDomain(entry);
-    if (d === e || d.endsWith('.' + e)) return true;
-  }
-  return false;
-}
-
 async function handleSuspendAll() {
   try {
     els.btnSuspendAll.disabled = true;
@@ -192,15 +170,16 @@ async function handleSuspendAll() {
       return !isWhitelisted(domain, whitelist);
     });
 
+    const BATCH_SIZE = 5;
     let count = 0;
-    for (const tab of toSuspend) {
-      try {
-        await freezeTab(tab);
-        await logHistory('suspend', tab);
-        count++;
-      } catch (err) {
-        console.error(`Failed to freeze tab ${tab.id}:`, err);
-      }
+    for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
+      const batch = toSuspend.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(tab =>
+        freezeTab(tab)
+          .then(() => logHistory('suspend', tab))
+          .catch(err => console.error(`Failed to freeze tab ${tab.id}:`, err))
+      ));
+      count += batch.length;
     }
 
     await updateBadge();

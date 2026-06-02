@@ -1,6 +1,7 @@
 // Shared history logging and badge updates
 // Used by background.js and popup.js
 
+import { ESTIMATED_BYTES_PER_TAB } from './utils.js';
 import { localGet, localSet } from './storage.js';
 import { getSuspendedTabs } from './tabs.js';
 
@@ -87,7 +88,7 @@ export async function logHistory(action, tab) {
     await localSet('suspensionHistory', history);
 
     if (action === 'suspend') {
-      const estimate = 75 * 1024 * 1024; // 75 MB per tab
+      const estimate = ESTIMATED_BYTES_PER_TAB;
       const saved = (await localGet('savedMemoryAllTime')) || 0;
       await localSet('savedMemoryAllTime', saved + estimate);
       await recordDailySavings(estimate);

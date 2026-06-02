@@ -1,6 +1,7 @@
 // Dashboard page logic — v2 with charts
 // Imports shared modules and renders stats, charts, consumers, and activity.
 
+import { ESTIMATED_BYTES_PER_TAB } from '../js/utils.js';
 import { initTheme } from '../js/theme.js';
 import { localGet, localSet } from '../js/storage.js';
 import { getAllTabs, getSuspendedTabs } from '../js/tabs.js';
@@ -25,7 +26,6 @@ const els = {
   chartWeekLabel: document.getElementById('chart-week-label'),
   consumerList: document.getElementById('consumer-list'),
   timelineList: document.getElementById('timeline-list'),
-  activityList: document.getElementById('activity-list'),
   linkSettings: document.getElementById('link-settings')
 };
 
@@ -217,10 +217,9 @@ async function loadMemoryInfo() {
       getSuspendedTabs()
     ]);
 
-    const avgBytesPerTab = 75 * 1024 * 1024;
     const activeCount = Math.max(0, allTabs.length - suspendedTabs.length);
-    const activeBytes = activeCount * avgBytesPerTab;
-    const suspendedBytes = suspendedTabs.length * avgBytesPerTab;
+    const activeBytes = activeCount * ESTIMATED_BYTES_PER_TAB;
+    const suspendedBytes = suspendedTabs.length * ESTIMATED_BYTES_PER_TAB;
 
     updateDonut(activeBytes, suspendedBytes);
 
@@ -407,6 +406,52 @@ async function loadRecentActivity() {
   }
 }
 
+async function loadRecentActivity() {
+  const list = els.activityList;
+  if (!list) return;
+
+  try {
+    const history = (await localGet('suspensionHistory')) || [];
+    const recent = history.slice(-10).reverse();
+
+    list.innerHTML = '';
+
+    if (recent.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'activity-empty';
+      empty.textContent = 'No recent activity.';
+      list.appendChild(empty);
+      return;
+    }
+
+    for (const entry of recent) {
+      const li = document.createElement('li');
+      li.className = 'activity-item';
+
+      const text = document.createElement('span');
+      text.className = 'activity-text';
+      const action = entry.action === 'suspend' ? 'Suspended' : entry.action === 'restore' ? 'Restored' : entry.action || 'Action';
+      const domain = entry.domain || entry.url || 'unknown';
+      text.textContent = `${action} — ${domain}`;
+
+      const time = document.createElement('span');
+      time.className = 'activity-time';
+      time.textContent = formatTimeAgo(entry.timestamp);
+
+      li.appendChild(text);
+      li.appendChild(time);
+      list.appendChild(li);
+    }
+  } catch (err) {
+    console.error('Dashboard: failed to load activity:', err);
+    list.innerHTML = '';
+    const empty = document.createElement('li');
+    empty.className = 'activity-empty';
+    empty.textContent = 'Unable to load activity.';
+    list.appendChild(empty);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Weekly Savings Storage                                                     */
 /* -------------------------------------------------------------------------- */
@@ -434,8 +479,7 @@ async function refreshAll() {
     loadSummary(),
     loadMemoryInfo(),
     loadTopConsumers(),
-    loadTimeline(),
-    loadRecentActivity()
+    loadTimeline()
   ]);
 }
 
@@ -454,7 +498,10 @@ async function init() {
     });
   }
 
-  setInterval(refreshAll, 30000);
+  const refreshInterval = setInterval(refreshAll, 30000);
+  window.addEventListener('beforeunload', () => {
+    if (refreshInterval) clearInterval(refreshInterval);
+  });
 }
 
 init().catch((err) => {
