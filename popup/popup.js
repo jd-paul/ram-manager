@@ -231,18 +231,18 @@ async function init() {
     loadCurrentTabStatus(),
     loadShortcutHint(),
   ]);
-}
 
-if (els.btnSuspendCurrent) els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
-if (els.btnSuspendAll) els.btnSuspendAll.addEventListener("click", handleSuspendAll);
-if (els.btnRestoreAll) els.btnRestoreAll.addEventListener("click", handleRestoreAll);
-if (els.linkDashboard) els.linkDashboard.addEventListener("click", (e) => {
-  e.preventDefault();
-  openPage("dashboard/dashboard.html");
-});
-if (els.linkSettings) els.linkSettings.addEventListener("click", (e) => {
-  e.preventDefault();
-  openPage("settings/settings.html");
-});
+  if (els.btnSuspendCurrent) els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
+  if (els.btnSuspendAll) els.btnSuspendAll.addEventListener("click", handleSuspendAll);
+  if (els.btnRestoreAll) els.btnRestoreAll.addEventListener("click", handleRestoreAll);
+  if (els.linkDashboard) els.linkDashboard.addEventListener("click", (e) => {
+    e.preventDefault();
+    openPage("dashboard/dashboard.html");
+  });
+  if (els.linkSettings) els.linkSettings.addEventListener("click", (e) => {
+    e.preventDefault();
+    openPage("settings/settings.html");
+  });
+}
 
 document.addEventListener("DOMContentLoaded", init);
