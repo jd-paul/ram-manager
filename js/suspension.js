@@ -3,25 +3,25 @@
 // local suspended page and restoring them back to their original URL.
 
 import { localGet, localSet } from './storage.js';
+import { logHistory, updateBadge } from './history.js';
 
 const SUSPENDED_PAGE = 'suspended.html';
 
 /**
  * Build the chrome-extension:// URL for the suspended page.
+ * All data needed to restore is embedded in the URL itself — no storage lookup needed.
  * @param {Object} params
  * @param {string} params.url — original URL
  * @param {string} params.title — original page title
  * @param {string} params.favicon — original favicon URL
- * @param {number} params.tabId — tab ID
  * @returns {string}
  */
-function buildSuspendedUrl({ url, title, favicon, tabId }) {
+function buildSuspendedUrl({ url, title, favicon }) {
   const base = chrome.runtime.getURL(SUSPENDED_PAGE);
   const qs = new URLSearchParams();
   qs.set('url', url);
   qs.set('title', title || 'Untitled');
   qs.set('favicon', favicon || '');
-  qs.set('tabId', String(tabId));
   return `${base}?${qs.toString()}`;
 }
 
@@ -42,11 +42,10 @@ export async function freezeTab(tab) {
   const suspendedUrl = buildSuspendedUrl({
     url: tab.url,
     title: tab.title,
-    favicon: tab.favIconUrl,
-    tabId: tab.id
+    favicon: tab.favIconUrl
   });
 
-  // Store original info so we can restore later (and for history)
+  // Store original info for history tracking only (not needed for restore)
   const frozenTabs = (await localGet('frozenTabs')) || {};
   frozenTabs[tab.id] = {
     originalUrl: tab.url,
@@ -62,26 +61,64 @@ export async function freezeTab(tab) {
 
 /**
  * Restore a frozen tab back to its original URL.
+ * Uses the URL embedded in the suspended page — no storage lookup needed.
  * @param {number} tabId
+ * @param {string} [originalUrl] — optional, if known. If not provided, reads from the tab's current URL.
  * @returns {Promise<void>}
  */
-export async function restoreTab(tabId) {
-  const frozenTabs = (await localGet('frozenTabs')) || {};
-  const info = frozenTabs[tabId];
+export async function restoreTab(tabId, originalUrl) {
+  // If originalUrl not provided, extract it from the suspended page URL
+  if (!originalUrl) {
+    const tab = await new Promise((resolve) => {
+      chrome.tabs.get(tabId, (t) => {
+        if (chrome.runtime.lastError) resolve(null);
+        else resolve(t);
+      });
+    });
 
-  if (!info || !info.originalUrl) {
-    throw new Error(`No frozen info found for tab ${tabId}`);
+    if (!tab || !tab.url) {
+      throw new Error(`Tab ${tabId} not found or has no URL`);
+    }
+
+    const params = new URLSearchParams(new URL(tab.url).search);
+    originalUrl = params.get('url');
+
+    if (!originalUrl) {
+      throw new Error(`No restore URL found in suspended page for tab ${tabId}`);
+    }
   }
 
   try {
-    await chrome.tabs.update(tabId, { url: info.originalUrl });
+    await chrome.tabs.update(tabId, { url: originalUrl });
   } catch (err) {
     throw new Error(`Failed to restore tab ${tabId}: ${err.message}`);
   }
 
-  // Clean up only after successful update
-  delete frozenTabs[tabId];
-  await localSet('frozenTabs', frozenTabs);
+  // Clean up storage entry (best effort — not critical for restore)
+  try {
+    const frozenTabs = (await localGet('frozenTabs')) || {};
+    if (frozenTabs[tabId]) {
+      delete frozenTabs[tabId];
+      await localSet('frozenTabs', frozenTabs);
+    }
+  } catch (err) {
+    console.error('Cleanup frozenTabs failed:', err);
+  }
+
+  // Log the restore action
+  try {
+    const tab = await new Promise((resolve) => {
+      chrome.tabs.get(tabId, (t) => {
+        if (chrome.runtime.lastError) resolve(null);
+        else resolve(t);
+      });
+    });
+    if (tab) {
+      await logHistory('restore', tab);
+    }
+  } catch (err) {
+    console.error('Restore history log failed:', err);
+  }
 }
 
 /**
@@ -133,17 +170,46 @@ export async function freezeAll(tabs, predicate = () => true) {
  * @returns {Promise<number>} count restored
  */
 export async function restoreAll() {
-  const frozenTabs = (await localGet('frozenTabs')) || {};
-  const tabIds = Object.keys(frozenTabs).map(Number);
+  // Get all tabs that are on our suspended page
+  const tabs = await new Promise((resolve) => {
+    chrome.tabs.query({}, (result) => {
+      if (chrome.runtime.lastError) resolve([]);
+      else resolve(result || []);
+    });
+  });
+
+  const suspendedPrefix = chrome.runtime.getURL(SUSPENDED_PAGE);
+  const suspendedTabs = tabs.filter((t) => t.url && t.url.startsWith(suspendedPrefix));
+
   let count = 0;
 
-  for (const tabId of tabIds) {
+  for (const tab of suspendedTabs) {
     try {
-      await restoreTab(tabId);
+      // Extract original URL from the suspended page's query params
+      const params = new URLSearchParams(new URL(tab.url).search);
+      const originalUrl = params.get('url');
+
+      if (!originalUrl) {
+        console.error(`No restore URL found in suspended tab ${tab.id}`);
+        continue;
+      }
+
+      await chrome.tabs.update(tab.id, { url: originalUrl });
       count++;
     } catch (err) {
-      console.error(`Failed to restore tab ${tabId}:`, err);
+      console.error(`Failed to restore tab ${tab.id}:`, err);
     }
+  }
+
+  // Clean up all frozenTabs entries (best effort)
+  try {
+    await localSet('frozenTabs', {});
+  } catch (err) {
+    console.error('Cleanup frozenTabs failed:', err);
+  }
+
+  if (count > 0) {
+    await updateBadge();
   }
 
   return count;

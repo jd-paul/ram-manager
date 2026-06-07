@@ -158,7 +158,7 @@ async function handleSuspendAll() {
 
     const toSuspend = allTabs.filter((tab) => {
       if (!canSuspend(tab, {
-        protectActive: settings.protectActive,
+        protectActive: false,
         protectPinned: settings.protectPinned,
         protectMedia: settings.protectMedia,
         warnFormData: settings.warnFormData,

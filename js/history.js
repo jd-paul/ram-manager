@@ -2,8 +2,7 @@
 // Used by background.js and popup.js
 
 import { ESTIMATED_BYTES_PER_TAB } from './utils.js';
-import { localGet, localSet } from './storage.js';
-import { getSuspendedTabs } from './tabs.js';
+import { localGet, localSet, getSettings } from './storage.js';
 
 function getDomain(url) {
   try {
@@ -100,14 +99,22 @@ export async function logHistory(action, tab) {
 
 export async function updateBadge() {
   try {
-    const { getSettings } = await import('./storage.js');
     const settings = await getSettings();
     if (!settings.badgeCountEnabled) {
       chrome.action.setBadgeText({ text: '' });
       return;
     }
-    const suspended = await getSuspendedTabs();
-    const count = suspended.length;
+
+    // Inline getSuspendedTabs logic to avoid circular dependency
+    const tabs = await new Promise((resolve) => {
+      chrome.tabs.query({}, (result) => {
+        if (chrome.runtime.lastError) resolve([]);
+        else resolve(result || []);
+      });
+    });
+    const suspendedPrefix = chrome.runtime.getURL('suspended.html');
+    const count = tabs.filter((t) => t.url && t.url.startsWith(suspendedPrefix)).length;
+
     chrome.action.setBadgeText({ text: count > 0 ? String(count) : '' });
     chrome.action.setBadgeBackgroundColor({ color: '#e74c3c' });
   } catch (err) {

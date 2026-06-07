@@ -256,7 +256,6 @@ async function handleTabActivated(tabId) {
   if (tab && tab.discarded) {
     try {
       await restoreTab(tab.id);
-      await logHistory('restore', tab);
       await updateBadge();
     } catch (err) {
       console.error('Auto-restore failed:', err);

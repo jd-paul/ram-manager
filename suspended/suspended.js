@@ -1,10 +1,9 @@
 // Suspended page logic — reads query params and handles restore
+// All restore data is embedded in the URL itself — no storage or tabId needed.
 
-import { restoreTab } from '../js/suspension.js';
 import { initTheme } from '../js/theme.js';
 
 const params = new URLSearchParams(window.location.search);
-const tabId = Number(params.get('tabId'));
 const originalUrl = params.get('url');
 const title = params.get('title');
 const favicon = params.get('favicon');
@@ -18,8 +17,8 @@ const els = {
 
 async function init() {
   await initTheme();
-  if (!tabId || isNaN(tabId) || tabId <= 0) {
-    console.error('Invalid tabId in suspended page');
+  if (!originalUrl) {
+    console.error('No restore URL in suspended page');
     els.title.textContent = 'Invalid tab';
     els.url.textContent = '—';
     els.btnRestore.disabled = true;
@@ -27,7 +26,7 @@ async function init() {
   }
 
   if (title) els.title.textContent = title;
-  if (originalUrl) els.url.textContent = originalUrl;
+  els.url.textContent = originalUrl;
   if (favicon && (favicon.startsWith('http://') || favicon.startsWith('https://') || favicon.startsWith('data:'))) {
     els.favicon.src = favicon;
     els.favicon.hidden = false;
@@ -41,15 +40,12 @@ async function handleRestore() {
     els.btnRestore.disabled = true;
     els.btnRestore.textContent = 'Restoring…';
 
-    if (!tabId || isNaN(tabId) || tabId <= 0) {
-      throw new Error('Missing or invalid tab ID');
-    }
-
     if (!originalUrl) {
       throw new Error('Missing original URL');
     }
 
-    await restoreTab(tabId);
+    // Navigate this tab directly to the original URL — no storage lookup needed
+    await chrome.tabs.update({ url: originalUrl });
   } catch (err) {
     console.error('Restore failed:', err);
     els.btnRestore.textContent = 'Restore Failed — Click to Retry';
