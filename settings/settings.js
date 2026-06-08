@@ -324,6 +324,7 @@ async function clearStatistics() {
     await localRemove('suspensionHistory');
     await localRemove('savedMemoryAllTime');
     await localRemove('tabLastActive');
+    await localRemove('weeklySavings');
     showDataHint('Statistics cleared successfully');
   } catch (err) {
     console.error('Clear stats failed:', err);
