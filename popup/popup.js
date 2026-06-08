@@ -12,7 +12,11 @@ import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 import { logHistory, updateBadge } from "../js/history.js";
 import { getDomain, normalizeDomain, isWhitelisted } from "../js/utils.js";
-import { loadSettingsIntoUI, bindToggle, bindSelect } from "../js/settings-ui.js";
+import {
+  loadSettingsIntoUI,
+  bindToggle,
+  bindSelect,
+} from "../js/settings-ui.js";
 
 const els = {};
 
@@ -132,7 +136,7 @@ async function handleSuspendCurrent() {
     }
 
     await freezeTab(tab);
-    await logHistory('suspend', tab);
+    await logHistory("suspend", tab);
     await updateBadge();
     console.log(`Frozen tab ${tab.id}`);
     await loadTabStats();
@@ -165,22 +169,24 @@ async function handleSuspendAll() {
     const [allTabs, settings, whitelistRaw, currentTab] = await Promise.all([
       getAllTabs(),
       getSettings(),
-      syncGet('whitelist'),
+      syncGet("whitelist"),
       getCurrentTab(),
     ]);
 
     const currentTabId = currentTab ? currentTab.id : undefined;
-    const whitelist = (whitelistRaw || []).map(d => normalizeDomain(d));
+    const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
 
     const toSuspend = allTabs.filter((tab) => {
-      if (!canSuspend(tab, {
-        protectActive: false,
-        protectPinned: settings.protectPinned,
-        protectMedia: settings.protectMedia,
-        protectLocalUrls: settings.protectLocalUrls,
-        warnFormData: settings.warnFormData,
-        currentTabId,
-      })) {
+      if (
+        !canSuspend(tab, {
+          protectActive: false,
+          protectPinned: settings.protectPinned,
+          protectMedia: settings.protectMedia,
+          protectLocalUrls: settings.protectLocalUrls,
+          warnFormData: settings.warnFormData,
+          currentTabId,
+        })
+      ) {
         return false;
       }
       const domain = getDomain(tab.url);
@@ -191,11 +197,15 @@ async function handleSuspendAll() {
     let count = 0;
     for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
       const batch = toSuspend.slice(i, i + BATCH_SIZE);
-      await Promise.all(batch.map(tab =>
-        freezeTab(tab)
-          .then(() => logHistory('suspend', tab))
-          .catch(err => console.error(`Failed to freeze tab ${tab.id}:`, err))
-      ));
+      await Promise.all(
+        batch.map((tab) =>
+          freezeTab(tab)
+            .then(() => logHistory("suspend", tab))
+            .catch((err) =>
+              console.error(`Failed to freeze tab ${tab.id}:`, err),
+            ),
+        ),
+      );
       count += batch.length;
     }
 
@@ -245,42 +255,19 @@ async function loadShortcutHint() {
 
 function toggleTimerRow(enabled) {
   if (!els.suspendTimerRow) return;
-  els.suspendTimerRow.style.opacity = enabled ? '1' : '0.5';
-  els.suspendTimerRow.style.pointerEvents = enabled ? 'auto' : 'none';
+  els.suspendTimerRow.style.opacity = enabled ? "1" : "0.5";
+  els.suspendTimerRow.style.pointerEvents = enabled ? "auto" : "none";
 }
 
 function bindToggles() {
-  // Collapsible header
-  if (els.togglesHeader && els.togglesBody) {
-    els.togglesHeader.addEventListener('click', () => {
-      const isHidden = els.togglesBody.hasAttribute('hidden');
-      if (isHidden) {
-        els.togglesBody.removeAttribute('hidden');
-        els.togglesHeader.setAttribute('aria-expanded', 'true');
-        if (els.togglesChevron) els.togglesChevron.textContent = '▾';
-      } else {
-        els.togglesBody.setAttribute('hidden', '');
-        els.togglesHeader.setAttribute('aria-expanded', 'false');
-        if (els.togglesChevron) els.togglesChevron.textContent = '▸';
-      }
-    });
-  }
-
-  // Auto-suspend toggle also controls timer row visibility
-  if (els.autoSuspendToggle) {
-    els.autoSuspendToggle.addEventListener('change', (e) => {
-      toggleTimerRow(e.target.checked);
-    });
-  }
-
   // Shared bindings
-  bindToggle(els.autoSuspendToggle, 'autoSuspendEnabled');
-  bindSelect(els.suspendTimer, 'suspendAfterMinutes', 'number');
-  bindToggle(els.protectMedia, 'protectMedia');
-  bindToggle(els.protectPinned, 'protectPinned');
-  bindToggle(els.protectActive, 'protectActive');
-  bindToggle(els.protectLocalUrls, 'protectLocalUrls');
-  bindToggle(els.suspendOnMinimize, 'suspendOnMinimize');
+  bindToggle(els.autoSuspendToggle, "autoSuspendEnabled");
+  bindSelect(els.suspendTimer, "suspendAfterMinutes", "number");
+  bindToggle(els.protectMedia, "protectMedia");
+  bindToggle(els.protectPinned, "protectPinned");
+  bindToggle(els.protectActive, "protectActive");
+  bindToggle(els.protectLocalUrls, "protectLocalUrls");
+  bindToggle(els.suspendOnMinimize, "suspendOnMinimize");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -302,17 +289,22 @@ async function init() {
   toggleTimerRow(els.autoSuspendToggle ? els.autoSuspendToggle.checked : true);
   bindToggles();
 
-  if (els.btnSuspendCurrent) els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
-  if (els.btnSuspendAll) els.btnSuspendAll.addEventListener("click", handleSuspendAll);
-  if (els.btnRestoreAll) els.btnRestoreAll.addEventListener("click", handleRestoreAll);
-  if (els.linkDashboard) els.linkDashboard.addEventListener("click", (e) => {
-    e.preventDefault();
-    openPage("dashboard/dashboard.html");
-  });
-  if (els.linkSettings) els.linkSettings.addEventListener("click", (e) => {
-    e.preventDefault();
-    openPage("settings/settings.html");
-  });
+  if (els.btnSuspendCurrent)
+    els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
+  if (els.btnSuspendAll)
+    els.btnSuspendAll.addEventListener("click", handleSuspendAll);
+  if (els.btnRestoreAll)
+    els.btnRestoreAll.addEventListener("click", handleRestoreAll);
+  if (els.linkDashboard)
+    els.linkDashboard.addEventListener("click", (e) => {
+      e.preventDefault();
+      openPage("dashboard/dashboard.html");
+    });
+  if (els.linkSettings)
+    els.linkSettings.addEventListener("click", (e) => {
+      e.preventDefault();
+      openPage("settings/settings.html");
+    });
 }
 
 document.addEventListener("DOMContentLoaded", init);

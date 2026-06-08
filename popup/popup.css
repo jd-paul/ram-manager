@@ -3,12 +3,12 @@
 .popup-container {
   width: 380px;
   min-height: 500px;
-  max-height: 500px;
+  max-height: 600px;
   display: flex;
   flex-direction: column;
   padding: var(--space-lg);
   background-color: var(--color-bg-primary);
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* Header */
@@ -115,7 +115,9 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-medium);
   text-align: center;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .btn-primary {
@@ -170,17 +172,6 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  cursor: pointer;
-}
-
-.toggles-header:hover {
-  background-color: var(--color-bg-hover);
-}
-
-.toggles-chevron {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  transition: transform 0.15s ease;
 }
 
 .toggles-body {
