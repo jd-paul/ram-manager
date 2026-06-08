@@ -295,47 +295,79 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 });
 
 /* -------------------------------------------------------------------------- */
-/* Suspend on minimize (window focus change)                                  */
+/* Suspend on unfocus (when a Chrome window loses focus to another window)    */
 /* -------------------------------------------------------------------------- */
+
+let lastFocusedWindowId = null;
 
 chrome.windows.onFocusChanged.addListener((windowId) => {
   handleWindowFocusChanged(windowId).catch(err => console.error('onFocusChanged error:', err));
 });
 
 async function handleWindowFocusChanged(windowId) {
-  // windowId === chrome.windows.WINDOW_ID_NONE means all windows lost focus
-  if (windowId !== chrome.windows.WINDOW_ID_NONE) return;
-
   const settings = await getSettings();
   if (!settings.suspendOnMinimize) return;
 
-  const allTabs = await getAllTabs();
-  const currentTab = await getCurrentTab();
-  const currentTabId = currentTab ? currentTab.id : undefined;
-
-  const toSuspend = allTabs.filter(tab =>
-    canSuspend(tab, {
-      protectActive: settings.protectActive,
-      protectPinned: settings.protectPinned,
-      protectMedia: settings.protectMedia,
-      protectLocalUrls: settings.protectLocalUrls,
-      warnFormData: settings.warnFormData,
-      currentTabId
-    })
-  );
-
-  const BATCH_SIZE = 5;
-  for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
-    const batch = toSuspend.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(tab =>
-      freezeTab(tab)
-        .then(() => logHistory('suspend', tab))
-        .catch(err => console.error('Suspend on minimize failed for tab', tab.id, err))
-    ));
+  // WINDOW_ID_NONE (-1) means all Chrome windows lost focus (e.g. user switched to another app)
+  // In that case, suspend tabs in the previously focused window
+  if (windowId === chrome.windows.WINDOW_ID_NONE) {
+    if (lastFocusedWindowId !== null) {
+      await suspendTabsInWindow(lastFocusedWindowId, settings);
+    }
+    return;
   }
 
-  if (toSuspend.length > 0) {
-    await updateBadge();
+  // A new Chrome window gained focus. Suspend tabs in the previously focused window
+  // (if there was one and it's different from the new one)
+  if (lastFocusedWindowId !== null && lastFocusedWindowId !== windowId) {
+    await suspendTabsInWindow(lastFocusedWindowId, settings);
+  }
+
+  // Update tracking
+  lastFocusedWindowId = windowId;
+}
+
+async function suspendTabsInWindow(windowId, settings) {
+  try {
+    const tabs = await new Promise((resolve) => {
+      chrome.tabs.query({ windowId }, (result) => {
+        if (chrome.runtime.lastError) resolve([]);
+        else resolve(result || []);
+      });
+    });
+
+    if (!tabs.length) return;
+
+    // Get the active tab in the unfocused window to respect protectActive
+    const activeTab = tabs.find(t => t.active);
+    const currentTabId = activeTab ? activeTab.id : undefined;
+
+    const toSuspend = tabs.filter(tab =>
+      canSuspend(tab, {
+        protectActive: settings.protectActive,
+        protectPinned: settings.protectPinned,
+        protectMedia: settings.protectMedia,
+        protectLocalUrls: settings.protectLocalUrls,
+        warnFormData: settings.warnFormData,
+        currentTabId
+      })
+    );
+
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
+      const batch = toSuspend.slice(i, i + BATCH_SIZE);
+      await Promise.all(batch.map(tab =>
+        freezeTab(tab)
+          .then(() => logHistory('suspend', tab))
+          .catch(err => console.error('Suspend on unfocus failed for tab', tab.id, err))
+      ));
+    }
+
+    if (toSuspend.length > 0) {
+      await updateBadge();
+    }
+  } catch (err) {
+    console.error('suspendTabsInWindow error:', err);
   }
 }
 

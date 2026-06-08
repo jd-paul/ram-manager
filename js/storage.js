@@ -6,7 +6,7 @@ const DEFAULT_SETTINGS = {
   suspendAfterMinutes: 30,
   protectMedia: true,
   protectPinned: true,
-  protectActive: true,
+  protectActive: false,
   protectLocalUrls: true,
   warnFormData: true,
   suspendOnMinimize: false,

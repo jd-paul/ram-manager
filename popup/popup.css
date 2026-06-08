@@ -2,8 +2,6 @@
 
 .popup-container {
   width: 380px;
-  min-height: 500px;
-  max-height: 600px;
   display: flex;
   flex-direction: column;
   padding: var(--space-lg);

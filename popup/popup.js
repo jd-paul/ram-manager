@@ -89,7 +89,7 @@ async function loadCurrentTabStatus() {
 
     const settings = await getSettings();
     const suspendable = canSuspend(tab, {
-      protectActive: false,
+      protectActive: settings.protectActive,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
@@ -122,7 +122,7 @@ async function handleSuspendCurrent() {
 
     const settings = await getSettings();
     const suspendable = canSuspend(tab, {
-      protectActive: false,
+      protectActive: settings.protectActive,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
@@ -179,7 +179,7 @@ async function handleSuspendAll() {
     const toSuspend = allTabs.filter((tab) => {
       if (
         !canSuspend(tab, {
-          protectActive: false,
+          protectActive: settings.protectActive,
           protectPinned: settings.protectPinned,
           protectMedia: settings.protectMedia,
           protectLocalUrls: settings.protectLocalUrls,
