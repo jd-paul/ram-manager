@@ -86,6 +86,7 @@ export function canSuspend(tab, options = {}) {
     protectActive = true,
     protectPinned = true,
     protectMedia = true,
+    protectLocalUrls = true,
     warnFormData = true,
     currentTabId
   } = options;
@@ -103,6 +104,22 @@ export function canSuspend(tab, options = {}) {
   // Protect tabs with audible media
   if (protectMedia && tab.audible === true) {
     return false;
+  }
+
+  // Protect local / development URLs
+  if (protectLocalUrls && tab.url) {
+    const urlObj = new URL(tab.url);
+    const hostname = urlObj.hostname;
+    // localhost
+    if (hostname === 'localhost') return false;
+    // 127.0.0.1 / loopback
+    if (hostname === '127.0.0.1' || hostname.startsWith('127.')) return false;
+    // IPv4 private networks: 10.x.x.x, 172.16-31.x.x, 192.168.x.x
+    if (/^10\./.test(hostname)) return false;
+    if (/^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname)) return false;
+    if (/^192\.168\./.test(hostname)) return false;
+    // file:// already blocked above, but keep explicit for clarity
+    if (tab.url.startsWith('file://')) return false;
   }
 
   // Lightweight heuristic: protect likely form pages when warnFormData is enabled

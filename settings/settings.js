@@ -11,6 +11,7 @@ import {
   getSavedLightThemeAsync,
   getSavedDarkThemeAsync,
 } from '../js/theme.js';
+import { loadSettingsIntoUI, bindToggle, bindSelect } from '../js/settings-ui.js';
 
 /* -------------------------------------------------------------------------- */
 /* DOM refs                                                                   */
@@ -23,7 +24,9 @@ const els = {
   protectMedia: document.getElementById('protect-media'),
   protectPinned: document.getElementById('protect-pinned'),
   protectActive: document.getElementById('protect-active'),
+  protectLocalUrls: document.getElementById('protect-local-urls'),
   warnFormData: document.getElementById('warn-form-data'),
+  suspendOnMinimize: document.getElementById('suspend-on-minimize'),
   whitelistInput: document.getElementById('whitelist-input'),
   whitelistAdd: document.getElementById('whitelist-add'),
   whitelistHint: document.getElementById('whitelist-hint'),
@@ -64,35 +67,17 @@ async function init() {
 /* -------------------------------------------------------------------------- */
 
 async function loadSettings() {
-  currentSettings = await getSettings();
-
-  // Auto Suspend
-  els.autoSuspendToggle.checked = currentSettings.autoSuspendEnabled ?? true;
+  currentSettings = await loadSettingsIntoUI(els);
   toggleTimerRow(els.autoSuspendToggle.checked);
-  const timerValue = currentSettings.suspendAfterMinutes ?? 30;
-  els.suspendTimer.value = String(timerValue);
-
-  // Protection
-  els.protectMedia.checked = currentSettings.protectMedia ?? true;
-  els.protectPinned.checked = currentSettings.protectPinned ?? true;
-  els.protectActive.checked = currentSettings.protectActive ?? true;
-  els.warnFormData.checked = currentSettings.warnFormData ?? true;
 
   // Display — theme mode + flavours
   populateFlavorSelects();
-
-  const savedMode = currentSettings.theme ?? 'system';
-  els.themeModeSelect.value = savedMode;
-  updateFlavorVisibility(savedMode);
+  updateFlavorVisibility(currentSettings.theme ?? 'system');
 
   const savedLight = await getSavedLightThemeAsync();
   const savedDark = await getSavedDarkThemeAsync();
   els.lightFlavorSelect.value = savedLight;
   els.darkFlavorSelect.value = savedDark;
-
-  els.badgeCountToggle.checked = currentSettings.badgeCountEnabled ?? true;
-  els.tabIconToggle.checked = currentSettings.changeTabIconWhenSuspended ?? true;
-  els.autoRestoreToggle.checked = currentSettings.autoRestore ?? false;
 
   // Whitelist
   whitelist = (await syncGet('whitelist')) || [];
@@ -285,7 +270,8 @@ async function importData(file) {
     // Known/expected keys whitelist
     const knownSyncKeys = new Set([
       'autoSuspendEnabled', 'suspendAfterMinutes', 'protectMedia', 'protectPinned',
-      'protectActive', 'warnFormData', 'theme', 'autoRestore', 'badgeCountEnabled',
+      'protectActive', 'protectLocalUrls', 'warnFormData', 'suspendOnMinimize',
+      'theme', 'autoRestore', 'badgeCountEnabled',
       'changeTabIconWhenSuspended', 'whitelist'
     ]);
     const knownLocalKeys = new Set([
@@ -362,26 +348,17 @@ function bindEvents() {
   // Auto Suspend
   els.autoSuspendToggle.addEventListener('change', async (e) => {
     toggleTimerRow(e.target.checked);
-    await saveSetting('autoSuspendEnabled', e.target.checked);
   });
 
-  els.suspendTimer.addEventListener('change', async (e) => {
-    await saveSetting('suspendAfterMinutes', Number(e.target.value));
-  });
-
-  // Protection
-  els.protectMedia.addEventListener('change', async (e) => {
-    await saveSetting('protectMedia', e.target.checked);
-  });
-  els.protectPinned.addEventListener('change', async (e) => {
-    await saveSetting('protectPinned', e.target.checked);
-  });
-  els.protectActive.addEventListener('change', async (e) => {
-    await saveSetting('protectActive', e.target.checked);
-  });
-  els.warnFormData.addEventListener('change', async (e) => {
-    await saveSetting('warnFormData', e.target.checked);
-  });
+  // Shared bindings (from settings-ui.js)
+  bindToggle(els.autoSuspendToggle, 'autoSuspendEnabled');
+  bindSelect(els.suspendTimer, 'suspendAfterMinutes', 'number');
+  bindToggle(els.protectMedia, 'protectMedia');
+  bindToggle(els.protectPinned, 'protectPinned');
+  bindToggle(els.protectActive, 'protectActive');
+  bindToggle(els.protectLocalUrls, 'protectLocalUrls');
+  bindToggle(els.warnFormData, 'warnFormData');
+  bindToggle(els.suspendOnMinimize, 'suspendOnMinimize');
 
   // Display — theme mode
   els.themeModeSelect.addEventListener('change', async (e) => {
@@ -405,8 +382,11 @@ function bindEvents() {
   els.lightFlavorSelect.addEventListener('change', async (e) => {
     const flavor = e.target.value;
     await saveLightThemeFlavor(flavor);
-    if (els.themeModeSelect.value === 'light' || els.themeModeSelect.value === 'system') {
+    const mode = els.themeModeSelect.value;
+    if (mode === 'light') {
       await applyTheme(flavor);
+    } else if (mode === 'system') {
+      await applyTheme('system');
     }
   });
 
@@ -414,20 +394,17 @@ function bindEvents() {
   els.darkFlavorSelect.addEventListener('change', async (e) => {
     const flavor = e.target.value;
     await saveDarkThemeFlavor(flavor);
-    if (els.themeModeSelect.value === 'dark' || els.themeModeSelect.value === 'system') {
+    const mode = els.themeModeSelect.value;
+    if (mode === 'dark') {
       await applyTheme(flavor);
+    } else if (mode === 'system') {
+      await applyTheme('system');
     }
   });
 
-  els.badgeCountToggle.addEventListener('change', async (e) => {
-    await saveSetting('badgeCountEnabled', e.target.checked);
-  });
-  els.tabIconToggle.addEventListener('change', async (e) => {
-    await saveSetting('changeTabIconWhenSuspended', e.target.checked);
-  });
-  els.autoRestoreToggle.addEventListener('change', async (e) => {
-    await saveSetting('autoRestore', e.target.checked);
-  });
+  bindToggle(els.badgeCountToggle, 'badgeCountEnabled');
+  bindToggle(els.tabIconToggle, 'changeTabIconWhenSuspended');
+  bindToggle(els.autoRestoreToggle, 'autoRestore');
 
   // Whitelist
   els.whitelistAdd.addEventListener('click', addWhitelistDomain);

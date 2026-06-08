@@ -86,6 +86,7 @@ async function handleAutoSuspend() {
       protectActive: settings.protectActive,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
       currentTabId
     })) {
@@ -161,6 +162,7 @@ async function handleContextMenuClick(info, tab) {
       protectActive: false,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData
     })) {
       return;
@@ -183,6 +185,7 @@ async function handleContextMenuClick(info, tab) {
       protectActive: settings.protectActive,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
       currentTabId: targetTabId
     }));
@@ -219,7 +222,8 @@ async function handleSuspendActiveTab() {
   if (!canSuspend(tab, {
     protectActive: false,
     protectPinned: settings.protectPinned,
-    protectMedia: settings.protectMedia
+    protectMedia: settings.protectMedia,
+    protectLocalUrls: settings.protectLocalUrls
   })) {
     return;
   }
@@ -289,6 +293,51 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     updateBadge().catch(err => console.error('updateBadge error:', err));
   }
 });
+
+/* -------------------------------------------------------------------------- */
+/* Suspend on minimize (window focus change)                                  */
+/* -------------------------------------------------------------------------- */
+
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  handleWindowFocusChanged(windowId).catch(err => console.error('onFocusChanged error:', err));
+});
+
+async function handleWindowFocusChanged(windowId) {
+  // windowId === chrome.windows.WINDOW_ID_NONE means all windows lost focus
+  if (windowId !== chrome.windows.WINDOW_ID_NONE) return;
+
+  const settings = await getSettings();
+  if (!settings.suspendOnMinimize) return;
+
+  const allTabs = await getAllTabs();
+  const currentTab = await getCurrentTab();
+  const currentTabId = currentTab ? currentTab.id : undefined;
+
+  const toSuspend = allTabs.filter(tab =>
+    canSuspend(tab, {
+      protectActive: settings.protectActive,
+      protectPinned: settings.protectPinned,
+      protectMedia: settings.protectMedia,
+      protectLocalUrls: settings.protectLocalUrls,
+      warnFormData: settings.warnFormData,
+      currentTabId
+    })
+  );
+
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
+    const batch = toSuspend.slice(i, i + BATCH_SIZE);
+    await Promise.all(batch.map(tab =>
+      freezeTab(tab)
+        .then(() => logHistory('suspend', tab))
+        .catch(err => console.error('Suspend on minimize failed for tab', tab.id, err))
+    ));
+  }
+
+  if (toSuspend.length > 0) {
+    await updateBadge();
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Startup                                                                    */

@@ -37,6 +37,74 @@
       <button class="btn btn-secondary" id="btn-restore-all" type="button">Restore All</button>
     </section>
 
+    <section class="toggles-section" id="toggles-section">
+      <button class="toggles-header" id="toggles-header" type="button" aria-expanded="false">
+        <span class="toggles-title">Quick Settings</span>
+        <span class="toggles-chevron" id="toggles-chevron">▸</span>
+      </button>
+      <div class="toggles-body" id="toggles-body" hidden>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Auto Suspend</span>
+            <span class="toggle-desc">Suspend inactive tabs automatically</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="auto-suspend-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row toggle-row--inline" id="suspend-timer-row">
+          <label for="suspend-timer">After</label>
+          <select id="suspend-timer">
+            <option value="5">5 min</option>
+            <option value="15">15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">60 min</option>
+          </select>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Protect Media</span>
+            <span class="toggle-desc">Don't suspend tabs with audio</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-media">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Protect Pinned</span>
+            <span class="toggle-desc">Don't suspend pinned tabs</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-pinned">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Protect Local URLs</span>
+            <span class="toggle-desc">Don't suspend localhost / private nets</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-local-urls">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Suspend on Minimize</span>
+            <span class="toggle-desc">Suspend tabs when window loses focus</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="suspend-on-minimize">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
     <section class="links-section">
       <a class="link" id="link-dashboard" href="#">Dashboard</a>
       <a class="link" id="link-settings" href="#">Settings</a>

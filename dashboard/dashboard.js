@@ -406,52 +406,6 @@ async function loadRecentActivity() {
   }
 }
 
-async function loadRecentActivity() {
-  const list = els.activityList;
-  if (!list) return;
-
-  try {
-    const history = (await localGet('suspensionHistory')) || [];
-    const recent = history.slice(-10).reverse();
-
-    list.innerHTML = '';
-
-    if (recent.length === 0) {
-      const empty = document.createElement('li');
-      empty.className = 'activity-empty';
-      empty.textContent = 'No recent activity.';
-      list.appendChild(empty);
-      return;
-    }
-
-    for (const entry of recent) {
-      const li = document.createElement('li');
-      li.className = 'activity-item';
-
-      const text = document.createElement('span');
-      text.className = 'activity-text';
-      const action = entry.action === 'suspend' ? 'Suspended' : entry.action === 'restore' ? 'Restored' : entry.action || 'Action';
-      const domain = entry.domain || entry.url || 'unknown';
-      text.textContent = `${action} — ${domain}`;
-
-      const time = document.createElement('span');
-      time.className = 'activity-time';
-      time.textContent = formatTimeAgo(entry.timestamp);
-
-      li.appendChild(text);
-      li.appendChild(time);
-      list.appendChild(li);
-    }
-  } catch (err) {
-    console.error('Dashboard: failed to load activity:', err);
-    list.innerHTML = '';
-    const empty = document.createElement('li');
-    empty.className = 'activity-empty';
-    empty.textContent = 'Unable to load activity.';
-    list.appendChild(empty);
-  }
-}
-
 /* -------------------------------------------------------------------------- */
 /* Weekly Savings Storage                                                     */
 /* -------------------------------------------------------------------------- */

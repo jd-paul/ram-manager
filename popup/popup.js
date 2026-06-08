@@ -12,6 +12,7 @@ import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 import { logHistory, updateBadge } from "../js/history.js";
 import { getDomain, normalizeDomain, isWhitelisted } from "../js/utils.js";
+import { loadSettingsIntoUI, bindToggle, bindSelect } from "../js/settings-ui.js";
 
 const els = {};
 
@@ -27,6 +28,18 @@ function initElements() {
   els.linkDashboard = document.getElementById("link-dashboard");
   els.linkSettings = document.getElementById("link-settings");
   els.shortcutHint = document.getElementById("shortcut-hint");
+
+  // Toggles
+  els.togglesHeader = document.getElementById("toggles-header");
+  els.togglesBody = document.getElementById("toggles-body");
+  els.togglesChevron = document.getElementById("toggles-chevron");
+  els.autoSuspendToggle = document.getElementById("auto-suspend-toggle");
+  els.suspendTimer = document.getElementById("suspend-timer");
+  els.suspendTimerRow = document.getElementById("suspend-timer-row");
+  els.protectMedia = document.getElementById("protect-media");
+  els.protectPinned = document.getElementById("protect-pinned");
+  els.protectLocalUrls = document.getElementById("protect-local-urls");
+  els.suspendOnMinimize = document.getElementById("suspend-on-minimize");
 }
 
 async function loadTabStats() {
@@ -74,6 +87,7 @@ async function loadCurrentTabStatus() {
       protectActive: false,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
     });
 
@@ -106,6 +120,7 @@ async function handleSuspendCurrent() {
       protectActive: false,
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
+      protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
       currentTabId: tab.id,
     });
@@ -161,6 +176,7 @@ async function handleSuspendAll() {
         protectActive: false,
         protectPinned: settings.protectPinned,
         protectMedia: settings.protectMedia,
+        protectLocalUrls: settings.protectLocalUrls,
         warnFormData: settings.warnFormData,
         currentTabId,
       })) {
@@ -222,6 +238,53 @@ async function loadShortcutHint() {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/* Toggles UI helpers                                                         */
+/* -------------------------------------------------------------------------- */
+
+function toggleTimerRow(enabled) {
+  if (!els.suspendTimerRow) return;
+  els.suspendTimerRow.style.opacity = enabled ? '1' : '0.5';
+  els.suspendTimerRow.style.pointerEvents = enabled ? 'auto' : 'none';
+}
+
+function bindToggles() {
+  // Collapsible header
+  if (els.togglesHeader && els.togglesBody) {
+    els.togglesHeader.addEventListener('click', () => {
+      const isHidden = els.togglesBody.hasAttribute('hidden');
+      if (isHidden) {
+        els.togglesBody.removeAttribute('hidden');
+        els.togglesHeader.setAttribute('aria-expanded', 'true');
+        if (els.togglesChevron) els.togglesChevron.textContent = '▾';
+      } else {
+        els.togglesBody.setAttribute('hidden', '');
+        els.togglesHeader.setAttribute('aria-expanded', 'false');
+        if (els.togglesChevron) els.togglesChevron.textContent = '▸';
+      }
+    });
+  }
+
+  // Auto-suspend toggle also controls timer row visibility
+  if (els.autoSuspendToggle) {
+    els.autoSuspendToggle.addEventListener('change', (e) => {
+      toggleTimerRow(e.target.checked);
+    });
+  }
+
+  // Shared bindings
+  bindToggle(els.autoSuspendToggle, 'autoSuspendEnabled');
+  bindSelect(els.suspendTimer, 'suspendAfterMinutes', 'number');
+  bindToggle(els.protectMedia, 'protectMedia');
+  bindToggle(els.protectPinned, 'protectPinned');
+  bindToggle(els.protectLocalUrls, 'protectLocalUrls');
+  bindToggle(els.suspendOnMinimize, 'suspendOnMinimize');
+}
+
+/* -------------------------------------------------------------------------- */
+/* Init                                                                       */
+/* -------------------------------------------------------------------------- */
+
 async function init() {
   initElements();
   await initTheme();
@@ -230,7 +293,12 @@ async function init() {
     loadMemoryInfo(),
     loadCurrentTabStatus(),
     loadShortcutHint(),
+    loadSettingsIntoUI(els),
   ]);
+
+  // Apply timer row state after settings loaded
+  toggleTimerRow(els.autoSuspendToggle ? els.autoSuspendToggle.checked : true);
+  bindToggles();
 
   if (els.btnSuspendCurrent) els.btnSuspendCurrent.addEventListener("click", handleSuspendCurrent);
   if (els.btnSuspendAll) els.btnSuspendAll.addEventListener("click", handleSuspendAll);
