@@ -38,6 +38,7 @@ function initElements() {
   els.suspendTimerRow = document.getElementById("suspend-timer-row");
   els.protectMedia = document.getElementById("protect-media");
   els.protectPinned = document.getElementById("protect-pinned");
+  els.protectActive = document.getElementById("protect-active");
   els.protectLocalUrls = document.getElementById("protect-local-urls");
   els.suspendOnMinimize = document.getElementById("suspend-on-minimize");
 }
@@ -277,6 +278,7 @@ function bindToggles() {
   bindSelect(els.suspendTimer, 'suspendAfterMinutes', 'number');
   bindToggle(els.protectMedia, 'protectMedia');
   bindToggle(els.protectPinned, 'protectPinned');
+  bindToggle(els.protectActive, 'protectActive');
   bindToggle(els.protectLocalUrls, 'protectLocalUrls');
   bindToggle(els.suspendOnMinimize, 'suspendOnMinimize');
 }
