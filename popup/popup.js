@@ -16,6 +16,7 @@ import {
   loadSettingsIntoUI,
   bindToggle,
   bindSelect,
+  saveSetting,
 } from "../js/settings-ui.js";
 
 const els = {};
