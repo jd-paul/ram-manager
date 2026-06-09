@@ -64,17 +64,21 @@ async function loadMemoryInfo() {
   try {
     const savedBytes = await getSavedMemoryToday();
     const formatted = formatBytes(savedBytes);
-    els.savedMemory.textContent = formatted;
+    if (els.savedMemory) {
+      els.savedMemory.textContent = formatted;
+    }
     if (els.savedMemoryPillText) {
       const mb = (savedBytes / (1024 * 1024)).toFixed(1);
       els.savedMemoryPillText.textContent = `${mb} MB saved`;
     }
-    els.estimatedNote.hidden = true;
+    if (els.estimatedNote) {
+      els.estimatedNote.hidden = true;
+    }
   } catch (err) {
     console.error("Failed to load memory info:", err);
-    els.savedMemory.textContent = "—";
+    if (els.savedMemory) els.savedMemory.textContent = "—";
     if (els.savedMemoryPillText) els.savedMemoryPillText.textContent = "0 MB saved";
-    els.estimatedNote.hidden = true;
+    if (els.estimatedNote) els.estimatedNote.hidden = true;
   }
 }
 
@@ -84,7 +88,7 @@ async function loadCurrentTabStatus() {
     if (!tab) {
       els.currentTabTitle.textContent = "No active tab";
       els.currentTabStatus.textContent = "—";
-      els.currentTabStatus.className = "current-tab-status";
+      els.currentTabStatus.className = "status-pill";
       return;
     }
 
@@ -102,16 +106,16 @@ async function loadCurrentTabStatus() {
 
     if (suspendable) {
       els.currentTabStatus.textContent = "can suspend";
-      els.currentTabStatus.className = "current-tab-status can-suspend";
+      els.currentTabStatus.className = "status-pill can-suspend";
     } else {
       els.currentTabStatus.textContent = "cannot suspend";
-      els.currentTabStatus.className = "current-tab-status cannot-suspend";
+      els.currentTabStatus.className = "status-pill cannot-suspend";
     }
   } catch (err) {
     console.error("Failed to load current tab status:", err);
     els.currentTabTitle.textContent = "—";
     els.currentTabStatus.textContent = "—";
-    els.currentTabStatus.className = "current-tab-status";
+    els.currentTabStatus.className = "status-pill";
   }
 }
 
@@ -226,8 +230,9 @@ async function handleSuspendAll() {
 
 function openPage(path) {
   const url = chrome.runtime.getURL(path);
-  chrome.tabs.create({ url });
-  window.close();
+  chrome.tabs.create({ url }, () => {
+    window.close();
+  });
 }
 
 async function loadShortcutHint() {
