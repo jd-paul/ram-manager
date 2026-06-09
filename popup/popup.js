@@ -53,10 +53,14 @@ async function loadTabStats() {
     ]);
     const total = allTabs.length;
     const suspended = suspendedTabs.length;
-    els.suspendedCount.textContent = `${suspended} / ${total}`;
+    if (els.suspendedCount) {
+      els.suspendedCount.textContent = `${suspended} / ${total}`;
+    }
   } catch (err) {
     console.error("Failed to load tab stats:", err);
-    els.suspendedCount.textContent = "— / —";
+    if (els.suspendedCount) {
+      els.suspendedCount.textContent = "— / —";
+    }
   }
 }
 
