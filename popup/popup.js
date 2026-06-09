@@ -38,6 +38,7 @@ function initElements() {
   els.togglesHeader = document.getElementById("toggles-header");
   els.togglesBody = document.getElementById("toggles-body");
   els.togglesChevron = document.getElementById("toggles-chevron");
+  els.togglesSection = document.getElementById("toggles-section");
   els.autoSuspendToggle = document.getElementById("auto-suspend-toggle");
   els.suspendTimer = document.getElementById("suspend-timer");
   els.suspendTimerRow = document.getElementById("suspend-timer-row");
@@ -271,6 +272,9 @@ function toggleQuickSettings() {
   const header = document.getElementById("toggles-header");
   const isCollapsed = section.classList.toggle("is-collapsed");
   header.setAttribute("aria-expanded", String(!isCollapsed));
+
+  // Persist the user's preference
+  saveSetting("quickSettingsCollapsed", isCollapsed);
 }
 
 function bindToggles() {

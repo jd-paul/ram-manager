@@ -57,6 +57,14 @@ export async function loadSettingsIntoUI(els) {
     els.themeModeSelect.value = settings.theme ?? 'system';
   }
 
+  // Quick Settings collapsed state
+  if (els.togglesSection && settings.quickSettingsCollapsed) {
+    els.togglesSection.classList.add('is-collapsed');
+    if (els.togglesHeader) {
+      els.togglesHeader.setAttribute('aria-expanded', 'false');
+    }
+  }
+
   return settings;
 }
 
