@@ -44,10 +44,21 @@ const els = {
   importData: document.getElementById('import-data'),
   clearStats: document.getElementById('clear-stats'),
   dataHint: document.getElementById('data-hint'),
+  linkDashboard: document.getElementById('link-dashboard'),
 };
 
 let currentSettings = {};
 let whitelist = [];
+
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
+
+function openPage(page) {
+  if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+    chrome.tabs.create({ url: chrome.runtime.getURL(page) });
+  }
+}
 
 /* -------------------------------------------------------------------------- */
 /* Init                                                                       */
@@ -381,6 +392,14 @@ function toggleTimerRow(enabled) {
 /* -------------------------------------------------------------------------- */
 
 function bindEvents() {
+  // Header navigation
+  if (els.linkDashboard) {
+    els.linkDashboard.addEventListener('click', (e) => {
+      e.preventDefault();
+      openPage('dashboard/dashboard.html');
+    });
+  }
+
   // Auto Suspend
   els.autoSuspendToggle.addEventListener('change', async (e) => {
     toggleTimerRow(e.target.checked);

@@ -9,256 +9,257 @@
   <link rel="stylesheet" href="../css/base.css">
   <link rel="stylesheet" href="settings.css">
 </head>
-<body class="theme-light">
-  <div class="settings-container">
-    <header class="settings-header">
-      <img src="../images/logo-with-text.png" alt="RAM Manager" class="settings-logo" width="180">
-      <div class="header-text">
-        <p class="settings-subtitle">Configure how tabs are suspended and protected.</p>
+<body>
+  <header class="dashboard-header">
+    <div class="header-left">
+      <img src="../images/logo-with-text.png" alt="RAM Manager" class="dashboard-logo" width="180">
+      <span class="header-subtitle">Settings</span>
+    </div>
+    <div class="header-right">
+      <a id="link-dashboard" class="header-link" href="#">Dashboard</a>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+    <!-- Auto Suspend -->
+    <section class="card setting-card" id="section-auto-suspend">
+      <div class="section-header">
+        <i data-lucide="timer" class="lucide section-icon"></i>
+        <div class="section-title-group">
+          <h2>Auto Suspend</h2>
+          <p>Automatically suspend idle tabs after a period of inactivity.</p>
+        </div>
       </div>
-    </header>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Enable Auto Suspend</span>
+          <span class="setting-desc">Automatically suspend inactive tabs after a period of time</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="auto-suspend-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--inline" id="suspend-timer-row">
+        <label for="suspend-timer">Suspend after</label>
+        <select id="suspend-timer">
+          <option value="5">5 minutes</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="60">60 minutes</option>
+        </select>
+      </div>
+    </section>
 
-    <main class="settings-body">
-      <!-- Auto Suspend -->
-      <section class="setting-section" id="section-auto-suspend">
-        <div class="section-header">
-          <i data-lucide="timer" class="lucide section-icon"></i>
-          <div class="section-title-group">
-            <h2>Auto Suspend</h2>
-            <p>Automatically suspend idle tabs after a period of inactivity.</p>
-          </div>
+    <!-- Tab Protection -->
+    <section class="card setting-card" id="section-protection">
+      <div class="section-header">
+        <i data-lucide="shield" class="lucide section-icon"></i>
+        <div class="section-title-group">
+          <h2>Tab Protection</h2>
+          <p>Prevent certain types of tabs from being suspended.</p>
         </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Enable Auto Suspend</span>
-            <span class="setting-desc">Automatically suspend inactive tabs after a period of time</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="auto-suspend-toggle">
-            <span class="toggle-slider"></span>
-          </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Media Tabs</span>
+          <span class="setting-desc">Don't suspend tabs playing audio or video</span>
         </div>
-        <div class="setting-row setting-row--inline" id="suspend-timer-row">
-          <label for="suspend-timer">Suspend after</label>
-          <select id="suspend-timer">
-            <option value="5">5 minutes</option>
-            <option value="15">15 minutes</option>
-            <option value="30">30 minutes</option>
-            <option value="60">60 minutes</option>
-          </select>
+        <label class="toggle">
+          <input type="checkbox" id="protect-media">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Pinned Tabs</span>
+          <span class="setting-desc">Don't suspend pinned tabs</span>
         </div>
-      </section>
+        <label class="toggle">
+          <input type="checkbox" id="protect-pinned">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Active Tab</span>
+          <span class="setting-desc">Never suspend the currently active tab</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-active">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Local URLs</span>
+          <span class="setting-desc">Don't suspend localhost, 127.0.0.1, file://, or private network addresses</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-local-urls">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Warn About Form Data</span>
+          <span class="setting-desc">Show warning before suspending tabs with unsaved form data</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="warn-form-data">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Suspend on Minimize</span>
+          <span class="setting-desc">Suspend tabs when their window loses focus</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="suspend-on-minimize">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </section>
 
-      <!-- Tab Protection -->
-      <section class="setting-section" id="section-protection">
-        <div class="section-header">
-          <i data-lucide="shield" class="lucide section-icon"></i>
-          <div class="section-title-group">
-            <h2>Tab Protection</h2>
-            <p>Prevent certain types of tabs from being suspended.</p>
-          </div>
+    <!-- Whitelist -->
+    <section class="card setting-card" id="section-whitelist">
+      <div class="section-header">
+        <i data-lucide="list-checks" class="lucide section-icon"></i>
+        <div class="section-title-group">
+          <h2>Whitelist</h2>
+          <p>Sites in this list will never be suspended.</p>
         </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Protect Media Tabs</span>
-            <span class="setting-desc">Don't suspend tabs playing audio or video</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="protect-media">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Protect Pinned Tabs</span>
-            <span class="setting-desc">Don't suspend pinned tabs</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="protect-pinned">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Protect Active Tab</span>
-            <span class="setting-desc">Never suspend the currently active tab</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="protect-active">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Protect Local URLs</span>
-            <span class="setting-desc">Don't suspend localhost, 127.0.0.1, file://, or private network addresses</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="protect-local-urls">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Warn About Form Data</span>
-            <span class="setting-desc">Show warning before suspending tabs with unsaved form data</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="warn-form-data">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Suspend on Minimize</span>
-            <span class="setting-desc">Suspend tabs when their window loses focus</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="suspend-on-minimize">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </section>
-
-      <!-- Whitelist -->
-      <section class="setting-section" id="section-whitelist">
-        <div class="section-header">
-          <i data-lucide="list-checks" class="lucide section-icon"></i>
-          <div class="section-title-group">
-            <h2>Whitelist</h2>
-            <p>Sites in this list will never be suspended.</p>
-          </div>
-        </div>
-        <div class="setting-row setting-row--input">
-          <div class="input-group">
-            <input type="text" id="whitelist-input" placeholder="Enter domain (e.g. youtube.com)" autocomplete="off">
-            <button type="button" id="whitelist-add" class="btn btn--primary">
-              <i data-lucide="plus" class="lucide btn-icon"></i>
-              Add
-            </button>
-          </div>
-          <p class="input-hint" id="whitelist-hint"></p>
-        </div>
-        <div class="setting-row">
-          <ul class="whitelist-list" id="whitelist-list"></ul>
-          <p class="empty-state" id="whitelist-empty">No sites in whitelist</p>
-        </div>
-      </section>
-
-      <!-- Display -->
-      <section class="setting-section" id="section-display">
-        <div class="section-header">
-          <i data-lucide="monitor" class="lucide section-icon"></i>
-          <div class="section-title-group">
-            <h2>Display</h2>
-            <p>Customise the appearance and behaviour of suspended tabs.</p>
-          </div>
-        </div>
-        <div class="setting-row setting-row--inline">
-          <label for="theme-mode-select">Theme mode</label>
-          <select id="theme-mode-select">
-            <option value="system">Auto (System)</option>
-            <option value="light">Light only</option>
-            <option value="dark">Dark only</option>
-          </select>
-        </div>
-        <div class="setting-row setting-row--inline" id="light-flavor-row">
-          <label for="light-flavor-select">Light flavour</label>
-          <select id="light-flavor-select"></select>
-        </div>
-        <div class="setting-row setting-row--inline" id="dark-flavor-row">
-          <label for="dark-flavor-select">Dark flavour</label>
-          <select id="dark-flavor-select"></select>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Show Badge Count</span>
-            <span class="setting-desc">Display number of suspended tabs on extension icon</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="badge-count-toggle">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Change Tab Icon When Suspended</span>
-            <span class="setting-desc">Show a dimmed overlay on the tab favicon for suspended tabs</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="tab-icon-toggle">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="setting-row setting-row--toggle">
-          <div class="setting-info">
-            <span class="setting-label">Auto Restore on Activate</span>
-            <span class="setting-desc">Automatically restore a suspended tab when you click on it</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="auto-restore-toggle">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </section>
-
-      <!-- Keyboard Shortcut — DISABLED for now -->
-      <!--
-      <section class="setting-section" id="section-shortcut">
-        <div class="section-header">
-          <i data-lucide="keyboard" class="lucide section-icon"></i>
-          <div class="section-title-group">
-            <h2>Keyboard Shortcut</h2>
-            <p>Quickly suspend the currently active tab with a keyboard shortcut.</p>
-          </div>
-        </div>
-        <div class="setting-row setting-row--inline">
-          <span class="setting-desc">Current shortcut to suspend active tab:</span>
-          <div class="shortcut-pills" id="shortcut-display">
-            <span class="key-pill">—</span>
-          </div>
-        </div>
-        <div class="setting-row">
-          <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" class="btn btn--link">
-            <i data-lucide="external-link" class="lucide btn-icon"></i>
-            Change shortcut
-          </a>
-        </div>
-      </section>
-      -->
-
-      <!-- Data Management -->
-      <section class="setting-section" id="section-data">
-        <div class="section-header">
-          <i data-lucide="database" class="lucide section-icon"></i>
-          <div class="section-title-group">
-            <h2>Data Management</h2>
-            <p>Export, import, or clear your extension data.</p>
-          </div>
-        </div>
-        <div class="data-actions">
-          <button type="button" id="export-data" class="btn btn--secondary">
-            <i data-lucide="download" class="lucide btn-icon"></i>
-            Export Data
-          </button>
-          <label class="btn btn--secondary file-input-label">
-            <i data-lucide="upload" class="lucide btn-icon"></i>
-            Import Data
-            <input type="file" id="import-data" accept=".json" hidden>
-          </label>
-          <button type="button" id="clear-stats" class="btn btn--danger">
-            <i data-lucide="trash-2" class="lucide btn-icon"></i>
-            Clear Statistics
+      </div>
+      <div class="setting-row setting-row--input">
+        <div class="input-group">
+          <input type="text" id="whitelist-input" placeholder="Enter domain (e.g. youtube.com)" autocomplete="off">
+          <button type="button" id="whitelist-add" class="btn btn--primary">
+            <i data-lucide="plus" class="lucide btn-icon"></i>
+            Add
           </button>
         </div>
-        <p class="input-hint" id="data-hint"></p>
-      </section>
-    </main>
+        <p class="input-hint" id="whitelist-hint"></p>
+      </div>
+      <div class="setting-row">
+        <ul class="whitelist-list" id="whitelist-list"></ul>
+        <p class="empty-state" id="whitelist-empty">No sites in whitelist</p>
+      </div>
+    </section>
 
-    <footer class="settings-footer">
-      <p>Changes are saved automatically.</p>
-    </footer>
-  </div>
+    <!-- Display -->
+    <section class="card setting-card" id="section-display">
+      <div class="section-header">
+        <i data-lucide="monitor" class="lucide section-icon"></i>
+        <div class="section-title-group">
+          <h2>Display</h2>
+          <p>Customise the appearance and behaviour of suspended tabs.</p>
+        </div>
+      </div>
+      <div class="setting-row setting-row--inline">
+        <label for="theme-mode-select">Theme mode</label>
+        <select id="theme-mode-select">
+          <option value="system">Auto (System)</option>
+          <option value="light">Light only</option>
+          <option value="dark">Dark only</option>
+        </select>
+      </div>
+      <div class="setting-row setting-row--inline" id="light-flavor-row">
+        <label for="light-flavor-select">Light flavour</label>
+        <select id="light-flavor-select"></select>
+      </div>
+      <div class="setting-row setting-row--inline" id="dark-flavor-row">
+        <label for="dark-flavor-select">Dark flavour</label>
+        <select id="dark-flavor-select"></select>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Show Badge Count</span>
+          <span class="setting-desc">Display number of suspended tabs on extension icon</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="badge-count-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Change Tab Icon When Suspended</span>
+          <span class="setting-desc">Show a dimmed overlay on the tab favicon for suspended tabs</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="tab-icon-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Auto Restore on Activate</span>
+          <span class="setting-desc">Automatically restore a suspended tab when you click on it</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="auto-restore-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Keyboard Shortcut — DISABLED for now -->
+    <!--
+    <section class="card setting-card" id="section-shortcut">
+      <div class="section-header">
+        <i data-lucide="keyboard" class="lucide section-icon"></i>
+        <div class="section-title-group">
+          <h2>Keyboard Shortcut</h2>
+          <p>Quickly suspend the currently active tab with a keyboard shortcut.</p>
+        </div>
+      </div>
+      <div class="setting-row setting-row--inline">
+        <span class="setting-desc">Current shortcut to suspend active tab:</span>
+        <div class="shortcut-pills" id="shortcut-display">
+          <span class="key-pill">—</span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <a href="chrome://extensions/shortcuts" target="_blank" rel="noopener noreferrer" class="btn btn--link">
+          <i data-lucide="external-link" class="lucide btn-icon"></i>
+          Change shortcut
+        </a>
+      </div>
+    </section>
+    -->
+
+    <!-- Data Management -->
+    <section class="card setting-card" id="section-data">
+      <div class="section-header">
+        <i data-lucide="database" class="lucide section-icon"></i>
+        <div class="section-title-group">
+          <h2>Data Management</h2>
+          <p>Export, import, or clear your extension data.</p>
+        </div>
+      </div>
+      <div class="data-actions">
+        <button type="button" id="export-data" class="btn btn--secondary">
+          <i data-lucide="download" class="lucide btn-icon"></i>
+          Export Data
+        </button>
+        <label class="btn btn--secondary file-input-label">
+          <i data-lucide="upload" class="lucide btn-icon"></i>
+          Import Data
+          <input type="file" id="import-data" accept=".json" hidden>
+        </label>
+        <button type="button" id="clear-stats" class="btn btn--danger">
+          <i data-lucide="trash-2" class="lucide btn-icon"></i>
+          Clear Statistics
+        </button>
+      </div>
+      <p class="input-hint" id="data-hint"></p>
+    </section>
+  </main>
+
+  <footer class="dashboard-footer">
+    <span>Changes are saved automatically.</span>
+  </footer>
 
   <script type="module" src="settings.js"></script>
 </body>
