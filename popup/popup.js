@@ -49,6 +49,7 @@ function initElements() {
   els.protectPinned = document.getElementById("protect-pinned");
   els.protectActive = document.getElementById("protect-active");
   els.protectLocalUrls = document.getElementById("protect-local-urls");
+  els.autoRestoreToggle = document.getElementById("auto-restore-toggle");
   els.suspendOnMinimize = document.getElementById("suspend-on-minimize");
 }
 
@@ -394,6 +395,7 @@ function bindToggles() {
   bindToggle(els.protectPinned, "protectPinned");
   bindToggle(els.protectActive, "protectActive");
   bindToggle(els.protectLocalUrls, "protectLocalUrls");
+  bindToggle(els.autoRestoreToggle, "autoRestore");
   bindToggle(els.suspendOnMinimize, "suspendOnMinimize");
 }
 
