@@ -1,6 +1,6 @@
 // Popup logic
 
-import { getSettings, syncGet } from "../js/storage.js";
+import { getSettings, syncGet, syncSet } from "../js/storage.js";
 import {
   getAllTabs,
   getSuspendedTabs,
@@ -32,7 +32,14 @@ function initElements() {
   els.btnRestoreAll = document.getElementById("btn-restore-all");
   els.linkDashboard = document.getElementById("link-dashboard");
   els.linkSettings = document.getElementById("link-settings");
-  els.shortcutHint = document.getElementById("shortcut-hint");
+  els.shortcutPills = document.getElementById("kbd-pills");
+
+  // Whitelist
+  els.whitelistInput = document.getElementById("whitelist-input");
+  els.whitelistAdd = document.getElementById("whitelist-add");
+  els.whitelistHint = document.getElementById("whitelist-hint");
+  els.whitelistList = document.getElementById("whitelist-list");
+  els.whitelistEmpty = document.getElementById("whitelist-empty");
 
   // Toggles
   els.autoSuspendToggle = document.getElementById("auto-suspend-toggle");
@@ -81,7 +88,8 @@ async function loadMemoryInfo() {
   } catch (err) {
     console.error("Failed to load memory info:", err);
     if (els.savedMemory) els.savedMemory.textContent = "—";
-    if (els.savedMemoryPillText) els.savedMemoryPillText.textContent = "0 MB saved";
+    if (els.savedMemoryPillText)
+      els.savedMemoryPillText.textContent = "0 MB saved";
     if (els.estimatedNote) els.estimatedNote.hidden = true;
   }
 }
@@ -252,14 +260,120 @@ async function loadShortcutHint() {
       (c) => c.name === "suspend-active-tab",
     );
     if (suspendCommand && suspendCommand.shortcut) {
-      els.shortcutHint.textContent = `Keyboard shortcut: ${suspendCommand.shortcut}`;
+      const parts = suspendCommand.shortcut.split("+");
+      const pillsHtml = parts
+        .map(
+          (part, i) =>
+            `${i > 0 ? '<span class="kbd-plus">+</span>' : ""}<span class="kbd-pill">${part.trim()}</span>`,
+        )
+        .join("");
+      if (els.shortcutPills) {
+        els.shortcutPills.innerHTML = pillsHtml;
+      }
     } else {
-      els.shortcutHint.textContent = "Keyboard shortcut: not set";
+      if (els.shortcutPills) {
+        els.shortcutPills.innerHTML = '<span class="kbd-pill">not set</span>';
+      }
     }
   } catch (err) {
     console.error("Failed to load shortcut hint:", err);
-    els.shortcutHint.textContent = "Keyboard shortcut: —";
+    if (els.shortcutPills) {
+      els.shortcutPills.innerHTML = '<span class="kbd-pill">—</span>';
+    }
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Whitelist helpers                                                          */
+/* -------------------------------------------------------------------------- */
+
+let popupWhitelist = [];
+
+function isValidWhitelistEntry(input) {
+  if (!input || typeof input !== 'string') return false;
+  const trimmed = input.trim();
+  if (!trimmed) return false;
+  if (/^https?:\/\//.test(trimmed)) {
+    try { new URL(trimmed); return true; } catch { return false; }
+  }
+  if (/[\/\?:#@]/.test(trimmed)) return false;
+  if (!trimmed.includes('.')) return false;
+  return true;
+}
+
+function normalizeWhitelistEntry(input) {
+  const trimmed = input.trim();
+  if (/^https?:\/\//.test(trimmed)) return trimmed.toLowerCase();
+  return trimmed.toLowerCase().replace(/^www\./, '');
+}
+
+function getWhitelistDisplayLabel(entry) {
+  if (/^https?:\/\//.test(entry)) {
+    try {
+      const url = new URL(entry);
+      const path = url.pathname + url.search;
+      if (path.length > 30) return url.hostname + path.slice(0, 30) + '...';
+      return url.hostname + path;
+    } catch { return entry; }
+  }
+  return entry;
+}
+
+function showWhitelistHint(message) {
+  if (els.whitelistHint) els.whitelistHint.textContent = message;
+}
+
+async function addPopupWhitelistEntry() {
+  const raw = els.whitelistInput.value;
+  if (!isValidWhitelistEntry(raw)) {
+    showWhitelistHint('Enter a valid domain or URL');
+    return;
+  }
+  const entry = normalizeWhitelistEntry(raw);
+  if (popupWhitelist.includes(entry)) {
+    showWhitelistHint('Already whitelisted');
+    return;
+  }
+  popupWhitelist.push(entry);
+  await syncSet('whitelist', popupWhitelist);
+  els.whitelistInput.value = '';
+  showWhitelistHint('');
+  renderPopupWhitelist();
+}
+
+async function removePopupWhitelistEntry(entry) {
+  popupWhitelist = popupWhitelist.filter((d) => d !== entry);
+  await syncSet('whitelist', popupWhitelist);
+  renderPopupWhitelist();
+}
+
+function renderPopupWhitelist() {
+  if (!els.whitelistList) return;
+  els.whitelistList.innerHTML = '';
+  if (popupWhitelist.length === 0) {
+    if (els.whitelistEmpty) els.whitelistEmpty.style.display = 'block';
+    return;
+  }
+  if (els.whitelistEmpty) els.whitelistEmpty.style.display = 'none';
+  for (const entry of popupWhitelist) {
+    const li = document.createElement('li');
+    li.className = 'whitelist-item';
+    const span = document.createElement('span');
+    span.textContent = getWhitelistDisplayLabel(entry);
+    span.title = entry;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = 'Remove';
+    btn.addEventListener('click', () => removePopupWhitelistEntry(entry));
+    li.appendChild(span);
+    li.appendChild(btn);
+    els.whitelistList.appendChild(li);
+  }
+}
+
+async function loadPopupWhitelist() {
+  popupWhitelist = (await syncGet('whitelist')) || [];
+  renderPopupWhitelist();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -296,6 +410,7 @@ async function init() {
     loadCurrentTabStatus(),
     loadShortcutHint(),
     loadSettingsIntoUI(els),
+    loadPopupWhitelist(),
   ]);
 
   // Apply timer row state after settings loaded
@@ -317,6 +432,15 @@ async function init() {
     els.linkSettings.addEventListener("click", (e) => {
       e.preventDefault();
       openPage("settings/settings.html");
+    });
+  if (els.whitelistAdd)
+    els.whitelistAdd.addEventListener("click", addPopupWhitelistEntry);
+  if (els.whitelistInput)
+    els.whitelistInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addPopupWhitelistEntry();
+      }
     });
 }
 

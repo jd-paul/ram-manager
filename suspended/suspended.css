@@ -53,13 +53,18 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-md);
-  background-color: var(--color-accent);
-  color: var(--color-text-inverse);
-  transition: background-color 0.2s ease;
+  background-color: var(--color-success);
+  color: var(--text-on-accent);
+  transition: background-color 0.2s ease, transform 0.1s ease, filter 0.15s ease;
 }
 
 #btn-restore:hover {
-  background-color: var(--color-accent-hover);
+  filter: brightness(1.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+#btn-restore:active {
+  transform: scale(0.98);
 }
 
 /* Generic button classes used by suspended.html */

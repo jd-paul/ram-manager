@@ -1,19 +1,19 @@
 // Storage wrappers for chrome.storage.local and chrome.storage.sync
 // Promise-based APIs with default settings
 
-const DEFAULT_SETTINGS = {
-  autoSuspendEnabled: true,
+export const DEFAULT_SETTINGS = {
+  autoSuspendEnabled: false,
   suspendAfterMinutes: 30,
   protectMedia: true,
   protectPinned: true,
-  protectActive: false,
+  protectActive: true,
   protectLocalUrls: true,
-  warnFormData: true,
+  warnFormData: false,
   suspendOnMinimize: false,
   theme: 'system',
   autoRestore: false,
-  badgeCountEnabled: true,
-  changeTabIconWhenSuspended: true
+  badgeCountEnabled: false,
+  changeTabIconWhenSuspended: false
 };
 
 function wrapStorageArea(storage) {

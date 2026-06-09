@@ -7,7 +7,7 @@ import {
   canSuspend,
   getCurrentTab
 } from './js/tabs.js';
-import { freezeTab, restoreTab } from './js/suspension.js';
+import { freezeTab, restoreTab, isFrozen } from './js/suspension.js';
 import { logHistory, updateBadge } from './js/history.js';
 import { getDomain, normalizeDomain, isWhitelisted } from './js/utils.js';
 
@@ -218,6 +218,18 @@ async function handleSuspendActiveTab() {
   if (!tab || !tab.id) {
     return;
   }
+
+  // Toggle: restore if frozen, otherwise suspend
+  if (isFrozen(tab)) {
+    try {
+      await restoreTab(tab.id);
+      await updateBadge();
+    } catch (err) {
+      console.error('Keyboard restore failed:', err);
+    }
+    return;
+  }
+
   const settings = await getSettings();
   if (!canSuspend(tab, {
     protectActive: false,
@@ -257,7 +269,7 @@ async function handleTabActivated(tabId) {
     });
   });
 
-  if (tab && tab.discarded) {
+  if (tab && isFrozen(tab)) {
     try {
       await restoreTab(tab.id);
       await updateBadge();

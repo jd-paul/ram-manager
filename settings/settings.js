@@ -1,6 +1,6 @@
 // Settings page logic — auto-saves on change, manages whitelist, themes, shortcuts, and data
 
-import { getSettings, setSettings, syncGet, syncSet, localGetAll, localSet, localRemove } from '../js/storage.js';
+import { getSettings, setSettings, syncGet, syncSet, localGetAll, localSet, localRemove, DEFAULT_SETTINGS } from '../js/storage.js';
 import {
   getLightThemes,
   getDarkThemes,
@@ -43,8 +43,10 @@ const els = {
   exportData: document.getElementById('export-data'),
   importData: document.getElementById('import-data'),
   clearStats: document.getElementById('clear-stats'),
+  resetSettings: document.getElementById('reset-settings'),
   dataHint: document.getElementById('data-hint'),
   linkDashboard: document.getElementById('link-dashboard'),
+  shortcutDisplay: document.getElementById('shortcut-display'),
 };
 
 let currentSettings = {};
@@ -77,6 +79,31 @@ async function init() {
 /* Load settings into UI                                                      */
 /* -------------------------------------------------------------------------- */
 
+async function loadShortcutDisplay() {
+  if (!els.shortcutDisplay) return;
+  try {
+    const commands = await new Promise((resolve) => {
+      if (chrome.commands && chrome.commands.getAll) {
+        chrome.commands.getAll(resolve);
+      } else {
+        resolve([]);
+      }
+    });
+    const suspendCommand = commands.find((c) => c.name === 'suspend-active-tab');
+    if (suspendCommand && suspendCommand.shortcut) {
+      const parts = suspendCommand.shortcut.split('+');
+      els.shortcutDisplay.innerHTML = parts.map((part, i) =>
+        `${i > 0 ? '<span class="key-plus">+</span>' : ''}<span class="key-pill">${part.trim()}</span>`
+      ).join('');
+    } else {
+      els.shortcutDisplay.innerHTML = '<span class="key-pill">not set</span>';
+    }
+  } catch (err) {
+    console.error('Failed to load shortcut display:', err);
+    els.shortcutDisplay.innerHTML = '<span class="key-pill">—</span>';
+  }
+}
+
 async function loadSettings() {
   currentSettings = await loadSettingsIntoUI(els);
   toggleTimerRow(els.autoSuspendToggle.checked);
@@ -93,6 +120,9 @@ async function loadSettings() {
   // Whitelist
   whitelist = (await syncGet('whitelist')) || [];
   renderWhitelist();
+
+  // Keyboard shortcut
+  await loadShortcutDisplay();
 }
 
 function populateFlavorSelects() {
@@ -378,6 +408,21 @@ async function clearStatistics() {
   }
 }
 
+async function resetSettingsToDefault() {
+  if (!confirm('Are you sure you want to reset all settings to their default values? This will not affect your whitelist or statistics.')) {
+    return;
+  }
+
+  try {
+    await setSettings(DEFAULT_SETTINGS);
+    showDataHint('Settings reset to defaults. Reloading...');
+    setTimeout(() => window.location.reload(), 800);
+  } catch (err) {
+    console.error('Reset settings failed:', err);
+    showDataHint('Failed to reset settings: ' + err.message, true);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* UI helpers                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -480,6 +525,9 @@ function bindEvents() {
     }
   });
   els.clearStats.addEventListener('click', clearStatistics);
+  if (els.resetSettings) {
+    els.resetSettings.addEventListener('click', resetSettingsToDefault);
+  }
 }
 
 /* -------------------------------------------------------------------------- */

@@ -2,6 +2,7 @@
 // All restore data is embedded in the URL itself — no storage or tabId needed.
 
 import { initTheme } from '../js/theme.js';
+import { getSettings } from '../js/storage.js';
 
 const params = new URLSearchParams(window.location.search);
 const originalUrl = params.get('url');
@@ -33,6 +34,50 @@ async function init() {
   } else {
     els.favicon.hidden = true;
   }
+
+  await updateTabFavicon();
+}
+
+async function updateTabFavicon() {
+  try {
+    const settings = await getSettings();
+    if (!settings.changeTabIconWhenSuspended) return;
+
+    if (!favicon || !(favicon.startsWith('http://') || favicon.startsWith('https://') || favicon.startsWith('data:'))) {
+      return;
+    }
+
+    const dimmedFavicon = await createDimmedFavicon(favicon);
+    const linkEl = document.querySelector('link[rel="icon"]');
+    if (linkEl) {
+      linkEl.href = dimmedFavicon;
+    }
+  } catch (err) {
+    console.error('Failed to update tab favicon:', err);
+  }
+}
+
+function createDimmedFavicon(faviconUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 32;
+      canvas.height = 32;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 32, 32);
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(0, 0, 32, 32);
+      try {
+        resolve(canvas.toDataURL('image/png'));
+      } catch (e) {
+        resolve(faviconUrl);
+      }
+    };
+    img.onerror = () => resolve(faviconUrl);
+    img.src = faviconUrl;
+  });
 }
 
 async function handleRestore() {
