@@ -23,19 +23,6 @@
       </header>
     </div>
 
-    <section class="status-section">
-      <h2 class="section-title">Tab Status</h2>
-      <div class="status-row">
-        <span class="status-label">Suspended</span>
-        <span class="status-value" id="suspended-count">0 / 0</span>
-      </div>
-      <div class="status-row">
-        <span class="status-label">Saved today</span>
-        <span class="status-value" id="saved-memory">0 B</span>
-      </div>
-      <p class="estimated-note" id="estimated-note" hidden>*Estimated*</p>
-    </section>
-
     <section class="actions-section">
       <button class="btn btn-primary" id="btn-suspend-current" type="button">Suspend Current Tab</button>
       <button class="btn btn-primary" id="btn-suspend-all" type="button">Suspend All</button>
@@ -136,14 +123,29 @@
       </div>
     </section>
 
-    <section class="links-section">
-      <a class="link" id="link-dashboard" href="#">Dashboard</a>
-      <a class="link" id="link-settings" href="#">Settings</a>
-    </section>
-
-    <footer class="popup-footer">
-      <p class="shortcut-hint" id="shortcut-hint">Keyboard shortcut here</p>
-    </footer>
+    <div class="popup-footer-section">
+      <footer class="popup-footer">
+        <div class="popup-footer-links">
+          <a class="footer-link" id="link-dashboard" href="#">
+            <svg class="footer-link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            Dashboard
+          </a>
+          <a class="footer-link" id="link-settings" href="#">
+            <svg class="footer-link-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
+          </a>
+        </div>
+        <p class="shortcut-hint" id="shortcut-hint">Keyboard shortcut here</p>
+      </footer>
+    </div>
   </div>
 
   <script type="module" src="popup.js"></script>
