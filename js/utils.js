@@ -16,11 +16,29 @@ export function normalizeDomain(input) {
   return input.trim().toLowerCase().replace(/^www\./, '');
 }
 
-export function isWhitelisted(domain, whitelist) {
-  const d = normalizeDomain(domain);
+export function isWhitelisted(url, whitelist) {
+  if (!url || !whitelist || !whitelist.length) return false;
+
+  const lowerUrl = url.toLowerCase();
+
   for (const entry of whitelist) {
-    const e = normalizeDomain(entry);
-    if (d === e || d.endsWith('.' + e)) return true;
+    const e = entry.toLowerCase();
+
+    // If entry is a full URL, check if the tab URL starts with it (prefix match)
+    if (/^https?:\/\//.test(e)) {
+      if (lowerUrl.startsWith(e)) return true;
+      continue;
+    }
+
+    // Otherwise treat as domain: exact match or subdomain match
+    try {
+      const urlObj = new URL(lowerUrl);
+      const hostname = urlObj.hostname;
+      if (hostname === e || hostname.endsWith('.' + e)) return true;
+    } catch {
+      // Invalid URL, skip domain matching
+    }
   }
+
   return false;
 }

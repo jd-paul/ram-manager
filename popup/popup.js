@@ -190,7 +190,7 @@ async function handleSuspendAll() {
         return false;
       }
       const domain = getDomain(tab.url);
-      return !isWhitelisted(domain, whitelist);
+      return !isWhitelisted(tab.url, whitelist);
     });
 
     const BATCH_SIZE = 5;
@@ -259,6 +259,13 @@ function toggleTimerRow(enabled) {
   els.suspendTimerRow.style.pointerEvents = enabled ? "auto" : "none";
 }
 
+function toggleQuickSettings() {
+  const section = document.getElementById("toggles-section");
+  const header = document.getElementById("toggles-header");
+  const isCollapsed = section.classList.toggle("is-collapsed");
+  header.setAttribute("aria-expanded", String(!isCollapsed));
+}
+
 function bindToggles() {
   // Shared bindings
   bindToggle(els.autoSuspendToggle, "autoSuspendEnabled");
@@ -268,6 +275,11 @@ function bindToggles() {
   bindToggle(els.protectActive, "protectActive");
   bindToggle(els.protectLocalUrls, "protectLocalUrls");
   bindToggle(els.suspendOnMinimize, "suspendOnMinimize");
+
+  // Quick Settings collapsible
+  if (els.togglesHeader) {
+    els.togglesHeader.addEventListener("click", toggleQuickSettings);
+  }
 }
 
 /* -------------------------------------------------------------------------- */

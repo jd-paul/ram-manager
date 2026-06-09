@@ -135,40 +135,74 @@ async function saveSetting(key, value) {
 /* Whitelist                                                                  */
 /* -------------------------------------------------------------------------- */
 
-function isValidDomain(input) {
-  // Allows IP addresses and localhost intentionally — useful for local dev whitelisting
+function isValidWhitelistEntry(input) {
   if (!input || typeof input !== 'string') return false;
   const trimmed = input.trim();
   if (!trimmed) return false;
+
+  // Allow full URLs (must start with http:// or https://)
+  if (/^https?:\/\//.test(trimmed)) {
+    try {
+      new URL(trimmed);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // Allow domains (legacy behavior)
   if (/[\/\?:#@]/.test(trimmed)) return false;
   if (!trimmed.includes('.')) return false;
   return true;
 }
 
-function normalizeDomain(input) {
-  return input.trim().toLowerCase().replace(/^www\./, '');
+function normalizeWhitelistEntry(input) {
+  const trimmed = input.trim();
+  // If it's a URL, return as-is (lowercased)
+  if (/^https?:\/\//.test(trimmed)) {
+    return trimmed.toLowerCase();
+  }
+  // Otherwise treat as domain
+  return trimmed.toLowerCase().replace(/^www\./, '');
 }
 
-async function addWhitelistDomain() {
+function getWhitelistDisplayLabel(entry) {
+  // If it's a URL, show a shortened version
+  if (/^https?:\/\//.test(entry)) {
+    try {
+      const url = new URL(entry);
+      const path = url.pathname + url.search;
+      if (path.length > 30) {
+        return url.hostname + path.slice(0, 30) + '...';
+      }
+      return url.hostname + path;
+    } catch {
+      return entry;
+    }
+  }
+  return entry;
+}
+
+async function addWhitelistEntry() {
   const raw = els.whitelistInput.value;
-  if (!isValidDomain(raw)) {
-    showHint('Enter a valid domain (e.g. example.com)');
+  if (!isValidWhitelistEntry(raw)) {
+    showHint('Enter a valid domain (e.g. example.com) or URL (e.g. https://youtube.com/watch?v=...)');
     return;
   }
-  const domain = normalizeDomain(raw);
-  if (whitelist.includes(domain)) {
-    showHint('Domain already whitelisted');
+  const entry = normalizeWhitelistEntry(raw);
+  if (whitelist.includes(entry)) {
+    showHint('Already whitelisted');
     return;
   }
-  whitelist.push(domain);
+  whitelist.push(entry);
   await syncSet('whitelist', whitelist);
   els.whitelistInput.value = '';
   showHint('');
   renderWhitelist();
 }
 
-async function removeWhitelistDomain(domain) {
-  whitelist = whitelist.filter((d) => d !== domain);
+async function removeWhitelistEntry(entry) {
+  whitelist = whitelist.filter((d) => d !== entry);
   await syncSet('whitelist', whitelist);
   renderWhitelist();
 }
@@ -181,18 +215,19 @@ function renderWhitelist() {
   }
   els.whitelistEmpty.style.display = 'none';
 
-  for (const domain of whitelist) {
+  for (const entry of whitelist) {
     const li = document.createElement('li');
     li.className = 'whitelist-item';
 
     const span = document.createElement('span');
-    span.textContent = domain;
+    span.textContent = getWhitelistDisplayLabel(entry);
+    span.title = entry; // full entry on hover
 
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'btn btn--danger';
     btn.innerHTML = '<i data-lucide="x" class="lucide btn-icon"></i> Remove';
-    btn.addEventListener('click', () => removeWhitelistDomain(domain));
+    btn.addEventListener('click', () => removeWhitelistEntry(entry));
 
     li.appendChild(span);
     li.appendChild(btn);
@@ -408,11 +443,11 @@ function bindEvents() {
   bindToggle(els.autoRestoreToggle, 'autoRestore');
 
   // Whitelist
-  els.whitelistAdd.addEventListener('click', addWhitelistDomain);
+  els.whitelistAdd.addEventListener('click', addWhitelistEntry);
   els.whitelistInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      addWhitelistDomain();
+      addWhitelistEntry();
     }
   });
 

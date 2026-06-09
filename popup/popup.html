@@ -10,13 +10,18 @@
 
 <body class="theme-light">
   <div class="popup-container">
-    <header class="popup-header">
-      <img src="../images/logo-icon.png" alt="RAM Manager" class="popup-logo" width="160">
-      <div class="current-tab" id="current-tab">
-        <span class="current-tab-title" id="current-tab-title">Don't have current file yet.</span>
-        <span class="current-tab-status" id="current-tab-status">—</span>
-      </div>
-    </header>
+    <div class="popup-header-section">
+      <header class="popup-header">
+        <div class="popup-brand">
+          <img src="../images/logo-icon.png" alt="RAM Manager" class="popup-logo" width="160">
+          <span class="popup-brand-text">RAM Manager</span>
+        </div>
+        <div class="current-tab" id="current-tab">
+          <span class="current-tab-title" id="current-tab-title">Don't have current file yet.</span>
+          <span class="status-pill" id="current-tab-status">—</span>
+        </div>
+      </header>
+    </div>
 
     <section class="status-section">
       <h2 class="section-title">Tab Status</h2>
@@ -38,9 +43,12 @@
     </section>
 
     <section class="toggles-section" id="toggles-section">
-      <div class="toggles-header">
+      <button class="toggles-header" id="toggles-header" type="button" aria-expanded="true" aria-controls="toggles-body">
         <span class="toggles-title">Quick Settings</span>
-      </div>
+        <span class="toggles-chevron" id="toggles-chevron" aria-hidden="true">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </span>
+      </button>
       <div class="toggles-body" id="toggles-body">
         <div class="toggle-row">
           <div class="toggle-info">

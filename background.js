@@ -94,7 +94,7 @@ async function handleAutoSuspend() {
     }
 
     const domain = getDomain(tab.url);
-    if (isWhitelisted(domain, whitelist)) continue;
+    if (isWhitelisted(tab.url, whitelist)) continue;
 
     const last = lastActive[tab.id];
     if (!last) continue;
