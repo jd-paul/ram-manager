@@ -25,6 +25,7 @@ function initElements() {
   els.currentTabStatus = document.getElementById("current-tab-status");
   els.suspendedCount = document.getElementById("suspended-count");
   els.savedMemory = document.getElementById("saved-memory");
+  els.savedMemoryPillText = document.getElementById("saved-memory-pill-text");
   els.estimatedNote = document.getElementById("estimated-note");
   els.btnSuspendCurrent = document.getElementById("btn-suspend-current");
   els.btnSuspendAll = document.getElementById("btn-suspend-all");
@@ -65,11 +66,17 @@ async function loadTabStats() {
 async function loadMemoryInfo() {
   try {
     const savedBytes = await getSavedMemoryToday();
-    els.savedMemory.textContent = formatBytes(savedBytes);
+    const formatted = formatBytes(savedBytes);
+    els.savedMemory.textContent = formatted;
+    if (els.savedMemoryPillText) {
+      const mb = (savedBytes / (1024 * 1024)).toFixed(1);
+      els.savedMemoryPillText.textContent = `${mb} MB saved`;
+    }
     els.estimatedNote.hidden = true;
   } catch (err) {
     console.error("Failed to load memory info:", err);
     els.savedMemory.textContent = "—";
+    if (els.savedMemoryPillText) els.savedMemoryPillText.textContent = "0 MB saved";
     els.estimatedNote.hidden = true;
   }
 }
