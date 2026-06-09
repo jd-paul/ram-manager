@@ -13,8 +13,7 @@ const DEFAULT_SETTINGS = {
   theme: 'system',
   autoRestore: false,
   badgeCountEnabled: true,
-  changeTabIconWhenSuspended: true,
-  quickSettingsCollapsed: true
+  changeTabIconWhenSuspended: true
 };
 
 function wrapStorageArea(storage) {

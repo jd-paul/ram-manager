@@ -16,7 +16,6 @@ import {
   loadSettingsIntoUI,
   bindToggle,
   bindSelect,
-  saveSetting,
 } from "../js/settings-ui.js";
 
 const els = {};
@@ -36,10 +35,6 @@ function initElements() {
   els.shortcutHint = document.getElementById("shortcut-hint");
 
   // Toggles
-  els.togglesHeader = document.getElementById("toggles-header");
-  els.togglesBody = document.getElementById("toggles-body");
-  els.togglesChevron = document.getElementById("toggles-chevron");
-  els.togglesSection = document.getElementById("toggles-section");
   els.autoSuspendToggle = document.getElementById("auto-suspend-toggle");
   els.suspendTimer = document.getElementById("suspend-timer");
   els.suspendTimerRow = document.getElementById("suspend-timer-row");
@@ -268,16 +263,6 @@ function toggleTimerRow(enabled) {
   els.suspendTimerRow.style.pointerEvents = enabled ? "auto" : "none";
 }
 
-function toggleQuickSettings() {
-  const section = document.getElementById("toggles-section");
-  const header = document.getElementById("toggles-header");
-  const isCollapsed = section.classList.toggle("is-collapsed");
-  header.setAttribute("aria-expanded", String(!isCollapsed));
-
-  // Persist the user's preference
-  saveSetting("quickSettingsCollapsed", isCollapsed);
-}
-
 function bindToggles() {
   // Shared bindings
   bindToggle(els.autoSuspendToggle, "autoSuspendEnabled");
@@ -287,11 +272,6 @@ function bindToggles() {
   bindToggle(els.protectActive, "protectActive");
   bindToggle(els.protectLocalUrls, "protectLocalUrls");
   bindToggle(els.suspendOnMinimize, "suspendOnMinimize");
-
-  // Quick Settings collapsible
-  if (els.togglesHeader) {
-    els.togglesHeader.addEventListener("click", toggleQuickSettings);
-  }
 }
 
 /* -------------------------------------------------------------------------- */

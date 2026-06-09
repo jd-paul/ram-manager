@@ -237,47 +237,11 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.toggles-header:hover {
-  background-color: var(--color-bg-hover);
-}
-
-.toggles-header:active {
-  background-color: var(--color-bg-active);
-}
-
-.toggles-chevron {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease;
-  color: var(--color-text-muted);
-}
-
-.toggles-section.is-collapsed .toggles-chevron {
-  transform: rotate(-90deg);
 }
 
 .toggles-body {
   padding: var(--space-sm) var(--space-md);
   background-color: var(--color-bg-primary);
-  transition:
-    max-height 0.25s ease,
-    opacity 0.2s ease,
-    padding 0.2s ease;
-  max-height: 600px;
-  opacity: 1;
-  overflow: hidden;
-}
-
-.toggles-section.is-collapsed .toggles-body {
-  max-height: 0;
-  opacity: 0;
-  padding-top: 0;
-  padding-bottom: 0;
 }
 
 .toggle-row {
