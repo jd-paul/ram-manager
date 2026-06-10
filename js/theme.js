@@ -95,15 +95,25 @@ export async function loadTheme(themeName) {
   const themeClass = getThemeClass(resolved);
   const paletteClass = resolved; // e.g. 'dracula', 'nord-light'
 
-  // 1. Update body classes — keep palette class for CSS scoping
-  document.body.classList.remove('theme-light', 'theme-dark');
-  document.body.classList.add(themeClass);
+  // 1. Update <html> classes — keep palette class for CSS scoping.
+  //    We target <html> (documentElement) so the FOUC-prevention script
+  //    in js/theme-fouc.js can set the class before <body> exists.
+  const root = document.documentElement;
+  root.classList.remove('theme-light', 'theme-dark');
+  root.classList.add(themeClass);
 
   // Remove old palette classes
   for (const t of ALL_THEMES) {
-    document.body.classList.remove(t.id);
+    root.classList.remove(t.id);
   }
-  document.body.classList.add(paletteClass);
+  root.classList.add(paletteClass);
+
+  // Cache the resolved light/dark class for the next page load.
+  try {
+    localStorage.setItem('ram-manager-theme-class', themeClass);
+  } catch (err) {
+    // Ignore localStorage errors in restricted contexts.
+  }
 
   // 2. Inject / swap theme CSS link
   const href = chrome.runtime.getURL(`${THEME_DIR}${resolved}.css`);
