@@ -309,11 +309,12 @@ async function exportData() {
     const blob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
     url = URL.createObjectURL(blob);
     const date = new Date().toISOString().split('T')[0];
-    await chrome.downloads.download({
-      url,
-      filename: `ram-manager-backup-${date}.json`,
-      saveAs: true,
-    });
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ram-manager-backup-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     showDataHint('Data exported successfully');
   } catch (err) {
     console.error('Export failed:', err);

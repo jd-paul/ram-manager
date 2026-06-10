@@ -10,8 +10,7 @@
     "tabs",
     "storage",
     "alarms",
-    "contextMenus",
-    "downloads"
+    "contextMenus"
   ],
   "background": {
     "service_worker": "background.js",
