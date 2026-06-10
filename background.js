@@ -106,11 +106,14 @@ async function handleAutoSuspend() {
   const BATCH_SIZE = 5;
   for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
     const batch = toSuspend.slice(i, i + BATCH_SIZE);
-    await Promise.all(batch.map(tab =>
-      freezeTab(tab)
-        .then(() => logHistory('suspend', tab))
-        .catch(err => console.error('Failed to suspend tab', tab.id, err))
-    ));
+    for (const tab of batch) {
+      try {
+        await freezeTab(tab);
+        await logHistory('suspend', tab);
+      } catch (err) {
+        console.error('Failed to suspend tab', tab.id, err);
+      }
+    }
     suspendedCount += batch.length;
   }
 
@@ -193,11 +196,14 @@ async function handleContextMenuClick(info, tab) {
     const BATCH_SIZE = 5;
     for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
       const batch = toSuspend.slice(i, i + BATCH_SIZE);
-      await Promise.all(batch.map(t =>
-        freezeTab(t)
-          .then(() => logHistory('suspend', t))
-          .catch(err => console.error('Suspend all other tabs failed for tab', t.id, err))
-      ));
+      for (const t of batch) {
+        try {
+          await freezeTab(t);
+          await logHistory('suspend', t);
+        } catch (err) {
+          console.error('Suspend all other tabs failed for tab', t.id, err);
+        }
+      }
     }
     await updateBadge();
   }
@@ -368,11 +374,14 @@ async function suspendTabsInWindow(windowId, settings) {
     const BATCH_SIZE = 5;
     for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
       const batch = toSuspend.slice(i, i + BATCH_SIZE);
-      await Promise.all(batch.map(tab =>
-        freezeTab(tab)
-          .then(() => logHistory('suspend', tab))
-          .catch(err => console.error('Suspend on unfocus failed for tab', tab.id, err))
-      ));
+      for (const tab of batch) {
+        try {
+          await freezeTab(tab);
+          await logHistory('suspend', tab);
+        } catch (err) {
+          console.error('Suspend on unfocus failed for tab', tab.id, err);
+        }
+      }
     }
 
     if (toSuspend.length > 0) {

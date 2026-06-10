@@ -70,31 +70,39 @@ function getWeekStartTimestamp(date, weekStart) {
   return d.getTime();
 }
 
-export async function logHistory(action, tab) {
-  try {
-    const history = (await localGet('suspensionHistory')) || [];
-    history.push({
-      action,
-      tabId: tab.id,
-      url: tab.url,
-      domain: getDomain(tab.url),
-      title: tab.title,
-      timestamp: Date.now()
-    });
-    if (history.length > 500) {
-      history.splice(0, history.length - 500);
-    }
-    await localSet('suspensionHistory', history);
+// Serialize all history logging through a single in-memory queue so that
+// concurrent calls (e.g. batch tab suspends) do not read the same stale
+// storage value and overwrite each other's updates.
+let _historyQueue = Promise.resolve();
 
-    if (action === 'suspend') {
-      const estimate = ESTIMATED_BYTES_PER_TAB;
-      const saved = (await localGet('savedMemoryAllTime')) || 0;
-      await localSet('savedMemoryAllTime', saved + estimate);
-      await recordDailySavings(estimate);
+export function logHistory(action, tab) {
+  _historyQueue = _historyQueue.then(async () => {
+    try {
+      const history = (await localGet('suspensionHistory')) || [];
+      history.push({
+        action,
+        tabId: tab.id,
+        url: tab.url,
+        domain: getDomain(tab.url),
+        title: tab.title,
+        timestamp: Date.now()
+      });
+      if (history.length > 500) {
+        history.splice(0, history.length - 500);
+      }
+      await localSet('suspensionHistory', history);
+
+      if (action === 'suspend') {
+        const estimate = ESTIMATED_BYTES_PER_TAB;
+        const saved = (await localGet('savedMemoryAllTime')) || 0;
+        await localSet('savedMemoryAllTime', saved + estimate);
+        await recordDailySavings(estimate);
+      }
+    } catch (err) {
+      console.error('logHistory error:', err);
     }
-  } catch (err) {
-    console.error('logHistory error:', err);
-  }
+  }).catch(() => {});
+  return _historyQueue;
 }
 
 export async function updateBadge() {

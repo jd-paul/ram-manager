@@ -218,15 +218,14 @@ async function handleSuspendAll() {
     let count = 0;
     for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
       const batch = toSuspend.slice(i, i + BATCH_SIZE);
-      await Promise.all(
-        batch.map((tab) =>
-          freezeTab(tab)
-            .then(() => logHistory("suspend", tab))
-            .catch((err) =>
-              console.error(`Failed to freeze tab ${tab.id}:`, err),
-            ),
-        ),
-      );
+      for (const tab of batch) {
+        try {
+          await freezeTab(tab);
+          await logHistory("suspend", tab);
+        } catch (err) {
+          console.error(`Failed to freeze tab ${tab.id}:`, err);
+        }
+      }
       count += batch.length;
     }
 
