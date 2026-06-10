@@ -44,12 +44,6 @@
       "description": "Suspend the currently active tab"
     }
   },
-  "web_accessible_resources": [
-    {
-      "resources": ["suspended.html", "suspended/*", "css/*", "images/*"],
-      "matches": ["<all_urls>"]
-    }
-  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }
