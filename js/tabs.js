@@ -56,7 +56,7 @@ export function getCurrentTab() {
  * @returns {boolean}
  */
 export function canSuspend(tab, options = {}) {
-  if (!tab || !tab.id) return false;
+  if (!tab || !tab.id || !tab.url) return false;
 
   // Already frozen (on our suspended page)
   if (isFrozen(tab)) return false;
@@ -81,6 +81,11 @@ export function canSuspend(tab, options = {}) {
 
   // File URLs (optional safeguard)
   if (tab.url && tab.url.startsWith('file://')) return false;
+
+  // Dangerous / special protocols that should never be suspended
+  if (tab.url && (tab.url.startsWith('data:') || tab.url.startsWith('blob:') || tab.url.startsWith('javascript:'))) {
+    return false;
+  }
 
   const {
     protectActive = true,
@@ -108,7 +113,12 @@ export function canSuspend(tab, options = {}) {
 
   // Protect local / development URLs
   if (protectLocalUrls && tab.url) {
-    const urlObj = new URL(tab.url);
+    let urlObj;
+    try {
+      urlObj = new URL(tab.url);
+    } catch {
+      return false;
+    }
     const hostname = urlObj.hostname;
     // localhost
     if (hostname === 'localhost') return false;
@@ -124,9 +134,14 @@ export function canSuspend(tab, options = {}) {
 
   // Lightweight heuristic: protect likely form pages when warnFormData is enabled
   if (warnFormData && tab.url) {
-    const path = new URL(tab.url).pathname.toLowerCase();
+    let path;
+    try {
+      path = new URL(tab.url).pathname.toLowerCase();
+    } catch {
+      path = '';
+    }
     const formPaths = ['/login', '/signin', '/checkout', '/cart', '/payment'];
-    if (formPaths.some((p) => path.includes(p))) {
+    if (path && formPaths.some((p) => path.includes(p))) {
       return false;
     }
   }
