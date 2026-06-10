@@ -98,6 +98,8 @@ export async function loadTheme(themeName) {
   // 1. Update <html> classes — keep palette class for CSS scoping.
   //    We target <html> (documentElement) so the FOUC-prevention script
   //    in js/theme-fouc.js can set the class before <body> exists.
+  //    We also mirror the classes onto <body> so existing theme CSS
+  //    selectors like `body.theme-light.notion-light { ... }` keep working.
   const root = document.documentElement;
   root.classList.remove('theme-light', 'theme-dark');
   root.classList.add(themeClass);
@@ -107,6 +109,16 @@ export async function loadTheme(themeName) {
     root.classList.remove(t.id);
   }
   root.classList.add(paletteClass);
+
+  // Mirror to <body> when it exists (module scripts run after DOM is ready).
+  const body = document.body;
+  if (body) {
+    body.classList.remove('theme-light', 'theme-dark');
+    for (const t of ALL_THEMES) {
+      body.classList.remove(t.id);
+    }
+    body.classList.add(themeClass, paletteClass);
+  }
 
   // Cache the resolved light/dark class for the next page load.
   try {
