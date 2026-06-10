@@ -2,6 +2,33 @@
 
 export const ESTIMATED_BYTES_PER_TAB = 75 * 1024 * 1024; // 75 MB
 
+/**
+ * Parse a platform-specific Chrome shortcut string into individual key parts.
+ *
+ * Windows/Linux: "Ctrl+Shift+X" → ['Ctrl', 'Shift', 'X']
+ * macOS:         "⇧⌘X"        → ['⇧', '⌘', 'X']
+ * Single key:    "X"          → ['X']
+ */
+export function parseShortcut(shortcut) {
+  if (!shortcut) return [];
+
+  // Windows & Linux format (also handles F-keys, MediaPlayPause, etc.)
+  if (shortcut.includes('+')) {
+    return shortcut.split('+').map((s) => s.trim()).filter(Boolean);
+  }
+
+  // macOS format: modifier symbols followed by the key character
+  const modifiers = [];
+  for (const char of shortcut) {
+    if ('⌘⌥⌃⇧'.includes(char)) {
+      modifiers.push(char);
+    }
+  }
+  const key = shortcut.replace(/[⌘⌥⌃⇧]/g, '').trim();
+  if (key) modifiers.push(key);
+  return modifiers;
+}
+
 export function getDomain(url) {
   try {
     if (!url) return 'unknown';

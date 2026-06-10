@@ -12,6 +12,7 @@ import {
   getSavedDarkThemeAsync,
 } from '../js/theme.js';
 import { loadSettingsIntoUI, bindToggle, bindSelect } from '../js/settings-ui.js';
+import { parseShortcut } from '../js/utils.js';
 
 /* -------------------------------------------------------------------------- */
 /* DOM refs                                                                   */
@@ -91,9 +92,9 @@ async function loadShortcutDisplay() {
     });
     const suspendCommand = commands.find((c) => c.name === 'suspend-active-tab');
     if (suspendCommand && suspendCommand.shortcut) {
-      const parts = suspendCommand.shortcut.split('+');
+      const parts = parseShortcut(suspendCommand.shortcut);
       els.shortcutDisplay.innerHTML = parts.map((part, i) =>
-        `${i > 0 ? '<span class="key-plus">+</span>' : ''}<span class="key-pill">${part.trim()}</span>`
+        `${i > 0 ? '<span class="key-plus">+</span>' : ''}<span class="key-pill">${part}</span>`
       ).join('');
     } else {
       els.shortcutDisplay.innerHTML = '<span class="key-pill">not set</span>';

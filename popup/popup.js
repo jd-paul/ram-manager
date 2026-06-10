@@ -11,7 +11,7 @@ import { freezeTab, restoreAll } from "../js/suspension.js";
 import { formatBytes, getSavedMemoryToday } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 import { logHistory, updateBadge } from "../js/history.js";
-import { getDomain, normalizeDomain, isWhitelisted } from "../js/utils.js";
+import { getDomain, normalizeDomain, isWhitelisted, parseShortcut } from "../js/utils.js";
 import {
   loadSettingsIntoUI,
   bindToggle,
@@ -261,11 +261,11 @@ async function loadShortcutHint() {
       (c) => c.name === "suspend-active-tab",
     );
     if (suspendCommand && suspendCommand.shortcut) {
-      const parts = suspendCommand.shortcut.split("+");
+      const parts = parseShortcut(suspendCommand.shortcut);
       const pillsHtml = parts
         .map(
           (part, i) =>
-            `${i > 0 ? '<span class="kbd-plus">+</span>' : ""}<span class="kbd-pill">${part.trim()}</span>`,
+            `${i > 0 ? '<span class="kbd-plus">+</span>' : ""}<span class="kbd-pill">${part}</span>`,
         )
         .join("");
       if (els.shortcutPills) {
