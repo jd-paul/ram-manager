@@ -144,3 +144,43 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Themed scrollbars                                                          */
+/*                                                                            */
+/* ::-webkit-scrollbar covers every Chromium build (our floor is Chrome 109,  */
+/* before the standards-based scrollbar-color landed); scrollbar-width/color  */
+/* covers Firefox. Both read theme variables, so all themes adapt. Ignored    */
+/* harmlessly on touch devices. Uniform always-visible style on all OSs.      */
+/* -------------------------------------------------------------------------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: var(--radius-full, 999px);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--interactive-accent);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--interactive-accent-hover);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
