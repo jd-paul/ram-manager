@@ -39,6 +39,7 @@ snippets/              Optional user CSS snippets injected on extension pages
 icons/, images/        Extension icons and logo assets
 research/              Reference material (The Great Suspender source/analysis)
 screenshots/           Competitor UI reference screenshots
+.DOCUMENTATION/        All markdown docs (README, this file, guides, release notes) — hidden folder
 anuppuccin-palettes.json  Unreferenced palette data used to author the themes — safe to ignore
 ```
 
@@ -129,7 +130,7 @@ Suspend paths that always apply regardless of settings: never suspend `chrome://
 - **Whitelist matching** (`utils.js isWhitelisted`): entries starting with `http(s)://` are prefix-matched against the full URL; everything else is matched as exact domain or parent domain (`example.com` also covers `www.example.com` after normalization).
 - **The suspended tab counts as a normal tab** for `getAllTabs`, so stats/UI compute suspended-vs-active by `isFrozen` URL check, and `canSuspend` refuses already-frozen tabs. Keep any new tab iteration consistent with that.
 - **Auto-suspend timer granularity**: the alarm fires once per minute; `tabLastActive` updates on activation, creation, and URL change only — scrolling/reading a page does not count as activity.
-- **`README.md` must stay UTF-8.** It used to be UTF-16 with only a title; it is now a full project README (badges, store link, features). If an edit tool mangles the encoding, convert back with `iconv -f UTF-16LE -t UTF-8`.
+- **`.DOCUMENTATION/README.md` must stay UTF-8.** It used to be UTF-16 with only a title; it is now a full project README (badges, store link, features). If an edit tool mangles the encoding, convert back with `iconv -f UTF-16LE -t UTF-8`.
 
 ## Design trade-offs (accepted, don't "fix" silently)
 
