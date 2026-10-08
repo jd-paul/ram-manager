@@ -28,6 +28,7 @@ const els = {
   protectLocalUrls: document.getElementById('protect-local-urls'),
   warnFormData: document.getElementById('warn-form-data'),
   suspendOnMinimize: document.getElementById('suspend-on-minimize'),
+  suspendOnStartup: document.getElementById('suspend-on-startup'),
   whitelistInput: document.getElementById('whitelist-input'),
   whitelistAdd: document.getElementById('whitelist-add'),
   whitelistHint: document.getElementById('whitelist-hint'),
@@ -355,6 +356,7 @@ async function importData(file) {
     const knownSyncKeys = new Set([
       'autoSuspendEnabled', 'suspendAfterMinutes', 'protectMedia', 'protectPinned',
       'protectActive', 'protectLocalUrls', 'warnFormData', 'suspendOnMinimize',
+      'suspendOnStartup',
       'theme', 'autoRestore', 'badgeCountEnabled',
       'changeTabIconWhenSuspended', 'whitelist'
     ]);
@@ -465,8 +467,38 @@ function bindEvents() {
   bindToggle(els.protectPinned, 'protectPinned');
   bindToggle(els.protectActive, 'protectActive');
   bindToggle(els.protectLocalUrls, 'protectLocalUrls');
-  bindToggle(els.warnFormData, 'warnFormData');
   bindToggle(els.suspendOnMinimize, 'suspendOnMinimize');
+  bindToggle(els.suspendOnStartup, 'suspendOnStartup');
+
+  // Real form detection reads page content — request the optional host
+  // permission at toggle-time; without it the URL heuristic still applies
+  if (els.warnFormData) {
+    els.warnFormData.addEventListener('change', async (e) => {
+      if (e.target.checked) {
+        let granted = false;
+        try {
+          granted = await new Promise((resolve) => {
+            chrome.permissions.request({ origins: ['<all_urls>'] }, (ok) => resolve(!!ok));
+          });
+        } catch (err) {
+          granted = false;
+        }
+        if (!granted) {
+          e.target.checked = false;
+          const row = e.target.closest('.setting-row');
+          const desc = row ? row.querySelector('.setting-desc') : null;
+          if (desc) {
+            const original = desc.textContent;
+            desc.textContent = 'Needs the optional page-access permission — allow it when prompted to enable';
+            desc.style.color = 'var(--color-danger)';
+            setTimeout(() => { desc.textContent = original; desc.style.color = ''; }, 4500);
+          }
+          return;
+        }
+      }
+      await saveSetting('warnFormData', e.target.checked);
+    });
+  }
 
   // Display — theme mode
   els.themeModeSelect.addEventListener('change', async (e) => {

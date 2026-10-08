@@ -5,7 +5,7 @@
 // auto-suspend engine, so the popup never disagrees with what will happen.
 
 import { getSettings, localGet, localSet, syncGet } from './storage.js';
-import { analyzeTab } from './tabs.js';
+import { analyzeTab, getKeptAwakeIds } from './tabs.js';
 import { isFrozen } from './suspension.js';
 import { normalizeDomain, ESTIMATED_BYTES_PER_TAB } from './utils.js';
 import { getSavedMemoryToday } from './memory.js';
@@ -58,12 +58,13 @@ function isWebUrl(url) {
  * @returns {Promise<{ items: Array, summary: Object }>}
  */
 export async function buildTabList() {
-  const [tabs, settings, whitelistRaw, lastActiveRaw, savedTodayBytes] = await Promise.all([
+  const [tabs, settings, whitelistRaw, lastActiveRaw, savedTodayBytes, keptAwake] = await Promise.all([
     getWindowTabs(),
     getSettings(),
     syncGet('whitelist'),
     localGet('tabLastActive'),
-    getSavedMemoryToday()
+    getSavedMemoryToday(),
+    getKeptAwakeIds()
   ]);
 
   const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
@@ -105,7 +106,8 @@ export async function buildTabList() {
       protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
       currentTabId,
-      whitelist
+      whitelist,
+      keptAwake: new Set(keptAwake)
     });
 
     if (!ok) {
@@ -309,13 +311,15 @@ export async function exportTabsToText() {
  * @returns {Promise<chrome.tabs.Tab[]>}
  */
 export async function getSuspendableTabs(excludeTabId) {
-  const [tabs, settings, whitelistRaw] = await Promise.all([
+  const [tabs, settings, whitelistRaw, keptAwake] = await Promise.all([
     getWindowTabs(),
     getSettings(),
-    syncGet('whitelist')
+    syncGet('whitelist'),
+    getKeptAwakeIds()
   ]);
 
   const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
+  const held = new Set(keptAwake);
 
   return tabs.filter((tab) => {
     if (tab.id === excludeTabId) return false;
@@ -325,7 +329,8 @@ export async function getSuspendableTabs(excludeTabId) {
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
-      whitelist
+      whitelist,
+      keptAwake: held
     }).ok;
   });
 }

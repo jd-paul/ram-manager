@@ -26,9 +26,12 @@ Why URL-rewrite instead of `chrome.tabs.discard`: it gives a branded placeholder
 ## Repository layout
 
 ```
-manifest.json          MV3 manifest: service worker, popup, options page, one command, CSP
-background.js          Service worker — alarms/auto-suspend, context menus, keyboard command,
-                       auto-restore, suspend-on-unfocus, badge, last-active tracking
+manifest.json          MV3 manifest: service worker, popup, options page, one command,
+                       CSP, scripting permission, optional <all_urls> host access
+background.js          Service worker — auto-suspend pipeline (warning banner,
+                       form check, keep-awake), startup sweep, context menus,
+                       keyboard command, auto-restore, suspend-on-unfocus,
+                       badge, last-active tracking
 suspended.html         Placeholder page shown in suspended tabs (restore lives in suspended/)
 popup/                 Toolbar popup (popup.html/css/js)
 dashboard/             Full-page stats dashboard with charts
@@ -47,9 +50,10 @@ anuppuccin-palettes.json  Unreferenced palette data used to author the themes �
 
 | Module | Exports | Notes |
 |---|---|---|
-| `storage.js` | `getSettings`, `setSettings`, `localGet/Set/Remove/GetAll`, `syncGet/Set/Remove/SetMultiple/GetAll`, `DEFAULT_SETTINGS` | Promise wrappers over callback-style `chrome.storage`. Settings merge stored sync values over `DEFAULT_SETTINGS`. |
-| `tabs.js` | `getAllTabs`, `getSuspendedTabs`, `getCurrentTab`, `canSuspend`, `analyzeTab` | `analyzeTab` is the single source of protection rules — it returns `{ ok, reason }` and `canSuspend` wraps it. Every suspend path funnels through it. |
+| `storage.js` | `getSettings`, `setSettings`, `localGet/Set/Remove/GetAll`, `syncGet/Set/Remove/SetMultiple/GetAll`, `sessionGet/sessionSet`, `DEFAULT_SETTINGS` | Promise wrappers over callback-style `chrome.storage`. Settings merge stored sync values over `DEFAULT_SETTINGS`. |
+| `tabs.js` | `getAllTabs`, `getSuspendedTabs`, `getCurrentTab`, `canSuspend`, `analyzeTab`, `touchTabLastActive`, `getKeptAwakeIds`, `setKeptAwake`, `clearKeptAwake` | `analyzeTab` is the single source of protection rules — it returns `{ ok, reason }` and `canSuspend` wraps it. Keep-awake holds and idle timestamps live here; every suspend path funnels through it. |
 | `tablist.js` | `buildTabList`, `getSuspendableTabs`, `getSessions`, `saveSession`, `deleteSession`, `restoreSession`, `closeDuplicateTabs`, `exportTabsToText`, `parseFrozenTab`, `SESSIONS_KEY` | Popup view-models: per-tab status/reason/countdown rows (same rules + `tabLastActive` as the engine), flat sessions across all windows, duplicate closing, clipboard export. |
+| `content.js` | (injected IIFE — no exports) | In-page warning banner ("Not now" bumps the tab clock) + dirty-form checker. Injected on demand via `chrome.scripting` before auto-suspend; idempotent via a `window` guard. |
 | `suspension.js` | `freezeTab`, `restoreTab`, `restoreAll`, `freezeAll`, `isFrozen`, `getFrozenOriginalUrl` | Core engine. `isFrozen` is a URL-prefix check. |
 | `history.js` | `logHistory`, `updateBadge` | History writes are serialized through an in-memory promise queue (`_historyQueue`) to stop concurrent batch suspends from clobbering each other. Do not bypass. |
 | `memory.js` | `getMemoryInfo`, `formatBytes`, `estimateMemory`, `getSavedMemoryToday` | Memory numbers are estimates only (see trade-offs). |
@@ -60,7 +64,7 @@ anuppuccin-palettes.json  Unreferenced palette data used to author the themes �
 
 ## UI pages
 
-- **popup/popup.js** — current-tab card with protection-reason pill (click deep-links to the blocking setting), 3-stat strip (sleeping/protected/saved-or-forecast), Suspend Current / Suspend Others / Suspend All with live progress, Restore All, per-tab list for the current window (countdown badges, hover-suspend, click to focus/wake), tab search / close-duplicates / export-to-clipboard, sessions save/restore, whitelist editor, quick toggles, keyboard-shortcut display. Refreshes on a 5 s poll while open.
+- **popup/popup.js** — current-tab card with protection-reason pill (click deep-links to the blocking setting), 3-stat strip (sleeping/protected/saved-or-forecast), Suspend Current / Suspend Others / Suspend All with live progress, Restore All, per-tab list for the current window (countdown badges, hover keep-awake + suspend buttons, click to focus/wake), tab search / close-duplicates / export-to-clipboard, sessions save/restore, whitelist editor, quick toggles (form protection requests the optional host permission at toggle-time), keyboard-shortcut display with shortcuts-page deep-link. Refreshes on a 5 s poll while open.
 - **dashboard/dashboard.js** — saved-today / all-time stats, suspended/total tabs, active-vs-suspended donut, weekly bar chart, per-domain "top consumers", activity timeline.
 - **settings/settings.js** — all settings, theme mode + light/dark flavor pickers, whitelist, data export/import (HTML5 anchor download; the `downloads` permission was deliberately removed), clear stats, reset settings.
 - **suspended/suspended.js** — reads query params, renders restore UI, optionally dims the favicon via canvas (`changeTabIconWhenSuspended`).
@@ -90,6 +94,12 @@ Every page calls `initTheme()` on load and includes `js/theme-fouc.js` as a clas
 | `snippetFiles` | string[] — filenames under `snippets/` | |
 | `tabSessions` | `{ id, name, createdAt, tabs: [{url, title, favIconUrl, pinned}] }[]`, capped at 20 (oldest dropped) | Popup sessions; saved flat across all windows, frozen/internal tabs excluded |
 
+**`chrome.storage.session`** (survives service-worker restarts, clears on browser restart):
+
+| Key | Shape | Notes |
+|---|---|---|
+| `keptAwakeTabIds` | number[] — tab IDs | Per-tab keep-awake holds from the popup; pruned on tab close; releases reset the idle clock |
+
 **`localStorage`** (page-origin only): `ram-manager-theme-class` — cached `theme-light`/`theme-dark` for FOUC prevention. Do not rename without updating `theme-fouc.js` and `theme.js` together. `ram-manager-popup-sections` — open/closed state of the popup's collapsible sections.
 
 ## Settings and defaults
@@ -102,8 +112,9 @@ From `js/storage.js` (`DEFAULT_SETTINGS`). Defaults are deliberate — conservat
 | `suspendAfterMinutes` | `30` | Idle threshold |
 | `protectMedia` / `protectPinned` / `protectActive` | `true` | Skip audible / pinned / active tabs |
 | `protectLocalUrls` | `true` | Skip localhost, 127.x, 10.x, 172.16–31.x, 192.168.x, file:// |
-| `warnFormData` | `false` | Skip pages whose path contains /login /signin /checkout /cart /payment (heuristic) |
+| `warnFormData` | `false` | Form protection: with the optional `<all_urls>` permission, blocks tabs where input differs from defaults (injected check); without it, skips pages whose path contains /login /signin /checkout /cart /payment |
 | `suspendOnMinimize` | `false` | Suspend tabs of a Chrome window when focus leaves it |
+| `suspendOnStartup` | `true` | Re-suspend restored tabs (browser restart) that are idle past the threshold and haven't been viewed |
 | `autoRestore` | `false` | Restore a suspended tab when it is activated |
 | `theme` | `'system'` | |
 | `badgeCountEnabled` | `true` | Toolbar badge = suspended tab count in the focused window (cleared when nothing suspended) |
@@ -129,7 +140,7 @@ Suspend paths that always apply regardless of settings: never suspend `chrome://
 - **`tabLastActive` is keyed by tabId**, which is only unique per session; the map is pruned on close/startup, so stale ids are mostly harmless.
 - **Whitelist matching** (`utils.js isWhitelisted`): entries starting with `http(s)://` are prefix-matched against the full URL; everything else is matched as exact domain or parent domain (`example.com` also covers `www.example.com` after normalization).
 - **The suspended tab counts as a normal tab** for `getAllTabs`, so stats/UI compute suspended-vs-active by `isFrozen` URL check, and `canSuspend` refuses already-frozen tabs. Keep any new tab iteration consistent with that.
-- **Auto-suspend timer granularity**: the alarm fires once per minute; `tabLastActive` updates on activation, creation, and URL change only — scrolling/reading a page does not count as activity.
+- **Auto-suspend timer granularity**: the alarm fires once per minute; `tabLastActive` updates on activation, creation, and URL change only — scrolling/reading a page does not count as activity. Audio ending (`audible === false`) also stamps activity. New/unknown tabs are seeded from `tab.lastAccessed` (Chrome 121+) so idle clocks survive restarts.
 - **`.DOCUMENTATION/README.md` must stay UTF-8.** It used to be UTF-16 with only a title; it is now a full project README (badges, store link, features). If an edit tool mangles the encoding, convert back with `iconv -f UTF-16LE -t UTF-8`.
 
 ## Design trade-offs (accepted, don't "fix" silently)

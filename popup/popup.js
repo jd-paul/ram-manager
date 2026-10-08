@@ -4,6 +4,9 @@ import { getSettings, syncGet, syncSet } from "../js/storage.js";
 import {
   getCurrentTab,
   analyzeTab,
+  getKeptAwakeIds,
+  setKeptAwake,
+  touchTabLastActive,
 } from "../js/tabs.js";
 import { freezeTab, restoreTab, restoreAll } from "../js/suspension.js";
 import { formatBytes } from "../js/memory.js";
@@ -14,6 +17,7 @@ import {
   loadSettingsIntoUI,
   bindToggle,
   bindSelect,
+  saveSetting,
 } from "../js/settings-ui.js";
 import {
   buildTabList,
@@ -39,6 +43,7 @@ const REASON_LABELS = {
   whitelisted: "Whitelisted",
   discarded: "Discarded",
   invalid: "—",
+  "kept-awake": "Kept awake",
 };
 
 // Which quick-setting toggle a blocked reason deep-links to
@@ -271,6 +276,7 @@ function buildTabRow(item) {
   row.dataset.tabId = String(item.id);
   row.dataset.title = item.title;
   row.dataset.url = item.url;
+  row.dataset.reason = item.reason || "";
   row.setAttribute("role", "button");
   row.setAttribute("tabindex", "0");
   row.title = item.url || item.title;
@@ -299,6 +305,22 @@ function buildTabRow(item) {
   badge.className = "tab-badge " + b.className;
   badge.textContent = b.text;
   row.appendChild(badge);
+
+  if (item.status === "idle" || item.reason === "kept-awake") {
+    const held = item.reason === "kept-awake";
+    const kaBtn = document.createElement("button");
+    kaBtn.className = "tab-keepawake-btn";
+    kaBtn.type = "button";
+    kaBtn.title = held ? "Allow sleep" : "Keep this tab awake";
+    kaBtn.innerHTML = held
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>';
+    kaBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleKeepAwake(item.id, !held);
+    });
+    row.appendChild(kaBtn);
+  }
 
   if (item.status === "idle") {
     const btn = document.createElement("button");
@@ -383,6 +405,10 @@ async function onTabRowClick(item) {
 
 async function suspendTabById(tabId) {
   try {
+    if ((await getKeptAwakeIds()).includes(tabId)) {
+      showToast("Kept awake — release it first");
+      return;
+    }
     const tab = await chrome.tabs.get(tabId).catch(() => null);
     if (!tab) return;
     const settings = await getSettings();
@@ -403,6 +429,20 @@ async function suspendTabById(tabId) {
   } catch (err) {
     console.error("Suspend tab failed:", err);
     showToast("Suspend failed");
+  }
+  await refresh();
+}
+
+async function toggleKeepAwake(tabId, on) {
+  try {
+    await setKeptAwake(tabId, on);
+    if (!on) {
+      // Releasing gives the tab a fresh countdown
+      await touchTabLastActive(tabId);
+    }
+  } catch (err) {
+    console.error("toggleKeepAwake failed:", err);
+    showToast("Couldn't update keep-awake");
   }
   await refresh();
 }
@@ -476,6 +516,11 @@ async function handleSuspendCurrent() {
     const tab = await getCurrentTab();
     if (!tab || !tab.id) {
       showToast("No active tab");
+      return;
+    }
+
+    if ((await getKeptAwakeIds()).includes(tab.id)) {
+      showToast("Kept awake — release it first");
       return;
     }
 
@@ -818,6 +863,16 @@ function toggleTimerRow(enabled) {
   els.suspendTimerRow.style.pointerEvents = enabled ? "auto" : "none";
 }
 
+function requestHostPermission() {
+  return new Promise((resolve) => {
+    try {
+      chrome.permissions.request({ origins: ["<all_urls>"] }, (granted) => resolve(!!granted));
+    } catch (err) {
+      resolve(false);
+    }
+  });
+}
+
 function bindToggles() {
   // Shared bindings
   bindToggle(els.autoSuspendToggle, "autoSuspendEnabled");
@@ -826,7 +881,24 @@ function bindToggles() {
   bindToggle(els.protectPinned, "protectPinned");
   bindToggle(els.protectActive, "protectActive");
   bindToggle(els.protectLocalUrls, "protectLocalUrls");
-  bindToggle(els.warnFormData, "warnFormData");
+
+  // Real form detection reads page content, so it needs the optional host
+  // permission — ask at toggle-time instead of install-time; without it we
+  // keep the URL-path heuristic
+  if (els.warnFormData) {
+    els.warnFormData.addEventListener("change", async (e) => {
+      if (e.target.checked) {
+        const granted = await requestHostPermission();
+        if (!granted) {
+          e.target.checked = false;
+          showToast("Form detection needs the optional permission");
+          return;
+        }
+      }
+      await saveSetting("warnFormData", e.target.checked);
+    });
+  }
+
   bindToggle(els.autoRestoreToggle, "autoRestore");
   bindToggle(els.suspendOnMinimize, "suspendOnMinimize");
 

@@ -3,6 +3,7 @@
 
 import { isFrozen } from './suspension.js';
 import { isWhitelisted } from './utils.js';
+import { localGet, localSet, sessionGet, sessionSet } from './storage.js';
 
 /**
  * Returns all tabs across all windows.
@@ -59,9 +60,10 @@ export function getCurrentTab() {
  * @param {boolean} [options.warnFormData=true]
  * @param {number} [options.currentTabId]
  * @param {string[]} [options.whitelist] — when provided, matching tabs are blocked with reason 'whitelisted'
+ * @param {Set<number>} [options.keptAwake] — tab IDs held awake via the popup; blocked with reason 'kept-awake'
  * @returns {{ ok: boolean, reason: string|null }}
  *   reason ∈ null | 'invalid' | 'frozen' | 'discarded' | 'system' | 'loading' |
- *            'active' | 'pinned' | 'audible' | 'local-url' | 'form' | 'whitelisted'
+ *            'kept-awake' | 'active' | 'pinned' | 'audible' | 'local-url' | 'form' | 'whitelisted'
  */
 export function analyzeTab(tab, options = {}) {
   if (!tab || !tab.id || !tab.url) return { ok: false, reason: 'invalid' };
@@ -93,8 +95,15 @@ export function analyzeTab(tab, options = {}) {
     protectLocalUrls = true,
     warnFormData = true,
     currentTabId,
-    whitelist
+    whitelist,
+    keptAwake
   } = options;
+
+  // Per-tab hold from the popup — wins over every other protection so the
+  // user always sees "Kept awake" as the reason
+  if (keptAwake && keptAwake.has(tab.id)) {
+    return { ok: false, reason: 'kept-awake' };
+  }
 
   // Protect currently active tab
   if (protectActive && currentTabId !== undefined && tab.id === currentTabId) {
@@ -164,4 +173,54 @@ export function analyzeTab(tab, options = {}) {
  */
 export function canSuspend(tab, options = {}) {
   return analyzeTab(tab, options).ok;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Idle timestamps                                                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Stamp a tab as just-active. Backs the auto-suspend countdown.
+ * @param {number} tabId
+ */
+export async function touchTabLastActive(tabId) {
+  try {
+    const lastActive = (await localGet('tabLastActive')) || {};
+    lastActive[tabId] = Date.now();
+    await localSet('tabLastActive', lastActive);
+  } catch (err) {
+    console.error('touchTabLastActive error:', err);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Keep-awake holds (per tab, cleared on browser restart)                     */
+/* -------------------------------------------------------------------------- */
+
+export async function getKeptAwakeIds() {
+  return (await sessionGet('keptAwakeTabIds')) || [];
+}
+
+/**
+ * Hold a tab awake (or release it). Stored in chrome.storage.session so the
+ * hold survives MV3 worker restarts but resets on browser restart.
+ * @param {number} tabId
+ * @param {boolean} on
+ */
+export async function setKeptAwake(tabId, on) {
+  let ids = await getKeptAwakeIds();
+  ids = ids.filter((id) => id !== tabId);
+  if (on) ids.push(tabId);
+  await sessionSet('keptAwakeTabIds', ids);
+}
+
+/**
+ * Drop closed tab IDs from the keep-awake set.
+ * @param {number} tabId
+ */
+export async function clearKeptAwake(tabId) {
+  const ids = await getKeptAwakeIds();
+  if (ids.includes(tabId)) {
+    await sessionSet('keptAwakeTabIds', ids.filter((id) => id !== tabId));
+  }
 }

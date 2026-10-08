@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = {
   protectLocalUrls: true,
   warnFormData: false,
   suspendOnMinimize: false,
+  suspendOnStartup: true,
   theme: 'system',
   autoRestore: false,
   badgeCountEnabled: true,
@@ -106,11 +107,17 @@ function wrapStorageArea(storage) {
 
 const local = wrapStorageArea(chrome.storage.local);
 const sync = wrapStorageArea(chrome.storage.sync);
+// storage.session survives service-worker restarts but clears on browser
+// restart — right lifetime for ephemeral tab state (keep-awake holds).
+const session = wrapStorageArea(chrome.storage.session || chrome.storage.local);
 
 export const localGet = (key) => local.get(key);
 export const localSet = (key, value) => local.set(key, value);
 export const localRemove = (key) => local.remove(key);
 export const localGetAll = () => local.getAll();
+
+export const sessionGet = (key) => session.get(key);
+export const sessionSet = (key, value) => session.set(key, value);
 
 export const syncGet = (key) => sync.get(key);
 export const syncSet = (key, value) => sync.set(key, value);

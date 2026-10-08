@@ -544,6 +544,39 @@ body.theme-dark .btn-restore {
   filter: brightness(1.1);
 }
 
+.tab-keepawake-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-s);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab-row[data-status="idle"]:hover .tab-keepawake-btn,
+.tab-row[data-reason="kept-awake"]:hover .tab-keepawake-btn,
+.tab-keepawake-btn:focus-visible {
+  opacity: 1;
+}
+
+.tab-keepawake-btn:hover {
+  color: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+
+.tab-badge.badge-kept-awake {
+  background-color: var(--interactive-accent-light);
+  color: var(--interactive-accent);
+}
+
 .tab-list-empty {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);

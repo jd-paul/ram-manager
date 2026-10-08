@@ -1,28 +1,68 @@
 // Service worker: alarms, auto-suspend, context menu, badge updates, auto-restore, history logging
 
-import { getSettings, localGet, localSet, syncGet } from './js/storage.js';
+import { getSettings, setSettings, localGet, localSet, syncGet } from './js/storage.js';
 import {
   getAllTabs,
   getSuspendedTabs,
   canSuspend,
-  getCurrentTab
+  getCurrentTab,
+  touchTabLastActive,
+  clearKeptAwake,
+  getKeptAwakeIds
 } from './js/tabs.js';
 import { freezeTab, restoreTab, isFrozen } from './js/suspension.js';
 import { logHistory, updateBadge } from './js/history.js';
-import { getDomain, normalizeDomain, isWhitelisted } from './js/utils.js';
+import { normalizeDomain, isWhitelisted } from './js/utils.js';
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
 
-async function updateTabLastActive(tabId) {
-  try {
-    const lastActive = (await localGet('tabLastActive')) || {};
-    lastActive[tabId] = Date.now();
-    await localSet('tabLastActive', lastActive);
-  } catch (err) {
-    console.error('updateTabLastActive error:', err);
-  }
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function hasAllUrlsPermission() {
+  return new Promise((resolve) => {
+    try {
+      chrome.permissions.contains({ origins: ['<all_urls>'] }, (ok) => resolve(!!ok));
+    } catch (err) {
+      resolve(false);
+    }
+  });
+}
+
+function injectContentScript(tabId) {
+  return new Promise((resolve) => {
+    try {
+      chrome.scripting.executeScript(
+        { target: { tabId }, files: ['js/content.js'] },
+        () => resolve(!chrome.runtime.lastError)
+      );
+    } catch (err) {
+      resolve(false);
+    }
+  });
+}
+
+function sendTabMessage(tabId, message, timeoutMs = 600) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) { settled = true; resolve(null); }
+    }, timeoutMs);
+    try {
+      chrome.tabs.sendMessage(tabId, message, (response) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (chrome.runtime.lastError) resolve(null);
+        else resolve(response || null);
+      });
+    } catch (err) {
+      if (!settled) { settled = true; clearTimeout(timer); resolve(null); }
+    }
+  });
 }
 
 async function initTabLastActive() {
@@ -34,7 +74,9 @@ async function initTabLastActive() {
 
     for (const tab of allTabs) {
       if (lastActive[tab.id] === undefined) {
-        lastActive[tab.id] = now;
+        // Seed from Chrome's own record so auto-suspend/sweep honor real
+        // idleness on install and browser restart (Chrome 121+)
+        lastActive[tab.id] = tab.lastAccessed || now;
       }
     }
 
@@ -52,21 +94,27 @@ async function initTabLastActive() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Auto-suspend alarm                                                         */
+/* Auto-suspend pipeline                                                      */
+/*                                                                            */
+/* One pass = find idle-eligible tabs → optional in-page warning (Not-now     */
+/* bumps) → optional dirty-form check → re-validate → batch-freeze.           */
+/* Used by the per-minute alarm (warned) and the startup sweep (quiet).       */
 /* -------------------------------------------------------------------------- */
 
 function setupAlarm() {
   chrome.alarms.create('auto-suspend', { periodInMinutes: 1 });
 }
 
-async function handleAutoSuspend() {
-  const settings = await getSettings();
-  if (!settings.autoSuspendEnabled) return;
+const WARNING_DELAY_MS = 4000;
+let _suspendPassRunning = false;
 
-  const [allTabs, whitelistRaw, lastActiveRaw] = await Promise.all([
+async function findSuspendableTabs() {
+  const [allTabs, settings, whitelistRaw, lastActiveRaw, keptAwake] = await Promise.all([
     getAllTabs(),
+    getSettings(),
     syncGet('whitelist'),
-    localGet('tabLastActive')
+    localGet('tabLastActive'),
+    getKeptAwakeIds()
   ]);
 
   const currentTab = await getCurrentTab();
@@ -75,12 +123,10 @@ async function handleAutoSuspend() {
   const thresholdMs = (settings.suspendAfterMinutes || 30) * 60 * 1000;
   const lastActive = lastActiveRaw || {};
   const whitelist = (whitelistRaw || []).map(d => normalizeDomain(d));
+  const held = new Set(keptAwake);
 
-  let suspendedCount = 0;
-  const toSuspend = [];
-
-  for (const tab of allTabs) {
-    if (!tab.id || tab.discarded) continue;
+  return allTabs.filter((tab) => {
+    if (!tab.id || tab.discarded) return false;
 
     if (!canSuspend(tab, {
       protectActive: settings.protectActive,
@@ -88,43 +134,177 @@ async function handleAutoSuspend() {
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
-      currentTabId
+      currentTabId,
+      keptAwake: held
     })) {
-      continue;
+      return false;
     }
 
-    const domain = getDomain(tab.url);
-    if (isWhitelisted(tab.url, whitelist)) continue;
+    if (isWhitelisted(tab.url, whitelist)) return false;
 
-    const last = lastActive[tab.id];
-    if (!last) continue;
-    if (now - last < thresholdMs) continue;
+    const last = lastActive[tab.id] ?? tab.lastAccessed;
+    if (!last) return false;
+    if (now - last < thresholdMs) return false;
 
-    toSuspend.push(tab);
+    return true;
+  });
+}
+
+async function runSuspendPass({ warn, checkForms }) {
+  const candidates = await findSuspendableTabs();
+  if (candidates.length === 0) return 0;
+  const candidateIds = new Set(candidates.map(t => t.id));
+
+  if (warn) {
+    for (const tab of candidates) {
+      if (!/^https?:/.test(tab.url || '')) continue;
+      injectContentScript(tab.id).then((ok) => {
+        if (ok) sendTabMessage(tab.id, { action: 'ramShowWarning' });
+      });
+    }
+    await delay(WARNING_DELAY_MS);
   }
 
+  // Real dirty-form detection — only when the optional host permission was
+  // granted (toggle-time request); the URL heuristic already ran in
+  // findSuspendableTabs for everyone else. Unverified (no answer) blocks.
+  const blockedByForm = new Set();
+  if (checkForms && await hasAllUrlsPermission()) {
+    const checks = candidates
+      .filter((t) => /^https?:/.test(t.url || ''))
+      .map(async (tab) => {
+        const ok = await injectContentScript(tab.id);
+        if (!ok) return;
+        const res = await sendTabMessage(tab.id, { action: 'ramCheckForm' });
+        if (!res || res.hasFormData === true) blockedByForm.add(tab.id);
+      });
+    await Promise.all(checks);
+  }
+
+  // Re-validate after the warning delay — Not-now bumps and keep-awake
+  // changes land in storage while we wait
+  const settings = await getSettings();
+  const thresholdMs = (settings.suspendAfterMinutes || 30) * 60 * 1000;
+  const [allTabs, whitelistRaw, lastActiveRaw, keptAwake] = await Promise.all([
+    getAllTabs(),
+    syncGet('whitelist'),
+    localGet('tabLastActive'),
+    getKeptAwakeIds()
+  ]);
+  const lastActive = lastActiveRaw || {};
+  const whitelist = (whitelistRaw || []).map(d => normalizeDomain(d));
+  const held = new Set(keptAwake);
+  const currentTab = await getCurrentTab();
+  const currentTabId = currentTab ? currentTab.id : undefined;
+  const now = Date.now();
+
+  const toSuspend = allTabs.filter((tab) => {
+    if (!candidateIds.has(tab.id)) return false;
+    if (blockedByForm.has(tab.id)) return false;
+    if (!canSuspend(tab, {
+      protectActive: settings.protectActive,
+      protectPinned: settings.protectPinned,
+      protectMedia: settings.protectMedia,
+      protectLocalUrls: settings.protectLocalUrls,
+      warnFormData: false,
+      currentTabId,
+      keptAwake: held
+    })) {
+      return false;
+    }
+    if (isWhitelisted(tab.url, whitelist)) return false;
+    const last = lastActive[tab.id] ?? tab.lastAccessed;
+    if (!last || now - last < thresholdMs) return false;
+    return true;
+  });
+
   const BATCH_SIZE = 5;
+  let suspendedCount = 0;
   for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
     const batch = toSuspend.slice(i, i + BATCH_SIZE);
     for (const tab of batch) {
       try {
         await freezeTab(tab);
         await logHistory('suspend', tab);
+        suspendedCount++;
       } catch (err) {
         console.error('Failed to suspend tab', tab.id, err);
       }
     }
-    suspendedCount += batch.length;
   }
 
   if (suspendedCount > 0) {
     await updateBadge();
+  }
+  return suspendedCount;
+}
+
+async function handleAutoSuspend() {
+  const settings = await getSettings();
+  if (!settings.autoSuspendEnabled) return;
+  if (_suspendPassRunning) return;
+  _suspendPassRunning = true;
+  try {
+    await runSuspendPass({ warn: true, checkForms: settings.warnFormData });
+  } catch (err) {
+    console.error('handleAutoSuspend error:', err);
+  } finally {
+    _suspendPassRunning = false;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Startup sweep — quietly re-suspend restored tabs the user hasn't viewed    */
+/* -------------------------------------------------------------------------- */
+
+const STARTUP_SWEEP_ALARM = 'startup-sweep';
+
+function setupStartupSweepAlarm() {
+  // Chrome clamps sub-minute delays to 1 minute in released builds
+  chrome.alarms.create(STARTUP_SWEEP_ALARM, { delayInMinutes: 1 });
+}
+
+async function startupSweep() {
+  const settings = await getSettings();
+  if (!settings.suspendOnStartup) return;
+  if (_suspendPassRunning) return;
+  _suspendPassRunning = true;
+  try {
+    await runSuspendPass({ warn: false, checkForms: false });
+  } catch (err) {
+    console.error('startupSweep error:', err);
+  } finally {
+    _suspendPassRunning = false;
   }
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'auto-suspend') {
     handleAutoSuspend().catch(err => console.error('handleAutoSuspend error:', err));
+  } else if (alarm.name === STARTUP_SWEEP_ALARM) {
+    startupSweep().catch(err => console.error('startupSweep error:', err));
+  }
+});
+
+/* -------------------------------------------------------------------------- */
+/* Content-script messages and permission revocation                          */
+/* -------------------------------------------------------------------------- */
+
+// "Not now" on the in-page warning banner — bump the tab's clock so it
+// sits out this pass and gets a fresh countdown
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg && msg.action === 'keepTabAwake' && sender.tab && sender.tab.id != null) {
+    touchTabLastActive(sender.tab.id).catch(err => console.error('keepTabAwake error:', err));
+    sendResponse({ ok: true });
+  }
+});
+
+// If the user revokes the optional host permission, real form detection
+// stops working — fall back to the heuristic instead of silently blocking
+chrome.permissions.onRemoved.addListener((permissions) => {
+  if (permissions.origins && permissions.origins.includes('<all_urls>')) {
+    setSettings({ warnFormData: false })
+      .catch(err => console.error('permissions.onRemoved error:', err));
   }
 });
 
@@ -146,6 +326,7 @@ chrome.runtime.onInstalled.addListener(() => {
     });
   });
   setupAlarm();
+  setupStartupSweepAlarm();
   initTabLastActive();
   updateBadge();
 });
@@ -156,6 +337,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
 async function handleContextMenuClick(info, tab) {
   const settings = await getSettings();
+  const held = new Set(await getKeptAwakeIds());
 
   if (info.menuItemId === 'suspend-this-tab') {
     const targetTab = tab || await getCurrentTab();
@@ -166,7 +348,8 @@ async function handleContextMenuClick(info, tab) {
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
-      warnFormData: settings.warnFormData
+      warnFormData: settings.warnFormData,
+      keptAwake: held
     })) {
       return;
     }
@@ -190,7 +373,8 @@ async function handleContextMenuClick(info, tab) {
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
       warnFormData: settings.warnFormData,
-      currentTabId: targetTabId
+      currentTabId: targetTabId,
+      keptAwake: held
     }));
 
     const BATCH_SIZE = 5;
@@ -237,11 +421,13 @@ async function handleSuspendActiveTab() {
   }
 
   const settings = await getSettings();
+  const held = new Set(await getKeptAwakeIds());
   if (!canSuspend(tab, {
     protectActive: false,
     protectPinned: settings.protectPinned,
     protectMedia: settings.protectMedia,
-    protectLocalUrls: settings.protectLocalUrls
+    protectLocalUrls: settings.protectLocalUrls,
+    keptAwake: held
   })) {
     return;
   }
@@ -263,7 +449,7 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 });
 
 async function handleTabActivated(tabId) {
-  await updateTabLastActive(tabId);
+  await touchTabLastActive(tabId);
 
   const settings = await getSettings();
   if (!settings.autoRestore) return;
@@ -287,7 +473,7 @@ async function handleTabActivated(tabId) {
 
 chrome.tabs.onCreated.addListener((tab) => {
   if (tab.id) {
-    updateTabLastActive(tab.id).catch(err => console.error('onCreated error:', err));
+    touchTabLastActive(tab.id).catch(err => console.error('onCreated error:', err));
   }
   updateBadge().catch(err => console.error('updateBadge error:', err));
 });
@@ -300,12 +486,18 @@ async function handleTabRemoved(tabId) {
   const lastActive = (await localGet('tabLastActive')) || {};
   delete lastActive[tabId];
   await localSet('tabLastActive', lastActive);
+  await clearKeptAwake(tabId);
   await updateBadge();
 }
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.url) {
-    updateTabLastActive(tabId).catch(err => console.error('onUpdated error:', err));
+    touchTabLastActive(tabId).catch(err => console.error('onUpdated error:', err));
+  }
+  // Audio ending counts as activity — a just-paused media tab gets a
+  // fresh countdown instead of being suspended mid-binge
+  if (changeInfo.audible === false) {
+    touchTabLastActive(tabId).catch(err => console.error('onUpdated audible error:', err));
   }
   if (changeInfo.discarded !== undefined || changeInfo.status !== undefined) {
     updateBadge().catch(err => console.error('updateBadge error:', err));
@@ -363,6 +555,7 @@ async function suspendTabsInWindow(windowId, settings) {
     const activeTab = tabs.find(t => t.active);
     const currentTabId = activeTab ? activeTab.id : undefined;
 
+    const held = new Set(await getKeptAwakeIds());
     const toSuspend = tabs.filter(tab =>
       canSuspend(tab, {
         protectActive: settings.protectActive,
@@ -370,7 +563,8 @@ async function suspendTabsInWindow(windowId, settings) {
         protectMedia: settings.protectMedia,
         protectLocalUrls: settings.protectLocalUrls,
         warnFormData: settings.warnFormData,
-        currentTabId
+        currentTabId,
+        keptAwake: held
       })
     );
 
@@ -401,6 +595,7 @@ async function suspendTabsInWindow(windowId, settings) {
 
 chrome.runtime.onStartup.addListener(() => {
   setupAlarm();
+  setupStartupSweepAlarm();
   initTabLastActive();
   updateBadge();
 });
@@ -410,5 +605,6 @@ chrome.runtime.onStartup.addListener(() => {
 /* -------------------------------------------------------------------------- */
 
 setupAlarm();
+setupStartupSweepAlarm();
 initTabLastActive();
 updateBadge();
