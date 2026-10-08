@@ -944,19 +944,18 @@ async function loadShortcutHint() {
       if (els.shortcutPills) {
         els.shortcutPills.innerHTML = pillsHtml;
       }
-    } else {
-      if (els.shortcutPills) {
-        els.shortcutPills.innerHTML = '<span class="kbd-pill">not set</span>';
-      }
-      // Chrome only applies suggested_key at first install and silently skips
-      // occupied combos — the only remedy is the user assigning it by hand.
-      if (els.shortcutRow) {
-        els.shortcutRow.classList.add("shortcut-row--actionable");
-        els.shortcutRow.title = "Click to assign a keyboard shortcut";
-        els.shortcutRow.addEventListener("click", () => {
-          chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
-        });
-      }
+    } else if (els.shortcutPills) {
+      els.shortcutPills.innerHTML = '<span class="kbd-pill">not set</span>';
+    }
+
+    // Clickable either way — Chrome only applies suggested_key at first
+    // install, so users may need the shortcuts page to assign or change it
+    if (els.shortcutRow) {
+      els.shortcutRow.classList.add("shortcut-row--actionable");
+      els.shortcutRow.title = "Click to customise the keyboard shortcut";
+      els.shortcutRow.addEventListener("click", () => {
+        chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+      });
     }
   } catch (err) {
     console.error("Failed to load shortcut hint:", err);

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome — RAM Manager</title>
+  <script src="js/theme-fouc.js"></script>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="onboarding/onboarding.css">
+  <link rel="icon" type="image/png" href="icons/icon32.png">
+</head>
+
+<body>
+  <main class="onb-stage">
+    <button class="onb-skip" id="btn-skip" type="button">Skip</button>
+
+    <div class="onb-viewport" id="onb-viewport">
+
+      <section class="onb-slide" data-slide="0">
+        <div class="onb-art" data-animate style="--d:0">
+          <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            <line x1="14" y1="7" x2="14.01" y2="7"></line>
+            <line x1="10" y1="11" x2="10.01" y2="11"></line>
+            <line x1="15" y1="12" x2="15.01" y2="12"></line>
+          </svg>
+        </div>
+        <p class="onb-kicker" data-animate style="--d:1">Welcome to</p>
+        <h1 class="onb-title" data-animate style="--d:2">RAM Manager</h1>
+        <p class="onb-lead" data-animate style="--d:3">
+          Tabs you haven't touched in a while go to sleep — and their memory
+          goes back to your computer. Click a sleeping tab any time to pick up
+          where you left off.
+        </p>
+        <div class="onb-chips" data-animate style="--d:4">
+          <span class="onb-chip">≈75 MB freed per sleeping tab</span>
+          <span class="onb-chip">Restore in one click</span>
+        </div>
+      </section>
+
+      <section class="onb-slide" data-slide="1">
+        <div class="onb-art" data-animate style="--d:0">
+          <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            <polyline points="9 12 11 14 15 10"></polyline>
+          </svg>
+        </div>
+        <h1 class="onb-title" data-animate style="--d:1">Nothing you care about gets touched</h1>
+        <ul class="onb-points">
+          <li data-animate style="--d:2">
+            <strong>Protected by default</strong> — the active, pinned, and
+            playing-audio tabs never suspend, and localhost stays awake.
+          </li>
+          <li data-animate style="--d:3">
+            <strong>Keep any tab awake</strong> — hover it in the popup and tap
+            the coffee icon. It stays yours until you say otherwise.
+          </li>
+          <li data-animate style="--d:4">
+            <strong>Warned, never ambushed</strong> — a tab about to sleep shows
+            a banner first, and “Not now” always works.
+          </li>
+        </ul>
+      </section>
+
+      <section class="onb-slide" data-slide="2">
+        <div class="onb-art" data-animate style="--d:0">
+          <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="21" x2="4" y2="14"></line>
+            <line x1="4" y1="10" x2="4" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12" y2="3"></line>
+            <line x1="20" y1="21" x2="20" y2="16"></line>
+            <line x1="20" y1="12" x2="20" y2="3"></line>
+            <line x1="1" y1="14" x2="7" y2="14"></line>
+            <line x1="9" y1="8" x2="15" y2="8"></line>
+            <line x1="17" y1="16" x2="23" y2="16"></line>
+          </svg>
+        </div>
+        <h1 class="onb-title" data-animate style="--d:1">Set it and forget it</h1>
+        <ul class="onb-points">
+          <li data-animate style="--d:2">
+            <strong>Auto-suspend</strong> on your schedule — 5 to 60 minutes —
+            with protections and warnings doing the worrying for you.
+          </li>
+          <li data-animate style="--d:3">
+            <strong>Make it yours</strong> — 28 themes, a dashboard of everything
+            you've saved, and sessions to stash tab sets for later.
+          </li>
+        </ul>
+        <button class="onb-shortcut-link" id="btn-shortcut" type="button" data-animate style="--d:4">
+          Set your keyboard shortcut →
+        </button>
+      </section>
+
+    </div>
+
+    <footer class="onb-footer">
+      <div class="onb-dots" id="onb-dots" role="tablist" aria-label="Onboarding progress"></div>
+      <button class="btn onb-next" id="btn-next" type="button">Next</button>
+    </footer>
+  </main>
+
+  <script type="module" src="onboarding/onboarding.js"></script>
+</body>
+
+</html>

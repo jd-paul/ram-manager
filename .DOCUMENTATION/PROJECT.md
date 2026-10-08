@@ -31,7 +31,10 @@ manifest.json          MV3 manifest: service worker, popup, options page, one co
 background.js          Service worker — auto-suspend pipeline (warning banner,
                        form check, keep-awake), startup sweep, context menus,
                        keyboard command, auto-restore, suspend-on-unfocus,
-                       badge, last-active tracking
+                       badge, last-active tracking, opens onboarding on install
+onboarding.html        3-slide first-run tour (directional transitions,
+onboarding/            staggered entrances, dots + keyboard nav); Finish goes
+                       to the dashboard; slide 3 links the shortcuts page
 suspended.html         Placeholder page shown in suspended tabs (restore lives in suspended/)
 popup/                 Toolbar popup (popup.html/css/js)
 dashboard/             Full-page stats dashboard with charts

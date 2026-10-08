@@ -312,7 +312,10 @@ chrome.permissions.onRemoved.addListener((permissions) => {
 /* Context menu                                                               */
 /* -------------------------------------------------------------------------- */
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === 'install') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('onboarding.html') });
+  }
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: 'suspend-this-tab',
