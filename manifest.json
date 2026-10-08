@@ -5,7 +5,7 @@
   "description": "Suspend idle tabs to free memory. Lightweight, fast, and themeable.",
   "minimum_chrome_version": "109",
   "author": "RAM Manager",
-  "homepage_url": "https://github.com/jp/ram-manager",
+  "homepage_url": "https://github.com/jd-paul/ram-manager",
   "permissions": [
     "tabs",
     "storage",
