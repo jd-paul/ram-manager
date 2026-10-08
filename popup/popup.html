@@ -17,33 +17,36 @@
           <img src="../images/logo-icon.png" alt="RAM Manager" class="popup-logo" width="160">
           <span class="popup-brand-text">RAM Manager</span>
         </div>
-        <div class="current-tab" id="current-tab">
+        <div class="current-tab" id="current-tab" title="">
           <span class="current-tab-title" id="current-tab-title">Don't have current file yet.</span>
           <span class="status-pill" id="current-tab-status">—</span>
         </div>
       </header>
     </div>
 
+    <section class="stats-strip" id="stats-strip">
+      <div class="stat-item" id="stat-sleeping" title="Tabs currently suspended in this window">
+        <span class="stat-value" id="stat-sleeping-value">0</span>
+        <span class="stat-label"><span class="stat-dot stat-dot-sleeping"></span>Sleeping</span>
+      </div>
+      <div class="stat-item" id="stat-protected" title="Tabs protected from suspension in this window">
+        <span class="stat-value" id="stat-protected-value">0</span>
+        <span class="stat-label"><span class="stat-dot stat-dot-protected"></span>Protected</span>
+      </div>
+      <div class="stat-item" id="stat-memory" title="Estimated memory">
+        <span class="stat-value" id="stat-memory-value">—</span>
+        <span class="stat-label" id="stat-memory-label"><span class="stat-dot stat-dot-memory"></span><span id="stat-memory-text">Saved today</span></span>
+      </div>
+    </section>
+
     <section class="actions-section">
-      <button class="btn btn-suspend" id="btn-suspend-current" type="button">Suspend Current Tab</button>
-      <button class="btn btn-suspend" id="btn-suspend-all" type="button">Suspend All</button>
-      <button class="btn btn-restore" id="btn-restore-all" type="button">Restore All</button>
-      <div class="saved-memory-pill" id="saved-memory-pill" title="Total RAM saved by suspending tabs">
-        <span class="saved-memory-icon" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
-            <line x1="6" y1="10" x2="6" y2="10"></line>
-            <line x1="6" y1="14" x2="6" y2="14"></line>
-            <line x1="10" y1="10" x2="10" y2="10"></line>
-            <line x1="10" y1="14" x2="10" y2="14"></line>
-            <line x1="14" y1="10" x2="14" y2="10"></line>
-            <line x1="14" y1="14" x2="14" y2="14"></line>
-            <line x1="18" y1="10" x2="18" y2="10"></line>
-            <line x1="18" y1="14" x2="18" y2="14"></line>
-          </svg>
-        </span>
-        <span class="saved-memory-text" id="saved-memory-pill-text">0 MB saved</span>
+      <div class="actions-row actions-primary">
+        <button class="btn btn-suspend" id="btn-suspend-others" type="button">Suspend Others</button>
+        <button class="btn btn-restore" id="btn-restore-all" type="button">Restore All</button>
+      </div>
+      <div class="actions-row actions-secondary">
+        <button class="btn btn-secondary" id="btn-suspend-current" type="button">Suspend Current</button>
+        <button class="btn btn-secondary" id="btn-suspend-all" type="button">Suspend All</button>
       </div>
       <div class="shortcut-row" id="shortcut-row">
         <span class="shortcut-label">Suspend shortcut</span>
@@ -53,11 +56,58 @@
       </div>
     </section>
 
-    <section class="toggles-section" id="toggles-section">
-      <div class="toggles-header">
-        <span class="toggles-title">Quick Settings</span>
+    <section class="tablist-section">
+      <div class="tablist-header">
+        <span class="section-title">Tabs in this window</span>
+        <div class="tablist-tools">
+          <button class="icon-btn" id="btn-tab-search" type="button" title="Search tabs">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+          <button class="icon-btn" id="btn-close-duplicates" type="button" title="Close duplicate tabs">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1"></rect>
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <line x1="9" y1="12" x2="15" y2="12"></line>
+            </svg>
+          </button>
+          <button class="icon-btn" id="btn-export-tabs" type="button" title="Copy all tabs to clipboard">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round">
+              <rect x="8" y="2" width="8" height="4" rx="1"></rect>
+              <path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"></path>
+              <path d="M12 11v6"></path>
+              <path d="m9 14 3 3 3-3"></path>
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="toggles-body" id="toggles-body">
+      <div class="tab-search-row" id="tab-search-row" hidden>
+        <input type="text" id="tab-search-input" placeholder="Filter by title or URL…" autocomplete="off">
+      </div>
+      <div class="tab-list" id="tab-list"></div>
+      <p class="tab-list-empty" id="tab-list-empty" hidden>No tabs found</p>
+    </section>
+
+    <details class="collapsible-section" id="sessions-section">
+      <summary class="collapsible-summary">Sessions</summary>
+      <div class="collapsible-body">
+        <div class="session-save-row">
+          <input type="text" id="session-name-input" placeholder="Name this session…" autocomplete="off">
+          <button class="btn btn-small" id="btn-save-session" type="button">Save</button>
+        </div>
+        <ul class="session-list" id="session-list"></ul>
+        <p class="session-empty" id="session-empty">No saved sessions — save one to restore these tabs anytime.</p>
+      </div>
+    </details>
+
+    <details class="collapsible-section" id="settings-section" open>
+      <summary class="collapsible-summary">Quick Settings</summary>
+      <div class="collapsible-body">
         <div class="toggle-row">
           <div class="toggle-info">
             <span class="toggle-label">Auto Suspend</span>
@@ -110,10 +160,20 @@
         <div class="toggle-row">
           <div class="toggle-info">
             <span class="toggle-label">Protect Local URLs</span>
-            <span class="toggle-desc">Don't suspend localhost, 127.0.0.1, file://, or private network addresses</span>
+            <span class="toggle-desc">Don't suspend localhost, 127.x, or private network addresses</span>
           </div>
           <label class="toggle">
             <input type="checkbox" id="protect-local-urls">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Protect Form Pages</span>
+            <span class="toggle-desc">Skip pages like login, checkout, or payment</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="warn-form-data">
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -138,13 +198,11 @@
           </label>
         </div>
       </div>
-    </section>
+    </details>
 
-    <section class="toggles-section" id="whitelist-section">
-      <div class="toggles-header">
-        <span class="toggles-title">Whitelist</span>
-      </div>
-      <div class="toggles-body">
+    <details class="collapsible-section" id="whitelist-section">
+      <summary class="collapsible-summary">Whitelist</summary>
+      <div class="collapsible-body">
         <div class="whitelist-input-row">
           <input type="text" id="whitelist-input" placeholder="e.g. youtube.com" autocomplete="off">
           <button class="btn btn-small" id="whitelist-add" type="button">Add</button>
@@ -153,7 +211,7 @@
         <ul class="whitelist-list" id="whitelist-list"></ul>
         <p class="whitelist-empty" id="whitelist-empty">No sites whitelisted</p>
       </div>
-    </section>
+    </details>
 
     <div class="popup-footer-section">
       <footer class="popup-footer">
@@ -181,6 +239,8 @@
         </div>
       </footer>
     </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
 
   <script type="module" src="popup.js"></script>
