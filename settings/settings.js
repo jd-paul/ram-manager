@@ -169,6 +169,12 @@ function updateFlavorVisibility(mode) {
 /* -------------------------------------------------------------------------- */
 
 async function saveSetting(key, value) {
+  if (!(key in DEFAULT_SETTINGS)) {
+    console.error(
+      `settings: refusing to save unknown setting "${key}" — add it to DEFAULT_SETTINGS in js/storage.js first`
+    );
+    return;
+  }
   currentSettings[key] = value;
   await setSettings({ [key]: value });
 }
