@@ -53,23 +53,40 @@ function isWebUrl(url) {
 }
 
 /**
+ * Compact asleep-duration string: 45m, 2h, 3d.
+ * @param {number} ms
+ * @returns {string}
+ */
+function formatAsleepFor(ms) {
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return 'now';
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
+
+/**
  * Build the popup's per-tab list for the current window plus a summary strip.
  * Row status ∈ 'sleeping' | 'protected' | 'idle'.
  * @returns {Promise<{ items: Array, summary: Object }>}
  */
 export async function buildTabList() {
-  const [tabs, settings, whitelistRaw, lastActiveRaw, savedTodayBytes, keptAwake] = await Promise.all([
+  const [tabs, settings, whitelistRaw, lastActiveRaw, savedTodayBytes, keptAwake, frozenTabsRaw] = await Promise.all([
     getWindowTabs(),
     getSettings(),
     syncGet('whitelist'),
     localGet('tabLastActive'),
     getSavedMemoryToday(),
-    getKeptAwakeIds()
+    getKeptAwakeIds(),
+    localGet('frozenTabs')
   ]);
+
+  const frozenTabs = frozenTabsRaw || {};
+  const now = Date.now();
 
   const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
   const lastActive = lastActiveRaw || {};
-  const now = Date.now();
   const thresholdMs = (settings.suspendAfterMinutes || 30) * 60 * 1000;
   const currentTab = tabs.find((t) => t.active);
   const currentTabId = currentTab ? currentTab.id : undefined;
@@ -85,17 +102,24 @@ export async function buildTabList() {
       active: tab.active === true,
       status: 'idle',
       reason: null,
-      timeLeft: null
+      timeLeft: null,
+      // Sleeping rows: ours = frozen via our suspended page (restorable by
+      // us); !ours = Chrome-native discarded (Chrome reloads on activation)
+      ours: false,
+      sleepFor: null
     };
 
     if (isFrozen(tab)) {
       const frozen = parseFrozenTab(tab);
+      const frozenAt = frozenTabs[tab.id] ? frozenTabs[tab.id].frozenAt : null;
       return {
         ...base,
         title: frozen.title || base.title,
         url: frozen.url || base.url,
         favIconUrl: frozen.favicon || base.favIconUrl,
-        status: 'sleeping'
+        status: 'sleeping',
+        ours: true,
+        sleepFor: frozenAt ? formatAsleepFor(now - frozenAt) : null
       };
     }
 
@@ -109,6 +133,16 @@ export async function buildTabList() {
       whitelist,
       keptAwake: new Set(keptAwake)
     });
+
+    // Chrome discarded this tab on its own — same asleep semantics for the UI
+    if (!ok && reason === 'discarded') {
+      return {
+        ...base,
+        status: 'sleeping',
+        ours: false,
+        sleepFor: tab.lastAccessed ? formatAsleepFor(now - tab.lastAccessed) : null
+      };
+    }
 
     if (!ok) {
       return { ...base, status: 'protected', reason };

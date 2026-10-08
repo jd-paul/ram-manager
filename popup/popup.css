@@ -476,8 +476,8 @@ body.theme-dark .btn-restore {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 2px 6px;
+  gap: 4px;
+  padding: 2px 7px;
   border-radius: var(--radius-full);
   font-size: 10px;
   font-weight: var(--font-weight-semibold);
@@ -488,33 +488,52 @@ body.theme-dark .btn-restore {
   white-space: nowrap;
 }
 
-.tab-badge.badge-sleeping {
+.tab-badge svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+}
+
+.tab-badge-sub {
+  text-transform: none;
+  font-weight: var(--font-weight-medium);
+  opacity: 0.85;
+}
+
+/* Countdown values read better lowercase ("13m"), word labels stay uppercase */
+.tab-badge.badge-val {
+  text-transform: none;
+}
+
+.tab-badge.badge-asleep {
   background-color: var(--interactive-accent-light);
   color: var(--interactive-accent);
 }
 
-.tab-badge.badge-whitelisted {
-  background-color: var(--interactive-accent-light);
-  color: var(--interactive-accent);
+.tab-badge.badge-active {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+body.theme-dark .tab-badge.badge-active {
+  color: #111827;
 }
 
 .tab-badge.badge-soon {
-  background-color: var(--interactive-accent-light);
   color: var(--color-danger);
 }
 
-.tab-badge.badge-pinned {
-  background-color: var(--color-bg-tertiary);
+.tab-badge.badge-pinned,
+.tab-badge.badge-form {
   color: var(--color-warning);
 }
 
 .tab-badge.badge-audible {
-  background-color: var(--color-bg-tertiary);
   color: var(--color-success);
 }
 
-.tab-badge.badge-active {
-  background-color: var(--interactive-accent-light);
+.tab-badge.badge-whitelisted,
+.tab-badge.badge-kept-awake {
   color: var(--interactive-accent);
 }
 

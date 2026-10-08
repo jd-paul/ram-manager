@@ -258,15 +258,59 @@ function renderCurrentTab(items) {
   }
 }
 
+/* Badge icon set — 12px line icons matching the house SVG style */
+const BADGE_ICON_SVG = {
+  asleep: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+  "clock-off": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 7 12 12 15 14"></polyline><line x1="4" y1="4" x2="20" y2="20"></line></svg>',
+  eye: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"></path><circle cx="12" cy="12" r="3"></circle></svg>',
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M9 10.76 7.21 11.66A2 2 0 0 0 6 13.43V15a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-1.57a2 2 0 0 0-1.21-1.77L15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"></path></svg>',
+  volume: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>',
+  coffee: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path></svg>',
+  form: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>',
+  local: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="12" x2="2" y2="12"></line><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path><line x1="6" y1="16" x2="6.01" y2="16"></line><line x1="10" y1="16" x2="10.01" y2="16"></line></svg>',
+  loading: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>',
+};
+
 function badgeFor(item) {
-  if (item.status === "sleeping") return { text: "Sleeping", className: "badge-sleeping" };
+  if (item.status === "sleeping") {
+    return {
+      text: "Asleep",
+      sub: item.sleepFor ? `· ${item.sleepFor}` : null,
+      className: "badge-asleep",
+      icon: "asleep",
+    };
+  }
   if (item.status === "protected") {
-    return { text: REASON_LABELS[item.reason] || "Protected", className: `badge-${item.reason}` };
+    switch (item.reason) {
+      case "active":
+        return { text: "Active", sub: null, className: "badge-active", icon: "eye" };
+      case "pinned":
+        return { text: "Pinned", sub: null, className: "badge-pinned", icon: "pin" };
+      case "audible":
+        return { text: "Audio", sub: null, className: "badge-audible", icon: "volume" };
+      case "local-url":
+        return { text: "Local", sub: null, className: "badge-local-url", icon: "local" };
+      case "form":
+        return { text: "Form", sub: null, className: "badge-form", icon: "form" };
+      case "system":
+        return { text: "System", sub: null, className: "badge-system", icon: "lock" };
+      case "whitelisted":
+        return { text: "Whitelisted", sub: null, className: "badge-whitelisted", icon: "shield" };
+      case "kept-awake":
+        return { text: "Keep awake", sub: null, className: "badge-kept-awake", icon: "coffee" };
+      case "loading":
+        return { text: "Loading", sub: null, className: "badge-loading", icon: "loading" };
+      default:
+        return { text: "Protected", sub: null, className: "", icon: "shield" };
+    }
   }
   // idle
-  if (item.timeLeft === null) return { text: "Paused", className: "" };
-  if (item.timeLeft <= 0) return { text: "Soon", className: "badge-soon" };
-  return { text: `${item.timeLeft}m`, className: "" };
+  if (item.timeLeft === null) return { text: "Paused", sub: null, className: "badge-paused", icon: "clock-off" };
+  if (item.timeLeft <= 0) return { text: "Soon", sub: null, className: "badge-soon", icon: "clock" };
+  return { text: `${item.timeLeft}m`, sub: null, className: "badge-val", icon: "clock" };
 }
 
 function buildTabRow(item) {
@@ -303,7 +347,18 @@ function buildTabRow(item) {
   const badge = document.createElement("span");
   const b = badgeFor(item);
   badge.className = "tab-badge " + b.className;
-  badge.textContent = b.text;
+  if (b.icon && BADGE_ICON_SVG[b.icon]) {
+    badge.innerHTML = BADGE_ICON_SVG[b.icon];
+  }
+  const label = document.createElement("span");
+  label.textContent = b.text;
+  badge.appendChild(label);
+  if (b.sub) {
+    const sub = document.createElement("span");
+    sub.className = "tab-badge-sub";
+    sub.textContent = b.sub;
+    badge.appendChild(sub);
+  }
   row.appendChild(badge);
 
   if (item.status === "idle" || item.reason === "kept-awake") {
@@ -351,7 +406,7 @@ function renderTabList(items) {
   if (!els.tabList) return;
   const signature =
     items
-      .map((i) => [i.id, i.status, i.reason, i.timeLeft, i.title, i.favIconUrl].join("|"))
+      .map((i) => [i.id, i.status, i.reason, i.timeLeft, i.title, i.favIconUrl, i.sleepFor].join("|"))
       .join(";") + "#" + (els.tabSearchInput ? els.tabSearchInput.value : "");
   if (signature === lastTabSignature) return;
   lastTabSignature = signature;
@@ -388,10 +443,12 @@ function applyTabFilter() {
 
 async function onTabRowClick(item) {
   try {
-    if (item.status === "sleeping") {
+    if (item.status === "sleeping" && item.ours) {
       await restoreTab(item.id);
       await updateBadge();
     }
+    // Chrome-discarded rows (ours === false) just get focused — Chrome
+    // natively reloads a discarded tab on activation
     await chrome.tabs.update(item.id, { active: true });
     const tab = await chrome.tabs.get(item.id).catch(() => null);
     if (tab) {
