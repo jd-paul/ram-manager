@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS = {
   suspendOnMinimize: false,
   theme: 'system',
   autoRestore: false,
-  badgeCountEnabled: false,
+  badgeCountEnabled: true,
   changeTabIconWhenSuspended: false
 };
 

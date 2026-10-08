@@ -81,6 +81,7 @@ function initElements() {
   els.linkDashboard = document.getElementById("link-dashboard");
   els.linkSettings = document.getElementById("link-settings");
   els.shortcutPills = document.getElementById("kbd-pills");
+  els.shortcutRow = document.getElementById("shortcut-row");
 
   els.tabList = document.getElementById("tab-list");
   els.tabListEmpty = document.getElementById("tab-list-empty");
@@ -874,6 +875,15 @@ async function loadShortcutHint() {
     } else {
       if (els.shortcutPills) {
         els.shortcutPills.innerHTML = '<span class="kbd-pill">not set</span>';
+      }
+      // Chrome only applies suggested_key at first install and silently skips
+      // occupied combos — the only remedy is the user assigning it by hand.
+      if (els.shortcutRow) {
+        els.shortcutRow.classList.add("shortcut-row--actionable");
+        els.shortcutRow.title = "Click to assign a keyboard shortcut";
+        els.shortcutRow.addEventListener("click", () => {
+          chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+        });
       }
     }
   } catch (err) {

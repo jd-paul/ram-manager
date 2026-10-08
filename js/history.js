@@ -105,6 +105,15 @@ export function logHistory(action, tab) {
   return _historyQueue;
 }
 
+function queryTabs(queryInfo) {
+  return new Promise((resolve) => {
+    chrome.tabs.query(queryInfo, (result) => {
+      if (chrome.runtime.lastError) resolve([]);
+      else resolve(result || []);
+    });
+  });
+}
+
 export async function updateBadge() {
   try {
     const settings = await getSettings();
@@ -113,13 +122,19 @@ export async function updateBadge() {
       return;
     }
 
-    // Inline getSuspendedTabs logic to avoid circular dependency
-    const tabs = await new Promise((resolve) => {
-      chrome.tabs.query({}, (result) => {
-        if (chrome.runtime.lastError) resolve([]);
-        else resolve(result || []);
+    // Count suspended tabs in the focused window only (like the popup's list)
+    const focusedWindow = await new Promise((resolve) => {
+      chrome.windows.getLastFocused((w) => {
+        if (chrome.runtime.lastError) resolve(null);
+        else resolve(w || null);
       });
     });
+    if (!focusedWindow || typeof focusedWindow.id !== 'number') {
+      chrome.action.setBadgeText({ text: '' });
+      return;
+    }
+
+    const tabs = await queryTabs({ windowId: focusedWindow.id });
     const suspendedPrefix = chrome.runtime.getURL('suspended.html');
     const count = tabs.filter((t) => t.url && t.url.startsWith(suspendedPrefix)).length;
 

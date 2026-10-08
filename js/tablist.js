@@ -227,6 +227,14 @@ export async function restoreSession(id, mode) {
         console.error('restoreSession: failed to remove old tabs:', err);
       }
     }
+    // Leave the user on a real tab instead of whatever Chrome picks
+    if (created.length) {
+      try {
+        await chrome.tabs.update(created[0], { active: true });
+      } catch (err) {
+        console.error('restoreSession: failed to activate tab:', err);
+      }
+    }
   }
 
   return opened;

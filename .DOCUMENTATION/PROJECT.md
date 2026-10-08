@@ -106,7 +106,7 @@ From `js/storage.js` (`DEFAULT_SETTINGS`). Defaults are deliberate — conservat
 | `suspendOnMinimize` | `false` | Suspend tabs of a Chrome window when focus leaves it |
 | `autoRestore` | `false` | Restore a suspended tab when it is activated |
 | `theme` | `'system'` | |
-| `badgeCountEnabled` | `false` | Toolbar badge = suspended tab count |
+| `badgeCountEnabled` | `true` | Toolbar badge = suspended tab count in the focused window (cleared when nothing suspended) |
 | `changeTabIconWhenSuspended` | `false` | Dim favicon on the suspended page |
 
 Suspend paths that always apply regardless of settings: never suspend `chrome://`, `chrome-extension://` (including our own suspended page), `edge://`, `devtools://`, `about:`, `file://`, `data:`, `blob:`, `javascript:` URLs, already-discarded tabs, or tabs still loading.

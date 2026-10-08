@@ -272,6 +272,22 @@ body.theme-dark .btn-restore {
   margin-top: var(--space-xs);
 }
 
+.shortcut-row--actionable {
+  cursor: pointer;
+  padding: 2px var(--space-xs);
+  border-radius: var(--radius-s);
+  align-self: center;
+  transition: background-color 0.15s ease;
+}
+
+.shortcut-row--actionable:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.shortcut-row--actionable .shortcut-label {
+  color: var(--interactive-accent);
+}
+
 .shortcut-label {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);

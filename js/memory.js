@@ -76,6 +76,8 @@ export async function getMemoryInfo() {
 
 /**
  * Calculate saved memory today from suspension history.
+ * Each tab counts once per RECOUNT_COOLDOWN_MS — wake/suspend cycles and
+ * re-testing the same tab must not inflate the stat.
  * @returns {Promise<number>}
  */
 export async function getSavedMemoryToday() {
@@ -90,12 +92,20 @@ export async function getSavedMemoryToday() {
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
 
-    const todayEntries = history.filter((entry) => {
-      return entry.action === 'suspend' && entry.timestamp >= startOfDay && entry.timestamp < endOfDay;
-    });
+    const RECOUNT_COOLDOWN_MS = 60 * 1000;
+    const lastCounted = new Map();
+    let count = 0;
 
-    const estimate = ESTIMATED_BYTES_PER_TAB;
-    return todayEntries.length * estimate;
+    for (const entry of history) {
+      if (entry.action !== 'suspend') continue;
+      if (entry.timestamp < startOfDay || entry.timestamp >= endOfDay) continue;
+      const prev = lastCounted.get(entry.tabId);
+      if (prev !== undefined && entry.timestamp - prev < RECOUNT_COOLDOWN_MS) continue;
+      lastCounted.set(entry.tabId, entry.timestamp);
+      count++;
+    }
+
+    return count * ESTIMATED_BYTES_PER_TAB;
   } catch (err) {
     console.error('getSavedMemoryToday error:', err);
     return 0;

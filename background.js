@@ -323,6 +323,9 @@ chrome.windows.onFocusChanged.addListener((windowId) => {
 });
 
 async function handleWindowFocusChanged(windowId) {
+  // Badge counts suspended tabs in the focused window — refresh on focus moves
+  updateBadge().catch(err => console.error('updateBadge error:', err));
+
   const settings = await getSettings();
   if (!settings.suspendOnMinimize) return;
 
