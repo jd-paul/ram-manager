@@ -1,0 +1,34 @@
+#!/bin/bash
+# Pre-commit gate: syntax-check every tracked JS file and run the asset audit.
+# Install once per clone:  git config core.hooksPath hooks
+# (This replaces .git/hooks — Git runs hooks from this directory instead.)
+
+set -u
+cd "$(dirname "$0")/.."
+
+fail=0
+
+# Syntax: node --check parses .js as CommonJS, so module files are checked
+# via a .mjs copy; .cjs files (audit-assets.cjs) are checked in place.
+while IFS= read -r f; do
+  case "$f" in
+    *.cjs)
+      node --check "$f" || { echo "pre-commit: SYNTAX FAIL: $f" >&2; fail=1; }
+      ;;
+    *)
+      cp "$f" /tmp/ram-manager-hook-check.mjs \
+        && node --check /tmp/ram-manager-hook-check.mjs \
+        || { echo "pre-commit: SYNTAX FAIL: $f" >&2; fail=1; }
+      ;;
+  esac
+done < <(git ls-files '*.js' | grep -v 'lucide')
+
+# Asset integrity: every referenced/injected/imported file must exist
+node audit-assets.cjs . || fail=1
+
+rm -f /tmp/ram-manager-hook-check.mjs
+
+if [ "$fail" -ne 0 ]; then
+  echo "pre-commit: checks failed — commit blocked (use --no-verify to override at your own risk)" >&2
+fi
+exit "$fail"

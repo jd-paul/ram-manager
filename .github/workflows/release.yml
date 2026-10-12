@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build and verify package
+        run: |
+          ./build.sh
+          tmp="$(mktemp -d)"
+          unzip -q ram-manager-v*.zip -d "$tmp"
+          node audit-assets.cjs "$tmp"
+
+      - name: Create GitHub Release with package attached
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          zip="$(ls ram-manager-v*.zip)"
+          gh release create "$TAG" "$zip" \
+            --title "$TAG" \
+            --generate-notes

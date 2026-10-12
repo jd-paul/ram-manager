@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Syntax-check all JS
+        run: |
+          set -u
+          fail=0
+          while IFS= read -r f; do
+            case "$f" in
+              *.cjs)
+                node --check "$f" || { echo "SYNTAX FAIL: $f"; fail=1; }
+                ;;
+              *)
+                cp "$f" /tmp/ci-check.mjs \
+                  && node --check /tmp/ci-check.mjs \
+                  || { echo "SYNTAX FAIL: $f"; fail=1; }
+                ;;
+            esac
+          done < <(git ls-files '*.js' | grep -v 'lucide')
+          exit "$fail"
+
+      - name: Asset integrity audit
+        run: node audit-assets.cjs .
+
+      - name: Build package
+        run: ./build.sh
+
+      # The gate that would have caught the v1.1.0 incident: audit the exact
+      # bytes that would ship to users, not just the working tree.
+      - name: Audit packaged zip
+        run: |
+          tmp="$(mktemp -d)"
+          unzip -q ram-manager-v*.zip -d "$tmp"
+          node audit-assets.cjs "$tmp"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ram-manager-package
+          path: ram-manager-v*.zip
+          if-no-files-found: error
