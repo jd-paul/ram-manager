@@ -72,6 +72,32 @@ git push -u origin feat/short-description
 
 Then open a PR against `master` on `https://github.com/jd-paul/ram-manager`, self-review the diff (read it as if you didn't write it), and merge.
 
+## Continuous checks
+
+The same three gates run locally (every commit) and in GitHub Actions (every
+push/PR, authoritative for merges):
+
+1. Syntax check on every tracked JS file
+2. `node audit-assets.cjs .` — asset integrity (no missing/broken references)
+3. `./build.sh` + audit of the packaged zip — verifies the exact bytes that
+   would ship, which is the check that would have caught the v1.1.0
+   `suspended/` packaging incident
+
+**Local (one-time setup per clone):**
+
+```bash
+git config core.hooksPath hooks
+```
+
+This makes Git run the versioned hooks in `hooks/` (currently `pre-commit`)
+instead of `.git/hooks/`. It runs in seconds; bypass with `--no-verify` only
+when you really mean it.
+
+**GitHub Actions:** `.github/workflows/ci.yml` runs on every push to
+`master` and every PR, and uploads the built zip as a workflow artifact.
+Set the `verify` check as a required status check in the repo's branch
+protection settings so nothing merges red.
+
 ## Shipping a release
 
 ### Step 1: Bump the version
@@ -88,16 +114,19 @@ The Chrome Web Store **rejects** a package whose version is not strictly higher 
 
 ### Step 2: Build the zip
 
-The release is the repo root zipped in the same shape as `ram-manager-v1.0.0.zip`. Exclude `.git/`, any previous release zip, and `.DS_Store` files:
+**Use `build.sh` — never hand-assemble the zip.** v1.1.0 was packaged from a
+hand-picked file list that silently dropped `suspended/`, shipping every user
+an unstyled frozen page with a dead Restore button. `build.sh` zips an
+explicit runtime file set and fails the build if any critical file is
+missing:
 
 ```bash
-zip -r ram-manager-v1.1.0.zip . \
-  -x ".git/*" \
-  -x "ram-manager-v*.zip" \
-  -x "*.DS_Store"
+./build.sh   # writes ram-manager-v<manifest-version>.zip
 ```
 
-Sanity-check the zip before uploading: unzip it to a temp folder and load that folder with "Load unpacked". The icon, popup, options page, and suspended page must all work.
+Sanity-check before uploading: unzip to a temp folder, load that folder with
+"Load unpacked", and confirm the icon, popup, options page, and suspended
+page all work.
 
 ### Step 3: Publish to the Chrome Web Store
 
@@ -114,6 +143,11 @@ git tag -a v1.1.0 -m "Release v1.1.0"
 git push origin v1.1.0
 ```
 
+Pushing the tag triggers `.github/workflows/release.yml`, which builds the
+zip via `build.sh`, audits the packaged contents, and attaches the zip to a
+GitHub Release automatically. The Chrome Web Store upload (Step 3) stays
+manual.
+
 ## Pre-push checklist
 
 - [ ] Extension reloads cleanly at `chrome://extensions`
@@ -129,5 +163,5 @@ git push origin v1.1.0
 |---|---|
 | Fix a bug | Branch → fix → manual verify → conventional commit → PR → merge |
 | Add a feature | Same, plus all four settings-plumbing steps if it's a setting |
-| Ship to users | Bump version → zip repo root → upload to CWS dashboard → tag `vX.Y.Z` |
+| Ship to users | Bump version → `./build.sh` + manual verify → upload zip to CWS dashboard → tag `vX.Y.Z` (CI attaches the zip to the GitHub Release) |
 | Check what shipped | `git tag -l`, or the store listing's version vs `manifest.json` |
