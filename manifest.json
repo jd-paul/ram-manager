@@ -11,8 +11,7 @@
     "storage",
     "alarms",
     "contextMenus",
-    "scripting",
-    "downloads"
+    "scripting"
   ],
   "optional_host_permissions": [
     "<all_urls>"

@@ -33,7 +33,6 @@ const els = {
   protectMusicSites: document.getElementById('protect-music-sites'),
   protectLiveTitles: document.getElementById('protect-live-titles'),
   protectInteraction: document.getElementById('protect-interaction'),
-  protectDownloads: document.getElementById('protect-downloads'),
   grantPageAccess: document.getElementById('grant-page-access'),
   pageAccessHint: document.getElementById('page-access-hint'),
   whitelistInput: document.getElementById('whitelist-input'),
@@ -386,7 +385,7 @@ async function importData(file) {
       'autoSuspendEnabled', 'suspendAfterMinutes', 'protectMedia', 'protectPinned',
       'protectActive', 'protectLocalUrls', 'protectForms', 'protectMediaElements',
       'protectMeetingSites', 'protectMusicSites', 'protectLiveTitles',
-      'protectInteraction', 'protectDownloads',
+      'protectInteraction',
       'theme', 'autoRestore', 'badgeCountEnabled',
       'changeTabIconWhenSuspended', 'whitelist'
     ]);
@@ -503,7 +502,6 @@ function bindEvents() {
   bindToggle(els.protectMusicSites, 'protectMusicSites');
   bindToggle(els.protectLiveTitles, 'protectLiveTitles');
   bindToggle(els.protectInteraction, 'protectInteraction');
-  bindToggle(els.protectDownloads, 'protectDownloads');
 
   // Form/media/activity detection reads page content — request the optional
   // host permission here; without it those protections skip freezing on doubt

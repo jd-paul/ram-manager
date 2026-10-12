@@ -16,8 +16,8 @@ update to this version and reload the frozen tab. Releases are now built by
 - New pre-freeze checks, each individually toggleable in Settings: typed or
   unsaved form data (including dropdowns, rich-text editors, and
   unsaved-changes warnings), any playing media even when muted, meeting and
-  music sites, live-updating pages (changing titles), tabs with a download
-  in progress, and real page activity (typing/mouse/scroll resets the timer)
+  music sites, live-updating pages (changing titles), and real page activity
+  (typing/mouse/scroll resets the timer)
 - If a check can't verify a tab, the tab is not frozen — unverifiable means
   unsafe
 - The active tab of every window is now protected, not just the current one
@@ -27,10 +27,13 @@ update to this version and reload the frozen tab. Releases are now built by
 **Defaults**: idle threshold 60 minutes, auto-restore on tab click. Existing
 installs keep their stored settings.
 
-**Permissions**: re-adds `downloads` (used only to avoid freezing tabs while
-a download is in progress). The optional page-access permission
-(`<all_urls>`) is now requested from Settings via "Grant Page Access" and
-powers form/media/activity detection.
+**Permissions**: unchanged from v1.0.0's minimal set (`tabs`, `storage`,
+`alarms`, `contextMenus`, plus `scripting` from v1.1.0). The optional
+page-access permission (`<all_urls>`) is requested from Settings via "Grant
+Page Access" and powers form/media/activity detection. No download
+protection is needed: freezing a tab does not cancel downloads — they are
+owned by Chrome's download manager, verified with in-flight downloads
+across a freeze.
 
 > **Draft note.** When ready: tag `v1.0.0` on `master`
 > (`git tag -a v1.0.0 -m "Release v1.0.0" && git push origin v1.0.0`), publish a

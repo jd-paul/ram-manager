@@ -14,7 +14,6 @@ export const DEFAULT_SETTINGS = {
   protectMusicSites: true,
   protectLiveTitles: true,
   protectInteraction: true,
-  protectDownloads: true,
   theme: 'system',
   autoRestore: true,
   badgeCountEnabled: true,

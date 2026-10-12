@@ -2,8 +2,7 @@
 //
 // analyzeTab() (js/tabs.js) covers sync tab metadata + URL heuristics. This
 // module covers everything that requires looking INSIDE the page: dirty
-// forms, playing media elements, live title changes, focused documents, and
-// in-progress downloads.
+// forms, playing media elements, live title changes, and focused documents.
 //
 // Policy (user-configured default): when an enabled check cannot run —
 // missing page-access permission, injection failure, no response, or an
@@ -80,23 +79,6 @@ export function getActiveTabIds() {
   });
 }
 
-/**
- * True when any download is currently in progress.
- * @returns {Promise<boolean>}
- */
-export function hasActiveDownloads() {
-  return new Promise((resolve) => {
-    try {
-      chrome.downloads.search({ state: 'in_progress' }, (items) => {
-        if (chrome.runtime.lastError) resolve(false);
-        else resolve((items || []).length > 0);
-      });
-    } catch (err) {
-      resolve(false);
-    }
-  });
-}
-
 function needsPageAccess(settings) {
   return Boolean(
     settings.protectForms ||
@@ -117,12 +99,8 @@ function needsPageAccess(settings) {
 export async function checkTabSmart(tab, settings) {
   const reasons = [];
 
-  if (settings.protectDownloads && await hasActiveDownloads()) {
-    reasons.push('downloading');
-  }
-
   if (!needsPageAccess(settings)) {
-    return { ok: reasons.length === 0, unknown: false, reasons };
+    return { ok: true, unknown: false, reasons };
   }
 
   if (!/^https?:/.test(tab.url || '')) {

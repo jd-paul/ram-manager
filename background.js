@@ -85,7 +85,7 @@ async function ensureContentScriptEverywhere() {
 /* Auto-suspend pipeline                                                      */
 /*                                                                            */
 /* One pass = find idle-eligible tabs → in-page warning (Not-now bumps) →     */
-/* smart pre-freeze checks (forms, media, focus, live titles, downloads) →    */
+/* smart pre-freeze checks (forms, media, focus, live titles) →          */
 /* re-validate → batch-freeze.                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -162,7 +162,7 @@ async function runSuspendPass({ warn }) {
   }
 
   // Smart pre-freeze checks: dirty forms, playing media, focused document,
-  // live title changes, active downloads. Unverifiable tabs are skipped —
+  // live title changes. Unverifiable tabs are skipped —
   // when in doubt, never freeze.
   const settings = await getSettings();
   const blocked = new Set();

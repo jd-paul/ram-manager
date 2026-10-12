@@ -42,7 +42,6 @@ const REASON_LABELS = {
   "media-playing": "Media playing",
   focused: "In use",
   "live-title": "Live page",
-  downloading: "Downloading",
   "meeting-site": "Meeting site",
   "music-site": "Music site",
   system: "System page",
@@ -64,7 +63,6 @@ const REASON_TO_TOGGLE = {
   "media-playing": "protect-media-elements",
   focused: "protect-interaction",
   "live-title": "protect-live-titles",
-  downloading: "protect-downloads",
   "meeting-site": "protect-meeting-sites",
   "music-site": "protect-music-sites",
 };

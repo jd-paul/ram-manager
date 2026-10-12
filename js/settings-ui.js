@@ -52,9 +52,6 @@ export async function loadSettingsIntoUI(els) {
   if (els.protectInteraction) {
     els.protectInteraction.checked = settings.protectInteraction ?? DEFAULT_SETTINGS.protectInteraction;
   }
-  if (els.protectDownloads) {
-    els.protectDownloads.checked = settings.protectDownloads ?? DEFAULT_SETTINGS.protectDownloads;
-  }
 
   // Display toggles
   if (els.badgeCountToggle) {
