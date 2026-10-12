@@ -26,7 +26,12 @@ async function init() {
     return;
   }
 
-  if (title) els.title.textContent = title;
+  if (title) {
+    els.title.textContent = title;
+    // Tab strip should show the page title with a frozen marker, not our
+    // chrome-extension:// page name
+    document.title = `❄️ ${title}`;
+  }
   els.url.textContent = originalUrl;
   if (favicon && (favicon.startsWith('http://') || favicon.startsWith('https://') || favicon.startsWith('data:'))) {
     els.favicon.src = favicon;
@@ -89,8 +94,14 @@ async function handleRestore() {
       throw new Error('Missing original URL');
     }
 
-    // Navigate this tab directly to the original URL — no storage lookup needed
-    await chrome.tabs.update({ url: originalUrl });
+    // Navigate this tab directly to the original URL — no storage lookup needed.
+    // Resolve our own tab explicitly: update() without a tabId can target the
+    // wrong tab from extension pages.
+    const tab = await chrome.tabs.getCurrent();
+    if (!tab || tab.id == null) {
+      throw new Error('Could not determine this tab');
+    }
+    await chrome.tabs.update(tab.id, { url: originalUrl });
   } catch (err) {
     console.error('Restore failed:', err);
     els.btnRestore.textContent = 'Restore Failed — Click to Retry';
