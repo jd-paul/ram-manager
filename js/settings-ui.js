@@ -34,13 +34,26 @@ export async function loadSettingsIntoUI(els) {
   if (els.protectLocalUrls) {
     els.protectLocalUrls.checked = settings.protectLocalUrls ?? DEFAULT_SETTINGS.protectLocalUrls;
   }
-  if (els.warnFormData) {
-    els.warnFormData.checked = settings.warnFormData ?? DEFAULT_SETTINGS.warnFormData;
+  if (els.protectForms) {
+    els.protectForms.checked = settings.protectForms ?? DEFAULT_SETTINGS.protectForms;
   }
-
-  // Suspend on minimize
-  if (els.suspendOnMinimize) {
-    els.suspendOnMinimize.checked = settings.suspendOnMinimize ?? DEFAULT_SETTINGS.suspendOnMinimize;
+  if (els.protectMediaElements) {
+    els.protectMediaElements.checked = settings.protectMediaElements ?? DEFAULT_SETTINGS.protectMediaElements;
+  }
+  if (els.protectMeetingSites) {
+    els.protectMeetingSites.checked = settings.protectMeetingSites ?? DEFAULT_SETTINGS.protectMeetingSites;
+  }
+  if (els.protectMusicSites) {
+    els.protectMusicSites.checked = settings.protectMusicSites ?? DEFAULT_SETTINGS.protectMusicSites;
+  }
+  if (els.protectLiveTitles) {
+    els.protectLiveTitles.checked = settings.protectLiveTitles ?? DEFAULT_SETTINGS.protectLiveTitles;
+  }
+  if (els.protectInteraction) {
+    els.protectInteraction.checked = settings.protectInteraction ?? DEFAULT_SETTINGS.protectInteraction;
+  }
+  if (els.protectDownloads) {
+    els.protectDownloads.checked = settings.protectDownloads ?? DEFAULT_SETTINGS.protectDownloads;
   }
 
   // Display toggles

@@ -38,6 +38,13 @@ const REASON_LABELS = {
   audible: "Playing audio",
   "local-url": "Local page",
   form: "Form page",
+  "form-dirty": "Unsaved form",
+  "media-playing": "Media playing",
+  focused: "In use",
+  "live-title": "Live page",
+  downloading: "Downloading",
+  "meeting-site": "Meeting site",
+  "music-site": "Music site",
   system: "System page",
   loading: "Loading",
   whitelisted: "Whitelisted",
@@ -52,7 +59,14 @@ const REASON_TO_TOGGLE = {
   audible: "protect-media",
   active: "protect-active",
   "local-url": "protect-local-urls",
-  form: "warn-form-data",
+  form: "protect-forms",
+  "form-dirty": "protect-forms",
+  "media-playing": "protect-media-elements",
+  focused: "protect-interaction",
+  "live-title": "protect-live-titles",
+  downloading: "protect-downloads",
+  "meeting-site": "protect-meeting-sites",
+  "music-site": "protect-music-sites",
 };
 
 const SECTION_STATE_KEY = "ram-manager-popup-sections";
@@ -120,9 +134,8 @@ function initElements() {
   els.protectPinned = document.getElementById("protect-pinned");
   els.protectActive = document.getElementById("protect-active");
   els.protectLocalUrls = document.getElementById("protect-local-urls");
-  els.warnFormData = document.getElementById("warn-form-data");
+  els.protectForms = document.getElementById("protect-forms");
   els.autoRestoreToggle = document.getElementById("auto-restore-toggle");
-  els.suspendOnMinimize = document.getElementById("suspend-on-minimize");
 
   els.toast = document.getElementById("toast");
 }
@@ -474,7 +487,9 @@ async function suspendTabById(tabId) {
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
-      warnFormData: settings.warnFormData,
+      protectForms: settings.protectForms,
+      protectMeetingSites: settings.protectMeetingSites,
+      protectMusicSites: settings.protectMusicSites,
     });
     if (!ok) {
       showToast(`Can't suspend: ${REASON_LABELS[reason] || "protected"}`);
@@ -589,7 +604,9 @@ async function handleSuspendCurrent() {
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
-      warnFormData: settings.warnFormData,
+      protectForms: settings.protectForms,
+      protectMeetingSites: settings.protectMeetingSites,
+      protectMusicSites: settings.protectMusicSites,
     });
 
     if (!ok) {
@@ -939,25 +956,24 @@ function bindToggles() {
   bindToggle(els.protectActive, "protectActive");
   bindToggle(els.protectLocalUrls, "protectLocalUrls");
 
-  // Real form detection reads page content, so it needs the optional host
-  // permission — ask at toggle-time instead of install-time; without it we
-  // keep the URL-path heuristic
-  if (els.warnFormData) {
-    els.warnFormData.addEventListener("change", async (e) => {
+  // Form detection reads page content, so it needs the optional host
+  // permission — ask at toggle-time; without it that protection skips
+  // tabs it cannot verify
+  if (els.protectForms) {
+    els.protectForms.addEventListener("change", async (e) => {
       if (e.target.checked) {
         const granted = await requestHostPermission();
         if (!granted) {
           e.target.checked = false;
-          showToast("Form detection needs the optional permission");
+          showToast("Form detection needs the optional page-access permission");
           return;
         }
       }
-      await saveSetting("warnFormData", e.target.checked);
+      await saveSetting("protectForms", e.target.checked);
     });
   }
 
   bindToggle(els.autoRestoreToggle, "autoRestore");
-  bindToggle(els.suspendOnMinimize, "suspendOnMinimize");
 
   if (els.autoSuspendToggle) {
     els.autoSuspendToggle.addEventListener("change", () => refresh());

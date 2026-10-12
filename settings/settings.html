@@ -61,13 +61,91 @@
           <p>Prevent certain types of tabs from being suspended.</p>
         </div>
       </div>
+      <div class="setting-row setting-row--inline">
+        <span class="setting-desc">Form, media, and activity detection read page content and need the optional page-access permission.</span>
+        <button type="button" id="grant-page-access" class="btn btn--secondary">
+          <i data-lucide="lock-open" class="lucide btn-icon"></i>
+          <span id="grant-page-access-label">Grant Page Access</span>
+        </button>
+        <p class="input-hint" id="page-access-hint"></p>
+      </div>
       <div class="setting-row setting-row--toggle">
         <div class="setting-info">
           <span class="setting-label">Protect Media Tabs</span>
-          <span class="setting-desc">Don't suspend tabs playing audio or video</span>
+          <span class="setting-desc">Don't suspend tabs playing audible audio or video</span>
         </div>
         <label class="toggle">
           <input type="checkbox" id="protect-media">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Playing Media</span>
+          <span class="setting-desc">Don't suspend tabs with any playing audio or video element, even muted ones</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-media-elements">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Meeting Sites</span>
+          <span class="setting-desc">Don't suspend Meet, Zoom, Teams, Discord, and other call sites</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-meeting-sites">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Music Sites</span>
+          <span class="setting-desc">Don't suspend Spotify, YouTube Music, SoundCloud, and other music players</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-music-sites">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Forms</span>
+          <span class="setting-desc">Don't suspend pages with typed form data, changed dropdowns, rich-text edits, or an unsaved-changes warning</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-forms">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Live-Updating Pages</span>
+          <span class="setting-desc">Don't suspend pages whose title keeps changing (dashboards, trackers, live scores)</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-live-titles">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Protect Downloading Tabs</span>
+          <span class="setting-desc">Don't suspend any tab while a download is in progress</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-downloads">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-row setting-row--toggle">
+        <div class="setting-info">
+          <span class="setting-label">Respect Page Activity</span>
+          <span class="setting-desc">Typing, mouse movement, or scrolling in a page resets its idle timer</span>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="protect-interaction">
           <span class="toggle-slider"></span>
         </label>
       </div>
@@ -83,8 +161,8 @@
       </div>
       <div class="setting-row setting-row--toggle">
         <div class="setting-info">
-          <span class="setting-label">Protect Active Tab</span>
-          <span class="setting-desc">Never suspend the currently active tab</span>
+          <span class="setting-label">Protect Active Tabs</span>
+          <span class="setting-desc">Never suspend the active tab of any window</span>
         </div>
         <label class="toggle">
           <input type="checkbox" id="protect-active">
@@ -108,36 +186,6 @@
         </div>
         <label class="toggle">
           <input type="checkbox" id="auto-restore-toggle">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Warn About Form Data</span>
-          <span class="setting-desc">Don't suspend tabs where you've typed into a form — asks for page access to detect real input</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="warn-form-data">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Suspend on Minimize</span>
-          <span class="setting-desc">Suspend tabs when their window loses focus</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="suspend-on-minimize">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Suspend on Startup</span>
-          <span class="setting-desc">After a browser restart, re-suspend restored tabs you haven't looked at yet</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="suspend-on-startup">
           <span class="toggle-slider"></span>
         </label>
       </div>

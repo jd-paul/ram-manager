@@ -87,9 +87,8 @@ export async function buildTabList() {
 
   const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
   const lastActive = lastActiveRaw || {};
-  const thresholdMs = (settings.suspendAfterMinutes || 30) * 60 * 1000;
-  const currentTab = tabs.find((t) => t.active);
-  const currentTabId = currentTab ? currentTab.id : undefined;
+  const thresholdMs = (settings.suspendAfterMinutes || 60) * 60 * 1000;
+  const activeTabIds = new Set(tabs.filter((t) => t.active).map((t) => t.id));
 
   const items = tabs.map((tab) => {
     const base = {
@@ -128,8 +127,10 @@ export async function buildTabList() {
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
-      warnFormData: settings.warnFormData,
-      currentTabId,
+      protectForms: settings.protectForms,
+      protectMeetingSites: settings.protectMeetingSites,
+      protectMusicSites: settings.protectMusicSites,
+      activeTabIds,
       whitelist,
       keptAwake: new Set(keptAwake)
     });
@@ -354,6 +355,7 @@ export async function getSuspendableTabs(excludeTabId) {
 
   const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
   const held = new Set(keptAwake);
+  const activeTabIds = new Set(tabs.filter((t) => t.active).map((t) => t.id));
 
   return tabs.filter((tab) => {
     if (tab.id === excludeTabId) return false;
@@ -362,7 +364,10 @@ export async function getSuspendableTabs(excludeTabId) {
       protectPinned: settings.protectPinned,
       protectMedia: settings.protectMedia,
       protectLocalUrls: settings.protectLocalUrls,
-      warnFormData: settings.warnFormData,
+      protectForms: settings.protectForms,
+      protectMeetingSites: settings.protectMeetingSites,
+      protectMusicSites: settings.protectMusicSites,
+      activeTabIds,
       whitelist,
       keptAwake: held
     }).ok;
