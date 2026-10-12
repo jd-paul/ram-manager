@@ -3,16 +3,20 @@
 
 export const DEFAULT_SETTINGS = {
   autoSuspendEnabled: false,
-  suspendAfterMinutes: 30,
+  suspendAfterMinutes: 60,
   protectMedia: true,
   protectPinned: true,
   protectActive: true,
   protectLocalUrls: true,
-  warnFormData: false,
-  suspendOnMinimize: false,
-  suspendOnStartup: true,
+  protectForms: true,
+  protectMediaElements: true,
+  protectMeetingSites: true,
+  protectMusicSites: true,
+  protectLiveTitles: true,
+  protectInteraction: true,
+  protectDownloads: true,
   theme: 'system',
-  autoRestore: false,
+  autoRestore: true,
   badgeCountEnabled: true,
   changeTabIconWhenSuspended: false
 };

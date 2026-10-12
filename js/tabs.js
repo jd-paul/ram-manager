@@ -2,7 +2,7 @@
 // Chrome Extension Manifest V3 APIs only
 
 import { isFrozen } from './suspension.js';
-import { isWhitelisted } from './utils.js';
+import { isWhitelisted, matchesHostCategory, MEETING_HOSTS, MUSIC_HOSTS } from './utils.js';
 import { localGet, localSet, sessionGet, sessionSet } from './storage.js';
 
 /**
@@ -51,19 +51,26 @@ export function getCurrentTab() {
  * that blocks suspension. This is the single source of protection rules —
  * canSuspend() is a thin wrapper over it for engine paths, and UI code uses
  * it to explain *why* a tab won't sleep.
+ *
+ * Sync checks only (tab metadata + URL). State that lives inside the page
+ * (dirty forms, playing media elements, live titles, user activity) is
+ * checked separately by js/smarts.js before the engine freezes.
  * @param {chrome.tabs.Tab} tab
  * @param {Object} options
  * @param {boolean} [options.protectActive=true]
  * @param {boolean} [options.protectPinned=true]
  * @param {boolean} [options.protectMedia=true]
  * @param {boolean} [options.protectLocalUrls=true]
- * @param {boolean} [options.warnFormData=true]
- * @param {number} [options.currentTabId]
+ * @param {boolean} [options.protectForms=true] — URL-path heuristic for form-heavy pages
+ * @param {boolean} [options.protectMeetingSites=true]
+ * @param {boolean} [options.protectMusicSites=true]
+ * @param {Set<number>} [options.activeTabIds] — active tab IDs across ALL windows
  * @param {string[]} [options.whitelist] — when provided, matching tabs are blocked with reason 'whitelisted'
  * @param {Set<number>} [options.keptAwake] — tab IDs held awake via the popup; blocked with reason 'kept-awake'
  * @returns {{ ok: boolean, reason: string|null }}
  *   reason ∈ null | 'invalid' | 'frozen' | 'discarded' | 'system' | 'loading' |
- *            'kept-awake' | 'active' | 'pinned' | 'audible' | 'local-url' | 'form' | 'whitelisted'
+ *            'kept-awake' | 'active' | 'pinned' | 'audible' | 'meeting-site' | 'music-site' |
+ *            'local-url' | 'form' | 'whitelisted'
  */
 export function analyzeTab(tab, options = {}) {
   if (!tab || !tab.id || !tab.url) return { ok: false, reason: 'invalid' };
@@ -93,8 +100,10 @@ export function analyzeTab(tab, options = {}) {
     protectPinned = true,
     protectMedia = true,
     protectLocalUrls = true,
-    warnFormData = true,
-    currentTabId,
+    protectForms = true,
+    protectMeetingSites = true,
+    protectMusicSites = true,
+    activeTabIds,
     whitelist,
     keptAwake
   } = options;
@@ -105,8 +114,9 @@ export function analyzeTab(tab, options = {}) {
     return { ok: false, reason: 'kept-awake' };
   }
 
-  // Protect currently active tab
-  if (protectActive && currentTabId !== undefined && tab.id === currentTabId) {
+  // Protect the active tab of every window — a background-position tab in a
+  // side window may still be the page the user is reading or typing into
+  if (protectActive && activeTabIds && activeTabIds.has(tab.id)) {
     return { ok: false, reason: 'active' };
   }
 
@@ -118,6 +128,15 @@ export function analyzeTab(tab, options = {}) {
   // Protect tabs with audible media
   if (protectMedia && tab.audible === true) {
     return { ok: false, reason: 'audible' };
+  }
+
+  // Meeting and music sites — live call/audio state isn't reliably visible
+  // to extensions, so these are host-pattern based
+  if (protectMeetingSites && matchesHostCategory(url, MEETING_HOSTS)) {
+    return { ok: false, reason: 'meeting-site' };
+  }
+  if (protectMusicSites && matchesHostCategory(url, MUSIC_HOSTS)) {
+    return { ok: false, reason: 'music-site' };
   }
 
   // Protect local / development URLs
@@ -139,15 +158,19 @@ export function analyzeTab(tab, options = {}) {
     if (/^192\.168\./.test(hostname)) return { ok: false, reason: 'local-url' };
   }
 
-  // Lightweight heuristic: protect likely form pages when warnFormData is enabled
-  if (warnFormData && url) {
+  // Lightweight heuristic: protect likely form pages when protectForms is enabled
+  if (protectForms && url) {
     let path;
     try {
       path = new URL(url).pathname.toLowerCase();
     } catch {
       path = '';
     }
-    const formPaths = ['/login', '/signin', '/checkout', '/cart', '/payment'];
+    const formPaths = [
+      '/login', '/signin', '/sign-in', '/signup', '/sign-up', '/register',
+      '/checkout', '/cart', '/payment', '/billing',
+      '/compose', '/draft', '/write', '/editor'
+    ];
     if (path && formPaths.some((p) => path.includes(p))) {
       return { ok: false, reason: 'form' };
     }
@@ -167,8 +190,10 @@ export function analyzeTab(tab, options = {}) {
  * @param {boolean} [options.protectActive=true]
  * @param {boolean} [options.protectPinned=true]
  * @param {boolean} [options.protectMedia=true]
- * @param {boolean} [options.warnFormData=true]
- * @param {number} [options.currentTabId]
+ * @param {boolean} [options.protectForms=true]
+ * @param {boolean} [options.protectMeetingSites=true]
+ * @param {boolean} [options.protectMusicSites=true]
+ * @param {Set<number>} [options.activeTabIds]
  * @returns {boolean}
  */
 export function canSuspend(tab, options = {}) {

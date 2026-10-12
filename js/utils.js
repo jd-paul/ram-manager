@@ -69,3 +69,67 @@ export function isWhitelisted(url, whitelist) {
 
   return false;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Site-category heuristics                                                   */
+/*                                                                            */
+/* Hostname lists matched as exact host or subdomain (e.g. "zoom.us" matches  */
+/* "us02web.zoom.us"). Real media/WebRTC state isn't reliably observable by   */
+/* extensions, so meeting/music protection is pattern-based.                  */
+/* -------------------------------------------------------------------------- */
+
+export const MEETING_HOSTS = [
+  'meet.google.com',
+  'zoom.us',
+  'teams.microsoft.com',
+  'teams.live.com',
+  'webex.com',
+  'discord.com',
+  'discordapp.com',
+  'slack.com',
+  'messenger.com',
+  'whatsapp.com',
+  'web.whatsapp.com',
+  'gather.town',
+  'daily.co',
+  'jit.si',
+  'whereby.com',
+  'goto.com',
+  'ringcentral.com',
+  'bluejeans.com'
+];
+
+export const MUSIC_HOSTS = [
+  'music.youtube.com',
+  'open.spotify.com',
+  'spotify.com',
+  'music.apple.com',
+  'soundcloud.com',
+  'tidal.com',
+  'deezer.com',
+  'pandora.com',
+  'music.amazon.com',
+  'iheart.com',
+  'tunein.com',
+  'last.fm',
+  'bandcamp.com',
+  'live365.com',
+  'siriusxm.com'
+];
+
+/**
+ * True when the URL's hostname is one of the given hosts or a subdomain of one.
+ * @param {string} url
+ * @param {string[]} hosts
+ * @returns {boolean}
+ */
+export function matchesHostCategory(url, hosts) {
+  if (!url) return false;
+  let hostname;
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return hosts.some((h) => hostname === h || hostname.endsWith('.' + h));
+}

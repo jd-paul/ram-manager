@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "RAM Manager",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Suspend idle tabs to free memory. Lightweight, fast, and themeable.",
   "minimum_chrome_version": "109",
   "author": "RAM Manager",
@@ -11,7 +11,8 @@
     "storage",
     "alarms",
     "contextMenus",
-    "scripting"
+    "scripting",
+    "downloads"
   ],
   "optional_host_permissions": [
     "<all_urls>"
