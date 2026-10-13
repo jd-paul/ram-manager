@@ -514,10 +514,27 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       if (granted) injectContentScript(tabId);
     });
   }
+  // Hybrid native discard: once our suspended page finishes loading in a
+  // background tab, hand its renderer back to Chrome. The frozen state
+  // lives in the URL, so restore is unchanged — but even the
+  // placeholder's memory is reclaimed.
+  if (changeInfo.status === 'complete' && tab.active === false && isFrozen(tab)) {
+    discardFrozenTab(tabId);
+  }
   if (changeInfo.discarded !== undefined || changeInfo.status !== undefined) {
     updateBadge().catch(err => console.error('updateBadge error:', err));
   }
 });
+
+async function discardFrozenTab(tabId) {
+  try {
+    const settings = await getSettings();
+    if (!settings.discardFrozenTabs) return;
+    await chrome.tabs.discard(tabId);
+  } catch (err) {
+    // Expected failures: tab is active, already discarded, or closing
+  }
+}
 
 chrome.windows.onFocusChanged.addListener(() => {
   // Badge counts suspended tabs in the focused window — refresh on focus moves

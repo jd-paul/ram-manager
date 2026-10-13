@@ -18,7 +18,8 @@ export const DEFAULT_SETTINGS = {
   theme: 'system',
   autoRestore: true,
   badgeCountEnabled: true,
-  changeTabIconWhenSuspended: false
+  changeTabIconWhenSuspended: false,
+  discardFrozenTabs: true
 };
 
 function wrapStorageArea(storage) {

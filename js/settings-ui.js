@@ -68,6 +68,9 @@ export async function loadSettingsIntoUI(els) {
   if (els.autoRestoreToggle) {
     els.autoRestoreToggle.checked = settings.autoRestore ?? DEFAULT_SETTINGS.autoRestore;
   }
+  if (els.discardFrozenToggle) {
+    els.discardFrozenToggle.checked = settings.discardFrozenTabs ?? DEFAULT_SETTINGS.discardFrozenTabs;
+  }
 
   // Theme mode
   if (els.themeModeSelect) {
