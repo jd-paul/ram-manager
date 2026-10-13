@@ -17,7 +17,7 @@ RAM Manager is a Chrome/Edge extension (Manifest V3) that suspends idle browser 
 
 The core mechanism is a **URL rewrite**, not native tab discard:
 
-1. `freezeTab(tab)` (js/suspension.js) builds `suspended.html?url=<original>&title=<title>&favicon=<favicon>` and navigates the tab there with `chrome.tabs.update`.
+1. `freezeTab(tab)` (js/suspension.js) builds `suspended.html?url=<original>&title=<title>&favicon=<favicon>` (plus `sx`/`sy` scroll offsets when page access is granted) and navigates the tab there with `chrome.tabs.update`.
 2. All restore data lives in the suspended page's query string. `restoreTab` reads `url` back out of the current tab URL and navigates back — no storage lookup is required for restore.
 3. `chrome.storage.local.frozenTabs` is a tabId → metadata map (originalUrl, title, favicon, frozenAt) kept **only for history/stats**, not for restore.
 
@@ -28,7 +28,7 @@ Why URL-rewrite instead of `chrome.tabs.discard`: it gives a branded placeholder
 ```
 manifest.json          MV3 manifest: service worker, popup, options page, commands
                        (suspend tab / suspend others / restore all),
-                       CSP, scripting permission, optional <all_urls> host access
+                       CSP, scripting + idle permissions, optional <all_urls> host access
 background.js          Service worker — idle-only auto-suspend pipeline (warning
                        banner, smart pre-freeze checks, keep-awake), context
                        menus, keyboard command, auto-restore, badge,
@@ -106,6 +106,7 @@ Every page calls `initTheme()` on load and includes `js/theme-fouc.js` as a clas
 | Key | Shape | Notes |
 |---|---|---|
 | `keptAwakeTabIds` | number[] — tab IDs | Per-tab keep-awake holds from the popup; pruned on tab close; releases reset the idle clock |
+| `pendingScroll` | `{ [tabId]: {x, y} }` | Scroll positions captured at freeze time, waiting for the restored page to finish loading; consumed by `applyPendingScroll` (background.js), pruned on tab close |
 
 **`localStorage`** (page-origin only): `ram-manager-theme-class` — cached `theme-light`/`theme-dark` for FOUC prevention. Do not rename without updating `theme-fouc.js` and `theme.js` together. `ram-manager-popup-sections` — open/closed state of the popup's collapsible sections.
 
@@ -126,6 +127,9 @@ From `js/storage.js` (`DEFAULT_SETTINGS`). Defaults are deliberate — conservat
 | `protectLiveTitles` | `true` | Block tabs whose `document.title` changed within the last 10 minutes |
 | `protectInteraction` | `true` | Page keydown/mouse/scroll/focus activity (content-script heartbeat) resets the idle clock |
 | `autoRestore` | `true` | Restore a suspended tab when it is activated |
+| `discardFrozenTabs` | `true` | `chrome.tabs.discard` frozen background tabs once the placeholder loads — Chrome reclaims even the suspended page's renderer; URL-based restore is unaffected |
+| `freezeOnlyWhenMachineIdle` | `false` | `handleAutoSuspend` skips its pass unless `chrome.idle` reports the machine idle/locked (60 s no-input window) |
+| `restoreScrollPosition` | `true` | Capture `window.scrollX/Y` via the content script at freeze time (needs page access), carry it in the suspended URL (`sx`/`sy`), re-apply with `chrome.scripting.executeScript` after the restored page loads (stashed in `pendingScroll` session key across the navigation) |
 | `theme` | `'system'` | |
 | `badgeCountEnabled` | `true` | Toolbar badge = suspended tab count in the focused window (cleared when nothing suspended) |
 | `changeTabIconWhenSuspended` | `false` | Dim favicon on the suspended page |

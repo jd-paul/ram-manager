@@ -20,7 +20,8 @@ export const DEFAULT_SETTINGS = {
   badgeCountEnabled: true,
   changeTabIconWhenSuspended: false,
   discardFrozenTabs: true,
-  freezeOnlyWhenMachineIdle: false
+  freezeOnlyWhenMachineIdle: false,
+  restoreScrollPosition: true
 };
 
 function wrapStorageArea(storage) {

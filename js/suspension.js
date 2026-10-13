@@ -2,10 +2,49 @@
 // This module handles the core "freeze" functionality: navigating tabs to a
 // local suspended page and restoring them back to their original URL.
 
-import { localGet, localSet } from './storage.js';
+import { localGet, localSet, sessionGet, sessionSet, getSettings } from './storage.js';
 import { logHistory, updateBadge } from './history.js';
+import { hasAllUrlsPermission, sendTabMessage } from './smarts.js';
 
 const SUSPENDED_PAGE = 'suspended.html';
+
+/**
+ * Read the tab's scroll position from the resident content script. Returns
+ * null when capture is off, impossible (no page access / non-web tab), or
+ * pointless (page is at the top).
+ */
+async function captureScrollPosition(tab) {
+  try {
+    const settings = await getSettings();
+    if (!settings.restoreScrollPosition) return null;
+    if (!/^https?:/.test(tab.url || '')) return null;
+    if (!(await hasAllUrlsPermission())) return null;
+    const res = await sendTabMessage(tab.id, { action: 'ramGetScroll' });
+    if (res && typeof res.x === 'number' && typeof res.y === 'number' && (res.x > 0 || res.y > 0)) {
+      return { x: Math.round(res.x), y: Math.round(res.y) };
+    }
+  } catch (err) {
+    // Capture is best-effort — never block a freeze on it
+  }
+  return null;
+}
+
+/**
+ * Stash a pending scroll target for a tab that is about to be restored.
+ * Session storage survives service-worker restarts mid-navigation.
+ */
+async function stashPendingScroll(tabId, params) {
+  try {
+    const sx = Number(params.get('sx'));
+    const sy = Number(params.get('sy'));
+    if (!Number.isFinite(sx) || !Number.isFinite(sy) || (sx <= 0 && sy <= 0)) return;
+    const pending = (await sessionGet('pendingScroll')) || {};
+    pending[tabId] = { x: sx, y: sy };
+    await sessionSet('pendingScroll', pending);
+  } catch (err) {
+    console.error('stashPendingScroll error:', err);
+  }
+}
 
 /**
  * Build the chrome-extension:// URL for the suspended page.
@@ -14,14 +53,19 @@ const SUSPENDED_PAGE = 'suspended.html';
  * @param {string} params.url — original URL
  * @param {string} params.title — original page title
  * @param {string} params.favicon — original favicon URL
+ * @param {{ x: number, y: number }} [params.scroll] — scroll position to restore
  * @returns {string}
  */
-function buildSuspendedUrl({ url, title, favicon }) {
+function buildSuspendedUrl({ url, title, favicon, scroll }) {
   const base = chrome.runtime.getURL(SUSPENDED_PAGE);
   const qs = new URLSearchParams();
   qs.set('url', url);
   qs.set('title', title || 'Untitled');
   qs.set('favicon', favicon || '');
+  if (scroll) {
+    qs.set('sx', String(scroll.x));
+    qs.set('sy', String(scroll.y));
+  }
   return `${base}?${qs.toString()}`;
 }
 
@@ -42,7 +86,8 @@ export async function freezeTab(tab) {
   const suspendedUrl = buildSuspendedUrl({
     url: tab.url,
     title: tab.title,
-    favicon: tab.favIconUrl
+    favicon: tab.favIconUrl,
+    scroll: await captureScrollPosition(tab)
   });
 
   // Store original info for history tracking only (not needed for restore)
@@ -67,15 +112,15 @@ export async function freezeTab(tab) {
  * @returns {Promise<void>}
  */
 export async function restoreTab(tabId, originalUrl) {
+  const tab = await new Promise((resolve) => {
+    chrome.tabs.get(tabId, (t) => {
+      if (chrome.runtime.lastError) resolve(null);
+      else resolve(t);
+    });
+  });
+
   // If originalUrl not provided, extract it from the suspended page URL
   if (!originalUrl) {
-    const tab = await new Promise((resolve) => {
-      chrome.tabs.get(tabId, (t) => {
-        if (chrome.runtime.lastError) resolve(null);
-        else resolve(t);
-      });
-    });
-
     if (!tab || !tab.url) {
       throw new Error(`Tab ${tabId} not found or has no URL`);
     }
@@ -85,6 +130,15 @@ export async function restoreTab(tabId, originalUrl) {
 
     if (!originalUrl) {
       throw new Error(`No restore URL found in suspended page for tab ${tabId}`);
+    }
+  }
+
+  // Carry the captured scroll position across the restore navigation
+  if (tab && tab.url) {
+    try {
+      await stashPendingScroll(tabId, new URLSearchParams(new URL(tab.url).search));
+    } catch (err) {
+      // Not a suspended URL / no params — nothing to carry
     }
   }
 
@@ -194,6 +248,7 @@ export async function restoreAll() {
         continue;
       }
 
+      await stashPendingScroll(tab.id, params);
       await chrome.tabs.update(tab.id, { url: originalUrl });
       count++;
     } catch (err) {

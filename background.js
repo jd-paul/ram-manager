@@ -5,7 +5,7 @@
 // re-validates, and batch-freezes. There are no startup-sweep or
 // window-unfocus paths — every freeze goes through the same pipeline.
 
-import { getSettings, setSettings, localGet, localSet, syncGet } from './js/storage.js';
+import { getSettings, setSettings, localGet, localSet, syncGet, sessionGet, sessionSet } from './js/storage.js';
 import {
   getAllTabs,
   getSuspendedTabs,
@@ -518,6 +518,11 @@ async function handleTabRemoved(tabId) {
   const lastActive = (await localGet('tabLastActive')) || {};
   delete lastActive[tabId];
   await localSet('tabLastActive', lastActive);
+  const pending = (await sessionGet('pendingScroll')) || {};
+  if (pending[tabId]) {
+    delete pending[tabId];
+    await sessionSet('pendingScroll', pending);
+  }
   await clearKeptAwake(tabId);
   await updateBadge();
 }
@@ -544,6 +549,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.active === false && isFrozen(tab)) {
     discardFrozenTab(tabId);
   }
+  if (changeInfo.status === 'complete') {
+    applyPendingScroll(tabId, tab);
+  }
   if (changeInfo.discarded !== undefined || changeInfo.status !== undefined) {
     updateBadge().catch(err => console.error('updateBadge error:', err));
   }
@@ -556,6 +564,30 @@ async function discardFrozenTab(tabId) {
     await chrome.tabs.discard(tabId);
   } catch (err) {
     // Expected failures: tab is active, already discarded, or closing
+  }
+}
+
+/**
+ * Re-apply the scroll position captured at freeze time once the restored
+ * page finishes loading. Best-effort: needs the optional page-access
+ * permission; late-lazy-loading pages may shift afterwards.
+ */
+async function applyPendingScroll(tabId, tab) {
+  try {
+    if (!/^https?:/.test(tab.url || '')) return;
+    const pending = (await sessionGet('pendingScroll')) || {};
+    const target = pending[tabId];
+    if (!target) return;
+    delete pending[tabId];
+    await sessionSet('pendingScroll', pending);
+    if (!(await hasAllUrlsPermission())) return;
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (sx, sy) => window.scrollTo(sx, sy),
+      args: [target.x, target.y]
+    });
+  } catch (err) {
+    // Tab closed mid-restore, or page rejected injection — non-fatal
   }
 }
 

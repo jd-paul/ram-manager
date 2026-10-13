@@ -74,6 +74,9 @@ export async function loadSettingsIntoUI(els) {
   if (els.machineIdleToggle) {
     els.machineIdleToggle.checked = settings.freezeOnlyWhenMachineIdle ?? DEFAULT_SETTINGS.freezeOnlyWhenMachineIdle;
   }
+  if (els.scrollRestoreToggle) {
+    els.scrollRestoreToggle.checked = settings.restoreScrollPosition ?? DEFAULT_SETTINGS.restoreScrollPosition;
+  }
 
   // Theme mode
   if (els.themeModeSelect) {

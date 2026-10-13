@@ -56,6 +56,7 @@ const els = {
   autoRestoreToggle: document.getElementById('auto-restore-toggle'),
   discardFrozenToggle: document.getElementById('discard-frozen-toggle'),
   machineIdleToggle: document.getElementById('machine-idle-toggle'),
+  scrollRestoreToggle: document.getElementById('scroll-restore-toggle'),
   exportData: document.getElementById('export-data'),
   importData: document.getElementById('import-data'),
   clearStats: document.getElementById('clear-stats'),
@@ -417,7 +418,7 @@ async function importData(file) {
       'protectInteraction',
       'theme', 'autoRestore', 'badgeCountEnabled',
       'changeTabIconWhenSuspended', 'discardFrozenTabs', 'freezeOnlyWhenMachineIdle',
-      'whitelist', 'forceList'
+      'restoreScrollPosition', 'whitelist', 'forceList'
     ]);
     const knownLocalKeys = new Set([
       'suspensionHistory', 'savedMemoryAllTime', 'savedMemoryToday', 'tabLastActive',
@@ -612,6 +613,7 @@ function bindEvents() {
   bindToggle(els.autoRestoreToggle, 'autoRestore');
   bindToggle(els.discardFrozenToggle, 'discardFrozenTabs');
   bindToggle(els.machineIdleToggle, 'freezeOnlyWhenMachineIdle');
+  bindToggle(els.scrollRestoreToggle, 'restoreScrollPosition');
 
   // Whitelist
   els.whitelistAdd.addEventListener('click', addWhitelistEntry);

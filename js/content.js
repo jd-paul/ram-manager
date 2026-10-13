@@ -256,6 +256,8 @@
         state = { error: String(err && err.message ? err.message : err) };
       }
       sendResponse(state);
+    } else if (msg && msg.action === 'ramGetScroll') {
+      sendResponse({ x: window.scrollX, y: window.scrollY });
     }
     // Synchronous responses — no return true needed
   });
