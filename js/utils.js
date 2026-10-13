@@ -133,3 +133,23 @@ export function matchesHostCategory(url, hosts) {
   }
   return hosts.some((h) => hostname === h || hostname.endsWith('.' + h));
 }
+
+/**
+ * Smart-freezing master gate: when smartFreezingEnabled is off, the six
+ * smart pre-freeze protections are treated as disabled everywhere, without
+ * touching their stored values (sub-toggle choices survive power cycles).
+ * @param {Object} settings
+ * @returns {Object} settings, with smart checks forced off when gated
+ */
+export function gateSmartChecks(settings) {
+  if (!settings || settings.smartFreezingEnabled) return settings;
+  return {
+    ...settings,
+    protectForms: false,
+    protectMediaElements: false,
+    protectMeetingSites: false,
+    protectMusicSites: false,
+    protectLiveTitles: false,
+    protectInteraction: false
+  };
+}

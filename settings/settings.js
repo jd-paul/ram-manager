@@ -20,7 +20,8 @@ import { hasAllUrlsPermission, requestAllUrlsPermission } from '../js/smarts.js'
 /* -------------------------------------------------------------------------- */
 
 const els = {
-  autoSuspendToggle: document.getElementById('auto-suspend-toggle'),
+  smartFreezingToggle: document.getElementById('smart-freezing-toggle'),
+  smartSubSettings: document.getElementById('smart-sub-settings'),
   suspendTimer: document.getElementById('suspend-timer'),
   suspendTimerRow: document.getElementById('suspend-timer-row'),
   protectMedia: document.getElementById('protect-media'),
@@ -114,7 +115,7 @@ async function loadShortcutDisplay() {
 
 async function loadSettings() {
   currentSettings = await loadSettingsIntoUI(els);
-  toggleTimerRow(els.autoSuspendToggle.checked);
+  updateSmartUI(els.smartFreezingToggle.checked);
 
   // Display — theme mode + flavours
   populateFlavorSelects();
@@ -382,7 +383,7 @@ async function importData(file) {
 
     // Known/expected keys whitelist
     const knownSyncKeys = new Set([
-      'autoSuspendEnabled', 'suspendAfterMinutes', 'protectMedia', 'protectPinned',
+      'smartFreezingEnabled', 'autoSuspendEnabled', 'suspendAfterMinutes', 'protectMedia', 'protectPinned',
       'protectActive', 'protectLocalUrls', 'protectForms', 'protectMediaElements',
       'protectMeetingSites', 'protectMusicSites', 'protectLiveTitles',
       'protectInteraction',
@@ -469,6 +470,22 @@ async function resetSettingsToDefault() {
 function toggleTimerRow(enabled) {
   els.suspendTimerRow.style.opacity = enabled ? '1' : '0.5';
   els.suspendTimerRow.style.pointerEvents = enabled ? 'auto' : 'none';
+  els.suspendTimer.disabled = !enabled;
+}
+
+const SMART_SUB_TOGGLES = [
+  'protectForms', 'protectMediaElements', 'protectMeetingSites',
+  'protectMusicSites', 'protectLiveTitles', 'protectInteraction'
+];
+
+function updateSmartUI(enabled) {
+  toggleTimerRow(enabled);
+  if (els.smartSubSettings) {
+    els.smartSubSettings.classList.toggle('smart-off', !enabled);
+  }
+  for (const key of SMART_SUB_TOGGLES) {
+    if (els[key]) els[key].disabled = !enabled;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -484,13 +501,16 @@ function bindEvents() {
     });
   }
 
-  // Auto Suspend
-  els.autoSuspendToggle.addEventListener('change', async (e) => {
-    toggleTimerRow(e.target.checked);
+  // Smart Freezing master switch: powers auto-suspend and gates the smart
+  // checks; sub-toggle choices are stored untouched and survive power cycles
+  els.smartFreezingToggle.addEventListener('change', async (e) => {
+    const on = e.target.checked;
+    await saveSetting('smartFreezingEnabled', on);
+    await saveSetting('autoSuspendEnabled', on);
+    updateSmartUI(on);
   });
 
   // Shared bindings (from settings-ui.js)
-  bindToggle(els.autoSuspendToggle, 'autoSuspendEnabled');
   bindSelect(els.suspendTimer, 'suspendAfterMinutes', 'number');
   bindToggle(els.protectMedia, 'protectMedia');
   bindToggle(els.protectPinned, 'protectPinned');

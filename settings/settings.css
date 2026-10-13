@@ -185,6 +185,19 @@ body {
   line-height: var(--line-height-normal);
 }
 
+/* Smart Freezing — sub-checks dim and lock while the master switch is off */
+.smart-sub-settings {
+  transition: opacity 0.2s ease;
+}
+
+.smart-sub-settings.smart-off {
+  opacity: 0.5;
+}
+
+.smart-sub-settings.smart-off .toggle {
+  pointer-events: none;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Toggle Switch                                                              */
 /* -------------------------------------------------------------------------- */

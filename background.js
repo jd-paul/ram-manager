@@ -5,7 +5,7 @@
 // re-validates, and batch-freezes. There are no startup-sweep or
 // window-unfocus paths — every freeze goes through the same pipeline.
 
-import { getSettings, localGet, localSet, syncGet } from './js/storage.js';
+import { getSettings, setSettings, localGet, localSet, syncGet } from './js/storage.js';
 import {
   getAllTabs,
   getSuspendedTabs,
@@ -17,7 +17,7 @@ import {
 } from './js/tabs.js';
 import { freezeTab, restoreTab, isFrozen } from './js/suspension.js';
 import { logHistory, updateBadge } from './js/history.js';
-import { normalizeDomain, isWhitelisted } from './js/utils.js';
+import { normalizeDomain, isWhitelisted, gateSmartChecks } from './js/utils.js';
 import {
   hasAllUrlsPermission,
   injectContentScript,
@@ -81,6 +81,24 @@ async function ensureContentScriptEverywhere() {
   }
 }
 
+/**
+ * Pre-smart-freezing installs: auto-suspend being on implied every smart
+ * check ran. Adopt that into the new master key once, so the update never
+ * silently strips protections. smartFreezingEnabled undefined = never set.
+ */
+async function migrateSmartFreezing() {
+  try {
+    const smart = await syncGet('smartFreezingEnabled');
+    if (smart !== undefined) return;
+    const auto = await syncGet('autoSuspendEnabled');
+    if (auto === true) {
+      await setSettings({ smartFreezingEnabled: true });
+    }
+  } catch (err) {
+    console.error('migrateSmartFreezing error:', err);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Auto-suspend pipeline                                                      */
 /*                                                                            */
@@ -97,14 +115,15 @@ const WARNING_DELAY_MS = 4000;
 let _suspendPassRunning = false;
 
 function protectionOptions(settings, activeTabIds) {
+  const gated = gateSmartChecks(settings);
   return {
-    protectActive: settings.protectActive,
-    protectPinned: settings.protectPinned,
-    protectMedia: settings.protectMedia,
-    protectLocalUrls: settings.protectLocalUrls,
-    protectForms: settings.protectForms,
-    protectMeetingSites: settings.protectMeetingSites,
-    protectMusicSites: settings.protectMusicSites,
+    protectActive: gated.protectActive,
+    protectPinned: gated.protectPinned,
+    protectMedia: gated.protectMedia,
+    protectLocalUrls: gated.protectLocalUrls,
+    protectForms: gated.protectForms,
+    protectMeetingSites: gated.protectMeetingSites,
+    protectMusicSites: gated.protectMusicSites,
     activeTabIds,
     keptAwake: null
   };
@@ -163,8 +182,9 @@ async function runSuspendPass({ warn }) {
 
   // Smart pre-freeze checks: dirty forms, playing media, focused document,
   // live title changes. Unverifiable tabs are skipped —
-  // when in doubt, never freeze.
-  const settings = await getSettings();
+  // when in doubt, never freeze. The smart-freezing master switch gates
+  // these checks off entirely when powered down.
+  const settings = gateSmartChecks(await getSettings());
   const blocked = new Set();
   const checks = candidates.map(async (tab) => {
     const verdict = await checkTabSmart(tab, settings);
@@ -279,6 +299,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   });
   setupAlarm();
   initTabLastActive();
+  migrateSmartFreezing();
   ensureContentScriptEverywhere();
   updateBadge();
 });
@@ -288,7 +309,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 async function handleContextMenuClick(info, tab) {
-  const settings = await getSettings();
+  const settings = gateSmartChecks(await getSettings());
   const held = new Set(await getKeptAwakeIds());
 
   if (info.menuItemId === 'suspend-this-tab') {
@@ -376,7 +397,7 @@ async function handleSuspendActiveTab() {
     return;
   }
 
-  const settings = await getSettings();
+  const settings = gateSmartChecks(await getSettings());
   const held = new Set(await getKeptAwakeIds());
   if (!canSuspend(tab, {
     protectActive: false,
@@ -481,6 +502,7 @@ chrome.windows.onFocusChanged.addListener(() => {
 chrome.runtime.onStartup.addListener(() => {
   setupAlarm();
   initTabLastActive();
+  migrateSmartFreezing();
   ensureContentScriptEverywhere();
   updateBadge();
 });
@@ -491,5 +513,6 @@ chrome.runtime.onStartup.addListener(() => {
 
 setupAlarm();
 initTabLastActive();
+migrateSmartFreezing();
 ensureContentScriptEverywhere();
 updateBadge();

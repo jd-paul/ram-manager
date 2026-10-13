@@ -13,6 +13,11 @@ import { getSettings, setSettings, DEFAULT_SETTINGS } from './storage.js';
 export async function loadSettingsIntoUI(els) {
   const settings = await getSettings();
 
+  // Smart Freezing master switch
+  if (els.smartFreezingToggle) {
+    els.smartFreezingToggle.checked = settings.smartFreezingEnabled ?? DEFAULT_SETTINGS.smartFreezingEnabled;
+  }
+
   // Auto Suspend
   if (els.autoSuspendToggle) {
     els.autoSuspendToggle.checked = settings.autoSuspendEnabled ?? DEFAULT_SETTINGS.autoSuspendEnabled;

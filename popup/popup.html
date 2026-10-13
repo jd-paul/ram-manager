@@ -105,19 +105,23 @@
       </div>
     </details>
 
-    <details class="collapsible-section" id="settings-section" open>
-      <summary class="collapsible-summary">Quick Settings</summary>
+    <details class="collapsible-section" id="smart-freezing-section" open>
+      <summary class="collapsible-summary">
+        <span class="smart-power-badge" id="smart-power-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path><line x1="12" y1="2" x2="12" y2="12"></line></svg></span>
+        Smart Freezing
+      </summary>
       <div class="collapsible-body">
-        <div class="toggle-row">
+        <div class="toggle-row smart-power-row">
           <div class="toggle-info">
-            <span class="toggle-label">Auto Suspend</span>
-            <span class="toggle-desc">Suspend inactive tabs automatically</span>
+            <span class="toggle-label">Smart Freezing</span>
+            <span class="toggle-desc">Auto-suspend idle tabs, guarded by smart checks</span>
           </div>
           <label class="toggle">
-            <input type="checkbox" id="auto-suspend-toggle">
+            <input type="checkbox" id="smart-freezing-toggle">
             <span class="toggle-slider"></span>
           </label>
         </div>
+        <p class="smart-status" id="smart-status"></p>
         <div class="toggle-row toggle-row--inline" id="suspend-timer-row">
           <label for="suspend-timer">After</label>
           <select id="suspend-timer">
@@ -127,6 +131,74 @@
             <option value="60">60 min</option>
           </select>
         </div>
+        <div class="smart-sub-toggles" id="smart-sub-toggles">
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Protect Forms</span>
+              <span class="toggle-desc">Skip pages with typed or unsaved form data</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="protect-forms">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Protect Playing Media</span>
+              <span class="toggle-desc">Skip tabs with any playing audio or video, even muted</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="protect-media-elements">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Protect Meeting Sites</span>
+              <span class="toggle-desc">Skip Meet, Zoom, Teams, Discord, and other call sites</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="protect-meeting-sites">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Protect Music Sites</span>
+              <span class="toggle-desc">Skip Spotify, YouTube Music, SoundCloud, and other players</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="protect-music-sites">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Protect Live Pages</span>
+              <span class="toggle-desc">Skip pages whose title keeps changing (dashboards, trackers)</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="protect-live-titles">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info">
+              <span class="toggle-label">Respect Page Activity</span>
+              <span class="toggle-desc">Typing, mouse, or scrolling resets a tab's idle timer</span>
+            </div>
+            <label class="toggle">
+              <input type="checkbox" id="protect-interaction">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <details class="collapsible-section" id="settings-section">
+      <summary class="collapsible-summary">Quick Settings</summary>
+      <div class="collapsible-body">
         <div class="toggle-row">
           <div class="toggle-info">
             <span class="toggle-label">Protect Media</span>
@@ -164,16 +236,6 @@
           </div>
           <label class="toggle">
             <input type="checkbox" id="protect-local-urls">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <div class="toggle-row">
-          <div class="toggle-info">
-            <span class="toggle-label">Protect Forms</span>
-            <span class="toggle-desc">Skip pages with typed or unsaved form data</span>
-          </div>
-          <label class="toggle">
-            <input type="checkbox" id="protect-forms">
             <span class="toggle-slider"></span>
           </label>
         </div>

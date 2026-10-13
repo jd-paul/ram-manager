@@ -61,14 +61,14 @@ anuppuccin-palettes.json  Unreferenced palette data used to author the themes �
 | `suspension.js` | `freezeTab`, `restoreTab`, `restoreAll`, `freezeAll`, `isFrozen`, `getFrozenOriginalUrl` | Core engine. `isFrozen` is a URL-prefix check. |
 | `history.js` | `logHistory`, `updateBadge` | History writes are serialized through an in-memory promise queue (`_historyQueue`) to stop concurrent batch suspends from clobbering each other. Do not bypass. |
 | `memory.js` | `getMemoryInfo`, `formatBytes`, `estimateMemory`, `getSavedMemoryToday` | Memory numbers are estimates only (see trade-offs). |
-| `utils.js` | `ESTIMATED_BYTES_PER_TAB`, `getDomain`, `normalizeDomain`, `isWhitelisted`, `parseShortcut`, `matchesHostCategory`, `MEETING_HOSTS`, `MUSIC_HOSTS` | Site-category lists are host-pattern based (exact host or subdomain). |
+| `utils.js` | `ESTIMATED_BYTES_PER_TAB`, `getDomain`, `normalizeDomain`, `isWhitelisted`, `parseShortcut`, `matchesHostCategory`, `gateSmartChecks`, `MEETING_HOSTS`, `MUSIC_HOSTS` | Site-category lists are host-pattern based (exact host or subdomain). |
 | `theme.js` | `initTheme`, `applyTheme`, `loadTheme`, `resolveThemeName`, theme catalog getters, snippet registration | Obsidian-style: injects one `<link>` to `themes/<id>.css` and sets `theme-light`/`theme-dark` + palette classes on `<html>`, mirrored to `<body>`. |
 | `theme-fouc.js` | (none — IIFE) | Classic script loaded synchronously in `<head>` of every page; reads the cached class from `localStorage['ram-manager-theme-class']` and applies it before first paint. |
 | `settings-ui.js` | `loadSettingsIntoUI`, `saveSetting`, `bindToggle`, `bindSelect` | Shared settings binding for popup and settings pages. Defaults derive from `DEFAULT_SETTINGS`; `saveSetting` refuses unknown keys. |
 
 ## UI pages
 
-- **popup/popup.js** — current-tab card with protection-reason pill (click deep-links to the blocking setting), 3-stat strip (sleeping/protected/saved-or-forecast), Suspend Current / Suspend Others / Suspend All with live progress, Restore All, per-tab list for the current window (countdown badges, hover keep-awake + suspend buttons, click to focus/wake), tab search / close-duplicates / export-to-clipboard, sessions save/restore, whitelist editor, quick toggles (form protection requests the optional host permission at toggle-time), keyboard-shortcut display with shortcuts-page deep-link. Refreshes on a 5 s poll while open.
+- **popup/popup.js** — current-tab card with protection-reason pill (click deep-links to the blocking setting), 3-stat strip (sleeping/protected/saved-or-forecast), Suspend Current / Suspend Others / Suspend All with live progress, Restore All, per-tab list for the current window (countdown badges, hover keep-awake + suspend buttons, click to focus/wake), tab search / close-duplicates / export-to-clipboard, sessions save/restore, whitelist editor, Smart Freezing section (power toggle, idle timer, next-freeze countdown, six gated smart-check sub-toggles) and Quick Settings toggles (form protection requests the optional host permission at toggle-time), keyboard-shortcut display with shortcuts-page deep-link. Refreshes on a 5 s poll while open.
 - **dashboard/dashboard.js** — saved-today / all-time stats, suspended/total tabs, active-vs-suspended donut, weekly bar chart, per-domain "top consumers", activity timeline.
 - **settings/settings.js** — all settings, theme mode + light/dark flavor pickers, whitelist, data export/import (HTML5 anchor download), clear stats, reset settings. No `downloads` permission: downloads are owned by Chrome's download manager, so freezing a tab does not cancel them (verified with in-flight 512 MB downloads across a freeze navigation).
 - **suspended/suspended.js** — reads query params, renders restore UI, optionally dims the favicon via canvas (`changeTabIconWhenSuspended`).
@@ -112,6 +112,7 @@ From `js/storage.js` (`DEFAULT_SETTINGS`). Defaults are deliberate — conservat
 
 | Key | Default | Meaning |
 |---|---|---|
+| `smartFreezingEnabled` | `false` | Master switch for the Smart Freezing bundle. The power toggles (popup + settings) write it together with `autoSuspendEnabled`; `gateSmartChecks` (js/utils.js) ANDs it onto the six smart pre-freeze checks at every engine/view-model call site, so sub-toggle values are preserved while powered off. `migrateSmartFreezing` (background.js, all init sites) upgrades pre-smart installs: `autoSuspendEnabled: true` with `smartFreezingEnabled` unset → set to `true`. |
 | `autoSuspendEnabled` | `false` | 1-minute alarm tick suspends tabs idle past `suspendAfterMinutes` |
 | `suspendAfterMinutes` | `60` | Idle threshold |
 | `protectMedia` / `protectPinned` / `protectActive` | `true` | Skip audible / pinned / active tabs (active = active tab of *every* window) |

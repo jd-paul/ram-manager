@@ -876,6 +876,66 @@ body.theme-dark .tab-badge.badge-active {
   outline-offset: 2px;
 }
 
+/* Smart Freezing */
+#smart-freezing-section > .collapsible-summary {
+  justify-content: flex-start;
+  gap: var(--space-sm);
+}
+
+#smart-freezing-section > .collapsible-summary::after {
+  margin-left: auto;
+}
+
+.smart-power-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background-color: var(--background-modifier-hover);
+  color: var(--text-faint);
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.smart-power-badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.smart-power-badge.on {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.smart-power-row .toggle-label {
+  font-weight: var(--font-weight-semibold);
+}
+
+.smart-status {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.smart-sub-toggles {
+  margin-top: var(--space-xs);
+  border-top: 1px solid var(--color-border-light);
+  padding-top: var(--space-xs);
+  transition: opacity 0.2s ease;
+}
+
+.smart-sub-toggles.smart-off {
+  opacity: 0.5;
+}
+
+.smart-sub-toggles.smart-off .toggle {
+  pointer-events: none;
+}
+
 /* Setting-row flash (deep link from "why won't this sleep") */
 @keyframes setting-flash {
   0%, 100% {

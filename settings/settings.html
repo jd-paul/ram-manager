@@ -22,22 +22,22 @@
   </header>
 
   <main class="dashboard-main">
-    <!-- Auto Suspend -->
-    <section class="card setting-card" id="section-auto-suspend">
+    <!-- Smart Freezing -->
+    <section class="card setting-card" id="section-smart-freezing">
       <div class="section-header">
-        <i data-lucide="timer" class="lucide section-icon"></i>
+        <i data-lucide="power" class="lucide section-icon"></i>
         <div class="section-title-group">
-          <h2>Auto Suspend</h2>
-          <p>Automatically suspend idle tabs after a period of inactivity.</p>
+          <h2>Smart Freezing</h2>
+          <p>Automatically suspend idle tabs, guarded by smart safety checks.</p>
         </div>
       </div>
       <div class="setting-row setting-row--toggle">
         <div class="setting-info">
-          <span class="setting-label">Enable Auto Suspend</span>
-          <span class="setting-desc">Automatically suspend inactive tabs after a period of time</span>
+          <span class="setting-label">Enable Smart Freezing</span>
+          <span class="setting-desc">Master switch: auto-suspend idle tabs with the checks below. Turning it off keeps your individual check settings.</span>
         </div>
         <label class="toggle">
-          <input type="checkbox" id="auto-suspend-toggle">
+          <input type="checkbox" id="smart-freezing-toggle">
           <span class="toggle-slider"></span>
         </label>
       </div>
@@ -50,6 +50,76 @@
           <option value="60">60 minutes</option>
         </select>
       </div>
+      <div class="smart-sub-settings" id="smart-sub-settings">
+        <div class="setting-row setting-row--inline">
+          <span class="setting-desc">Form, media, and activity detection read page content and need the optional page-access permission.</span>
+          <button type="button" id="grant-page-access" class="btn btn--secondary">
+            <i data-lucide="lock-open" class="lucide btn-icon"></i>
+            <span id="grant-page-access-label">Grant Page Access</span>
+          </button>
+          <p class="input-hint" id="page-access-hint"></p>
+        </div>
+        <div class="setting-row setting-row--toggle">
+          <div class="setting-info">
+            <span class="setting-label">Protect Playing Media</span>
+            <span class="setting-desc">Don't suspend tabs with any playing audio or video element, even muted ones</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-media-elements">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row setting-row--toggle">
+          <div class="setting-info">
+            <span class="setting-label">Protect Meeting Sites</span>
+            <span class="setting-desc">Don't suspend Meet, Zoom, Teams, Discord, and other call sites</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-meeting-sites">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row setting-row--toggle">
+          <div class="setting-info">
+            <span class="setting-label">Protect Music Sites</span>
+            <span class="setting-desc">Don't suspend Spotify, YouTube Music, SoundCloud, and other music players</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-music-sites">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row setting-row--toggle">
+          <div class="setting-info">
+            <span class="setting-label">Protect Forms</span>
+            <span class="setting-desc">Don't suspend pages with typed form data, changed dropdowns, rich-text edits, or an unsaved-changes warning</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-forms">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row setting-row--toggle">
+          <div class="setting-info">
+            <span class="setting-label">Protect Live-Updating Pages</span>
+            <span class="setting-desc">Don't suspend pages whose title keeps changing (dashboards, trackers, live scores)</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-live-titles">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="setting-row setting-row--toggle">
+          <div class="setting-info">
+            <span class="setting-label">Respect Page Activity</span>
+            <span class="setting-desc">Typing, mouse movement, or scrolling in a page resets its idle timer</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="protect-interaction">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
     </section>
 
     <!-- Tab Protection -->
@@ -61,14 +131,6 @@
           <p>Prevent certain types of tabs from being suspended.</p>
         </div>
       </div>
-      <div class="setting-row setting-row--inline">
-        <span class="setting-desc">Form, media, and activity detection read page content and need the optional page-access permission.</span>
-        <button type="button" id="grant-page-access" class="btn btn--secondary">
-          <i data-lucide="lock-open" class="lucide btn-icon"></i>
-          <span id="grant-page-access-label">Grant Page Access</span>
-        </button>
-        <p class="input-hint" id="page-access-hint"></p>
-      </div>
       <div class="setting-row setting-row--toggle">
         <div class="setting-info">
           <span class="setting-label">Protect Media Tabs</span>
@@ -76,66 +138,6 @@
         </div>
         <label class="toggle">
           <input type="checkbox" id="protect-media">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Protect Playing Media</span>
-          <span class="setting-desc">Don't suspend tabs with any playing audio or video element, even muted ones</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="protect-media-elements">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Protect Meeting Sites</span>
-          <span class="setting-desc">Don't suspend Meet, Zoom, Teams, Discord, and other call sites</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="protect-meeting-sites">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Protect Music Sites</span>
-          <span class="setting-desc">Don't suspend Spotify, YouTube Music, SoundCloud, and other music players</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="protect-music-sites">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Protect Forms</span>
-          <span class="setting-desc">Don't suspend pages with typed form data, changed dropdowns, rich-text edits, or an unsaved-changes warning</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="protect-forms">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Protect Live-Updating Pages</span>
-          <span class="setting-desc">Don't suspend pages whose title keeps changing (dashboards, trackers, live scores)</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="protect-live-titles">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-row setting-row--toggle">
-        <div class="setting-info">
-          <span class="setting-label">Respect Page Activity</span>
-          <span class="setting-desc">Typing, mouse movement, or scrolling in a page resets its idle timer</span>
-        </div>
-        <label class="toggle">
-          <input type="checkbox" id="protect-interaction">
           <span class="toggle-slider"></span>
         </label>
       </div>

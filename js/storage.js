@@ -2,6 +2,7 @@
 // Promise-based APIs with default settings
 
 export const DEFAULT_SETTINGS = {
+  smartFreezingEnabled: false,
   autoSuspendEnabled: false,
   suspendAfterMinutes: 60,
   protectMedia: true,

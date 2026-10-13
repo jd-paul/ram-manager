@@ -12,7 +12,7 @@ import { freezeTab, restoreTab, restoreAll } from "../js/suspension.js";
 import { formatBytes } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 import { logHistory, updateBadge } from "../js/history.js";
-import { parseShortcut, ESTIMATED_BYTES_PER_TAB } from "../js/utils.js";
+import { parseShortcut, ESTIMATED_BYTES_PER_TAB, gateSmartChecks } from "../js/utils.js";
 import {
   loadSettingsIntoUI,
   bindToggle,
@@ -114,6 +114,7 @@ function initElements() {
   els.sessionList = document.getElementById("session-list");
   els.sessionEmpty = document.getElementById("session-empty");
 
+  els.smartFreezingSection = document.getElementById("smart-freezing-section");
   els.settingsSection = document.getElementById("settings-section");
   els.whitelistSection = document.getElementById("whitelist-section");
 
@@ -125,7 +126,10 @@ function initElements() {
   els.whitelistEmpty = document.getElementById("whitelist-empty");
 
   // Toggles
-  els.autoSuspendToggle = document.getElementById("auto-suspend-toggle");
+  els.smartFreezingToggle = document.getElementById("smart-freezing-toggle");
+  els.smartPowerBadge = document.getElementById("smart-power-badge");
+  els.smartStatus = document.getElementById("smart-status");
+  els.smartSubToggles = document.getElementById("smart-sub-toggles");
   els.suspendTimer = document.getElementById("suspend-timer");
   els.suspendTimerRow = document.getElementById("suspend-timer-row");
   els.protectMedia = document.getElementById("protect-media");
@@ -133,6 +137,11 @@ function initElements() {
   els.protectActive = document.getElementById("protect-active");
   els.protectLocalUrls = document.getElementById("protect-local-urls");
   els.protectForms = document.getElementById("protect-forms");
+  els.protectMediaElements = document.getElementById("protect-media-elements");
+  els.protectMeetingSites = document.getElementById("protect-meeting-sites");
+  els.protectMusicSites = document.getElementById("protect-music-sites");
+  els.protectLiveTitles = document.getElementById("protect-live-titles");
+  els.protectInteraction = document.getElementById("protect-interaction");
   els.autoRestoreToggle = document.getElementById("auto-restore-toggle");
 
   els.toast = document.getElementById("toast");
@@ -189,6 +198,7 @@ async function refresh() {
     renderStats(summary);
     renderCurrentTab(items);
     renderTabList(items);
+    updateSmartStatus(items);
   } catch (err) {
     console.error("Popup refresh failed:", err);
   } finally {
@@ -479,7 +489,7 @@ async function suspendTabById(tabId) {
     }
     const tab = await chrome.tabs.get(tabId).catch(() => null);
     if (!tab) return;
-    const settings = await getSettings();
+    const settings = gateSmartChecks(await getSettings());
     const { ok, reason } = analyzeTab(tab, {
       protectActive: false,
       protectPinned: settings.protectPinned,
@@ -596,7 +606,7 @@ async function handleSuspendCurrent() {
 
     // Explicit user action — overrides the active-tab protection,
     // same as the keyboard shortcut and context menu paths
-    const settings = await getSettings();
+    const settings = gateSmartChecks(await getSettings());
     const { ok, reason } = analyzeTab(tab, {
       protectActive: false,
       protectPinned: settings.protectPinned,
@@ -827,9 +837,11 @@ function handleCurrentTabClick() {
 
   const toggleId = REASON_TO_TOGGLE[reason];
   if (!toggleId) return;
-  if (els.settingsSection) els.settingsSection.open = true;
   const input = document.getElementById(toggleId);
-  flashElement(input ? input.closest(".toggle-row") : null);
+  if (!input) return;
+  const section = input.closest("details.collapsible-section");
+  if (section) section.open = true;
+  flashElement(input.closest(".toggle-row"));
 }
 
 /* -------------------------------------------------------------------------- */
@@ -929,10 +941,53 @@ async function loadPopupWhitelist() {
 /* Toggles UI helpers                                                         */
 /* -------------------------------------------------------------------------- */
 
+const SMART_SUB_TOGGLES = [
+  "protectForms",
+  "protectMediaElements",
+  "protectMeetingSites",
+  "protectMusicSites",
+  "protectLiveTitles",
+  "protectInteraction",
+];
+
 function toggleTimerRow(enabled) {
   if (!els.suspendTimerRow) return;
   els.suspendTimerRow.style.opacity = enabled ? "1" : "0.5";
   els.suspendTimerRow.style.pointerEvents = enabled ? "auto" : "none";
+  if (els.suspendTimer) els.suspendTimer.disabled = !enabled;
+}
+
+function updateSmartUI(enabled) {
+  if (els.smartPowerBadge) {
+    els.smartPowerBadge.classList.toggle("on", enabled);
+  }
+  toggleTimerRow(enabled);
+  if (els.smartSubToggles) {
+    els.smartSubToggles.classList.toggle("smart-off", !enabled);
+  }
+  for (const key of SMART_SUB_TOGGLES) {
+    if (els[key]) els[key].disabled = !enabled;
+  }
+}
+
+function updateSmartStatus(items) {
+  if (!els.smartStatus) return;
+  const on = els.smartFreezingToggle ? els.smartFreezingToggle.checked : false;
+  if (!on) {
+    els.smartStatus.textContent = "Off — idle tabs stay awake";
+    return;
+  }
+  const next = items
+    .filter((i) => i.status === "idle" && i.timeLeft !== null)
+    .reduce((min, i) => Math.min(min, i.timeLeft), Infinity);
+  if (next === Infinity) {
+    const mins = els.suspendTimer ? els.suspendTimer.value : "60";
+    els.smartStatus.textContent = `On — freezing tabs after ${mins} min idle`;
+  } else if (next <= 0) {
+    els.smartStatus.textContent = "On — freezing eligible tabs on the next pass";
+  } else {
+    els.smartStatus.textContent = `Next freeze in ~${next}m`;
+  }
 }
 
 function requestHostPermission() {
@@ -946,13 +1001,29 @@ function requestHostPermission() {
 }
 
 function bindToggles() {
+  // Smart Freezing master switch: powers auto-suspend and gates the smart
+  // checks; sub-toggle choices are stored untouched and survive power cycles
+  if (els.smartFreezingToggle) {
+    els.smartFreezingToggle.addEventListener("change", async (e) => {
+      const on = e.target.checked;
+      await saveSetting("smartFreezingEnabled", on);
+      await saveSetting("autoSuspendEnabled", on);
+      updateSmartUI(on);
+      refresh();
+    });
+  }
+
   // Shared bindings
-  bindToggle(els.autoSuspendToggle, "autoSuspendEnabled");
   bindSelect(els.suspendTimer, "suspendAfterMinutes", "number");
   bindToggle(els.protectMedia, "protectMedia");
   bindToggle(els.protectPinned, "protectPinned");
   bindToggle(els.protectActive, "protectActive");
   bindToggle(els.protectLocalUrls, "protectLocalUrls");
+  bindToggle(els.protectMediaElements, "protectMediaElements");
+  bindToggle(els.protectMeetingSites, "protectMeetingSites");
+  bindToggle(els.protectMusicSites, "protectMusicSites");
+  bindToggle(els.protectLiveTitles, "protectLiveTitles");
+  bindToggle(els.protectInteraction, "protectInteraction");
 
   // Form detection reads page content, so it needs the optional host
   // permission — ask at toggle-time; without it that protection skips
@@ -973,9 +1044,6 @@ function bindToggles() {
 
   bindToggle(els.autoRestoreToggle, "autoRestore");
 
-  if (els.autoSuspendToggle) {
-    els.autoSuspendToggle.addEventListener("change", () => refresh());
-  }
   if (els.suspendTimer) {
     els.suspendTimer.addEventListener("change", () => refresh());
   }
@@ -1070,8 +1138,8 @@ async function init() {
     renderSessions(),
   ]);
 
-  // Apply timer row state after settings loaded
-  toggleTimerRow(els.autoSuspendToggle ? els.autoSuspendToggle.checked : true);
+  // Apply smart-freezing UI state after settings loaded
+  updateSmartUI(els.smartFreezingToggle ? els.smartFreezingToggle.checked : false);
   bindToggles();
 
   if (els.btnSuspendOthers)

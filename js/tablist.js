@@ -7,7 +7,7 @@
 import { getSettings, localGet, localSet, syncGet } from './storage.js';
 import { analyzeTab, getKeptAwakeIds } from './tabs.js';
 import { isFrozen } from './suspension.js';
-import { normalizeDomain, ESTIMATED_BYTES_PER_TAB } from './utils.js';
+import { normalizeDomain, ESTIMATED_BYTES_PER_TAB, gateSmartChecks } from './utils.js';
 import { getSavedMemoryToday } from './memory.js';
 
 export const SESSIONS_KEY = 'tabSessions';
@@ -72,7 +72,7 @@ function formatAsleepFor(ms) {
  * @returns {Promise<{ items: Array, summary: Object }>}
  */
 export async function buildTabList() {
-  const [tabs, settings, whitelistRaw, lastActiveRaw, savedTodayBytes, keptAwake, frozenTabsRaw] = await Promise.all([
+  const [tabs, rawSettings, whitelistRaw, lastActiveRaw, savedTodayBytes, keptAwake, frozenTabsRaw] = await Promise.all([
     getWindowTabs(),
     getSettings(),
     syncGet('whitelist'),
@@ -82,6 +82,7 @@ export async function buildTabList() {
     localGet('frozenTabs')
   ]);
 
+  const settings = gateSmartChecks(rawSettings);
   const frozenTabs = frozenTabsRaw || {};
   const now = Date.now();
 
@@ -346,12 +347,14 @@ export async function exportTabsToText() {
  * @returns {Promise<chrome.tabs.Tab[]>}
  */
 export async function getSuspendableTabs(excludeTabId) {
-  const [tabs, settings, whitelistRaw, keptAwake] = await Promise.all([
+  const [tabs, rawSettings, whitelistRaw, keptAwake] = await Promise.all([
     getWindowTabs(),
     getSettings(),
     syncGet('whitelist'),
     getKeptAwakeIds()
   ]);
+
+  const settings = gateSmartChecks(rawSettings);
 
   const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
   const held = new Set(keptAwake);
