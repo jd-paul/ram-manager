@@ -55,6 +55,7 @@ const els = {
   tabIconToggle: document.getElementById('tab-icon-toggle'),
   autoRestoreToggle: document.getElementById('auto-restore-toggle'),
   discardFrozenToggle: document.getElementById('discard-frozen-toggle'),
+  machineIdleToggle: document.getElementById('machine-idle-toggle'),
   exportData: document.getElementById('export-data'),
   importData: document.getElementById('import-data'),
   clearStats: document.getElementById('clear-stats'),
@@ -415,7 +416,8 @@ async function importData(file) {
       'protectMeetingSites', 'protectMusicSites', 'protectLiveTitles',
       'protectInteraction',
       'theme', 'autoRestore', 'badgeCountEnabled',
-      'changeTabIconWhenSuspended', 'discardFrozenTabs', 'whitelist', 'forceList'
+      'changeTabIconWhenSuspended', 'discardFrozenTabs', 'freezeOnlyWhenMachineIdle',
+      'whitelist', 'forceList'
     ]);
     const knownLocalKeys = new Set([
       'suspensionHistory', 'savedMemoryAllTime', 'savedMemoryToday', 'tabLastActive',
@@ -609,6 +611,7 @@ function bindEvents() {
   bindToggle(els.tabIconToggle, 'changeTabIconWhenSuspended');
   bindToggle(els.autoRestoreToggle, 'autoRestore');
   bindToggle(els.discardFrozenToggle, 'discardFrozenTabs');
+  bindToggle(els.machineIdleToggle, 'freezeOnlyWhenMachineIdle');
 
   // Whitelist
   els.whitelistAdd.addEventListener('click', addWhitelistEntry);

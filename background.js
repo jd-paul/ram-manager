@@ -99,6 +99,24 @@ async function migrateSmartFreezing() {
   }
 }
 
+/**
+ * Machine-idle state via chrome.idle (60 s no-input window). On any
+ * failure, report 'active' so the freeze pass skips — when in doubt,
+ * never freeze.
+ */
+function queryMachineIdleState() {
+  return new Promise((resolve) => {
+    try {
+      chrome.idle.queryState(60, (state) => {
+        if (chrome.runtime.lastError) resolve('active');
+        else resolve(state);
+      });
+    } catch (err) {
+      resolve('active');
+    }
+  });
+}
+
 /* -------------------------------------------------------------------------- */
 /* Auto-suspend pipeline                                                      */
 /*                                                                            */
@@ -259,6 +277,11 @@ async function handleAutoSuspend() {
   // manual suspends (popup, shortcut, context menu) still work
   const snoozeUntil = await localGet('smartFreezeSnoozeUntil');
   if (typeof snoozeUntil === 'number' && Date.now() < snoozeUntil) return;
+  // Optional machine-idle gate: only freeze while the computer itself is
+  // idle/locked — anyone actively using the machine keeps every tab
+  if (settings.freezeOnlyWhenMachineIdle) {
+    if ((await queryMachineIdleState()) === 'active') return;
+  }
   if (_suspendPassRunning) return;
   _suspendPassRunning = true;
   try {

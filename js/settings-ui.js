@@ -71,6 +71,9 @@ export async function loadSettingsIntoUI(els) {
   if (els.discardFrozenToggle) {
     els.discardFrozenToggle.checked = settings.discardFrozenTabs ?? DEFAULT_SETTINGS.discardFrozenTabs;
   }
+  if (els.machineIdleToggle) {
+    els.machineIdleToggle.checked = settings.freezeOnlyWhenMachineIdle ?? DEFAULT_SETTINGS.freezeOnlyWhenMachineIdle;
+  }
 
   // Theme mode
   if (els.themeModeSelect) {
