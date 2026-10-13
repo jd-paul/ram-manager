@@ -432,35 +432,52 @@ function buildTabRow(item) {
   }
   row.appendChild(badge);
 
-  if (item.status === "idle" || item.reason === "kept-awake") {
-    const held = item.reason === "kept-awake";
-    const kaBtn = document.createElement("button");
-    kaBtn.className = "tab-keepawake-btn";
-    kaBtn.type = "button";
+  // Action buttons render on EVERY row so spacing never shifts; rows where
+  // an action doesn't apply get a disabled button with an explanatory title
+  const isIdle = item.status === "idle";
+  const isSleeping = item.status === "sleeping";
+  const held = item.reason === "kept-awake";
+
+  const kaBtn = document.createElement("button");
+  kaBtn.className = "tab-keepawake-btn";
+  kaBtn.type = "button";
+  kaBtn.innerHTML = held
+    ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+    : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>';
+  if (isIdle || held) {
     kaBtn.title = held ? "Allow sleep" : "Keep this tab awake";
-    kaBtn.innerHTML = held
-      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
-      : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"></path><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"></path><line x1="6" y1="2" x2="6" y2="4"></line><line x1="10" y1="2" x2="10" y2="4"></line><line x1="14" y1="2" x2="14" y2="4"></line></svg>';
     kaBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       toggleKeepAwake(item.id, !held);
     });
-    row.appendChild(kaBtn);
+  } else {
+    kaBtn.disabled = true;
+    kaBtn.title = isSleeping
+      ? "Already asleep"
+      : `No need — this tab won't auto-suspend (${REASON_LABELS[item.reason] || "protected"})`;
   }
+  row.appendChild(kaBtn);
 
-  if (item.status === "idle") {
-    const btn = document.createElement("button");
-    btn.className = "tab-suspend-btn";
-    btn.type = "button";
-    btn.title = "Suspend this tab";
-    btn.innerHTML =
-      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"></line><line x1="15" y1="5" x2="15" y2="19"></svg>';
-    btn.addEventListener("click", (e) => {
+  const suspendBtn = document.createElement("button");
+  suspendBtn.className = "tab-suspend-btn";
+  suspendBtn.type = "button";
+  suspendBtn.innerHTML =
+    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="9" y1="5" x2="9" y2="19"></line><line x1="15" y1="5" x2="15" y2="19"></svg>';
+  if (isIdle) {
+    suspendBtn.title = "Suspend this tab";
+    suspendBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       suspendTabById(item.id);
     });
-    row.appendChild(btn);
+  } else {
+    suspendBtn.disabled = true;
+    suspendBtn.title = isSleeping
+      ? "Already asleep"
+      : held
+        ? "Kept awake — release it first"
+        : `Can't suspend: ${REASON_LABELS[item.reason] || "protected"}`;
   }
+  row.appendChild(suspendBtn);
 
   row.addEventListener("click", () => onTabRowClick(item));
   row.addEventListener("keydown", (e) => {
