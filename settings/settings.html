@@ -189,12 +189,12 @@
         <i data-lucide="list-checks" class="lucide section-icon"></i>
         <div class="section-title-group">
           <h2>Whitelist</h2>
-          <p>Sites in this list will never be suspended.</p>
+          <p>Sites in this list will never be suspended. Domains, URL prefixes, and /regex/ patterns are supported.</p>
         </div>
       </div>
       <div class="setting-row setting-row--input">
         <div class="input-group">
-          <input type="text" id="whitelist-input" placeholder="Enter domain (e.g. youtube.com)" autocomplete="off">
+          <input type="text" id="whitelist-input" placeholder="Domain, URL prefix, or /regex/" autocomplete="off">
           <button type="button" id="whitelist-add" class="btn btn--primary">
             <i data-lucide="plus" class="lucide btn-icon"></i>
             Add
@@ -205,6 +205,31 @@
       <div class="setting-row">
         <ul class="whitelist-list" id="whitelist-list"></ul>
         <p class="empty-state" id="whitelist-empty">No sites in whitelist</p>
+      </div>
+    </section>
+
+    <!-- Force Freeze -->
+    <section class="card setting-card" id="section-force-list">
+      <div class="section-header">
+        <i data-lucide="zap" class="lucide section-icon"></i>
+        <div class="section-title-group">
+          <h2>Force Freeze</h2>
+          <p>Sites here are always frozen once idle — protections and the whitelist are ignored. The active tab and kept-awake tabs are still spared.</p>
+        </div>
+      </div>
+      <div class="setting-row setting-row--input">
+        <div class="input-group">
+          <input type="text" id="force-list-input" placeholder="Domain, URL prefix, or /regex/" autocomplete="off">
+          <button type="button" id="force-list-add" class="btn btn--primary">
+            <i data-lucide="plus" class="lucide btn-icon"></i>
+            Add
+          </button>
+        </div>
+        <p class="input-hint" id="force-list-hint"></p>
+      </div>
+      <div class="setting-row">
+        <ul class="whitelist-list" id="force-list-list"></ul>
+        <p class="empty-state" id="force-list-empty">No sites force-frozen</p>
       </div>
     </section>
 

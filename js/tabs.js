@@ -67,6 +67,8 @@ export function getCurrentTab() {
  * @param {Set<number>} [options.activeTabIds] — active tab IDs across ALL windows
  * @param {string[]} [options.whitelist] — when provided, matching tabs are blocked with reason 'whitelisted'
  * @param {Set<number>} [options.keptAwake] — tab IDs held awake via the popup; blocked with reason 'kept-awake'
+ * @param {boolean} [options.forced=false] — force-list match: bypass every protection
+ *   except structural validity, keep-awake holds, and the active tab
  * @returns {{ ok: boolean, reason: string|null }}
  *   reason ∈ null | 'invalid' | 'frozen' | 'discarded' | 'system' | 'loading' |
  *            'kept-awake' | 'active' | 'pinned' | 'audible' | 'meeting-site' | 'music-site' |
@@ -105,7 +107,8 @@ export function analyzeTab(tab, options = {}) {
     protectMusicSites = true,
     activeTabIds,
     whitelist,
-    keptAwake
+    keptAwake,
+    forced = false
   } = options;
 
   // Per-tab hold from the popup — wins over every other protection so the
@@ -115,9 +118,15 @@ export function analyzeTab(tab, options = {}) {
   }
 
   // Protect the active tab of every window — a background-position tab in a
-  // side window may still be the page the user is reading or typing into
-  if (protectActive && activeTabIds && activeTabIds.has(tab.id)) {
+  // side window may still be the page the user is reading or typing into.
+  // Force-listed tabs never suspend the tab the user is looking at.
+  if ((protectActive || forced) && activeTabIds && activeTabIds.has(tab.id)) {
     return { ok: false, reason: 'active' };
+  }
+
+  // Force-list match: every other protection and the whitelist are bypassed
+  if (forced) {
+    return { ok: true, reason: null };
   }
 
   // Protect pinned tabs

@@ -22,11 +22,11 @@ RAM Manager is a Chrome/Edge extension (Manifest V3) that puts idle tabs to slee
 - **One-click suspension** — suspend the current tab, all others, or everything at once, with live progress
 - **Auto-suspend** — optional idle timer (default: 30 min) puts untouched tabs to sleep automatically
 - **Smart protections** — skips audible, pinned, and active tabs; localhost/private-network and internal pages are never touched; optional guard for login/checkout/payment pages
-- **Whitelist** — protect domains or URL prefixes from ever being suspended
+- **Whitelist** — protect domains, URL prefixes, or `/regex/` patterns from ever being suspended; a force-freeze list does the opposite
 - **Tab sessions** — save and restore whole windows, close duplicate tabs, export a tab list to the clipboard
 - **Stats dashboard** — memory saved today and all time, weekly chart, top memory consumers, suspension timeline
 - **28 themes** — 9 light and 19 dark flavors, system mode, plus custom CSS snippets on every extension page
-- **Keyboard shortcut** — suspend the active tab without opening the popup (`Alt+Shift+X` by default)
+- **Keyboard shortcuts** — suspend the active tab, suspend all others, or restore all without opening the popup (`Alt+Shift+X` / `Alt+Shift+O` / `Alt+Shift+R` by default)
 - **Minimal permissions** — only `tabs`, `storage`, `alarms`, and `contextMenus`; no trackers, no remote code, zero dependencies
 
 ## How it works

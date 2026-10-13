@@ -12,7 +12,7 @@ import {
   getSavedDarkThemeAsync,
 } from '../js/theme.js';
 import { loadSettingsIntoUI, bindToggle, bindSelect } from '../js/settings-ui.js';
-import { parseShortcut } from '../js/utils.js';
+import { parseShortcut, isValidListEntry, normalizeListEntry, getEntryDisplayLabel } from '../js/utils.js';
 import { hasAllUrlsPermission, requestAllUrlsPermission } from '../js/smarts.js';
 
 /* -------------------------------------------------------------------------- */
@@ -41,6 +41,11 @@ const els = {
   whitelistHint: document.getElementById('whitelist-hint'),
   whitelistList: document.getElementById('whitelist-list'),
   whitelistEmpty: document.getElementById('whitelist-empty'),
+  forceListInput: document.getElementById('force-list-input'),
+  forceListAdd: document.getElementById('force-list-add'),
+  forceListHint: document.getElementById('force-list-hint'),
+  forceListList: document.getElementById('force-list-list'),
+  forceListEmpty: document.getElementById('force-list-empty'),
   themeModeSelect: document.getElementById('theme-mode-select'),
   lightFlavorRow: document.getElementById('light-flavor-row'),
   lightFlavorSelect: document.getElementById('light-flavor-select'),
@@ -60,6 +65,7 @@ const els = {
 
 let currentSettings = {};
 let whitelist = [];
+let forceList = [];
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
@@ -130,6 +136,10 @@ async function loadSettings() {
   whitelist = (await syncGet('whitelist')) || [];
   renderWhitelist();
 
+  // Force list
+  forceList = (await syncGet('forceList')) || [];
+  renderForceList();
+
   // Keyboard shortcut
   await loadShortcutDisplay();
 
@@ -194,61 +204,13 @@ async function saveSetting(key, value) {
 /* Whitelist                                                                  */
 /* -------------------------------------------------------------------------- */
 
-function isValidWhitelistEntry(input) {
-  if (!input || typeof input !== 'string') return false;
-  const trimmed = input.trim();
-  if (!trimmed) return false;
-
-  // Allow full URLs (must start with http:// or https://)
-  if (/^https?:\/\//.test(trimmed)) {
-    try {
-      new URL(trimmed);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // Allow domains (legacy behavior)
-  if (/[\/\?:#@]/.test(trimmed)) return false;
-  if (!trimmed.includes('.')) return false;
-  return true;
-}
-
-function normalizeWhitelistEntry(input) {
-  const trimmed = input.trim();
-  // If it's a URL, return as-is (lowercased)
-  if (/^https?:\/\//.test(trimmed)) {
-    return trimmed.toLowerCase();
-  }
-  // Otherwise treat as domain
-  return trimmed.toLowerCase().replace(/^www\./, '');
-}
-
-function getWhitelistDisplayLabel(entry) {
-  // If it's a URL, show a shortened version
-  if (/^https?:\/\//.test(entry)) {
-    try {
-      const url = new URL(entry);
-      const path = url.pathname + url.search;
-      if (path.length > 30) {
-        return url.hostname + path.slice(0, 30) + '...';
-      }
-      return url.hostname + path;
-    } catch {
-      return entry;
-    }
-  }
-  return entry;
-}
-
 async function addWhitelistEntry() {
   const raw = els.whitelistInput.value;
-  if (!isValidWhitelistEntry(raw)) {
-    showHint('Enter a valid domain (e.g. example.com) or URL (e.g. https://youtube.com/watch?v=...)');
+  if (!isValidListEntry(raw)) {
+    showHint('Enter a valid domain (example.com), URL prefix (https://…), or /regex/');
     return;
   }
-  const entry = normalizeWhitelistEntry(raw);
+  const entry = normalizeListEntry(raw);
   if (whitelist.includes(entry)) {
     showHint('Already whitelisted');
     return;
@@ -279,7 +241,7 @@ function renderWhitelist() {
     li.className = 'whitelist-item';
 
     const span = document.createElement('span');
-    span.textContent = getWhitelistDisplayLabel(entry);
+    span.textContent = getEntryDisplayLabel(entry);
     span.title = entry; // full entry on hover
 
     const btn = document.createElement('button');
@@ -300,6 +262,70 @@ function renderWhitelist() {
 
 function showHint(message) {
   els.whitelistHint.textContent = message;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Force list                                                                 */
+/* -------------------------------------------------------------------------- */
+
+function showForceListHint(message) {
+  els.forceListHint.textContent = message;
+}
+
+async function addForceListEntry() {
+  const raw = els.forceListInput.value;
+  if (!isValidListEntry(raw)) {
+    showForceListHint('Enter a valid domain (example.com), URL prefix (https://…), or /regex/');
+    return;
+  }
+  const entry = normalizeListEntry(raw);
+  if (forceList.includes(entry)) {
+    showForceListHint('Already in the force list');
+    return;
+  }
+  forceList.push(entry);
+  await syncSet('forceList', forceList);
+  els.forceListInput.value = '';
+  showForceListHint('');
+  renderForceList();
+}
+
+async function removeForceListEntry(entry) {
+  forceList = forceList.filter((d) => d !== entry);
+  await syncSet('forceList', forceList);
+  renderForceList();
+}
+
+function renderForceList() {
+  els.forceListList.innerHTML = '';
+  if (forceList.length === 0) {
+    els.forceListEmpty.style.display = 'block';
+    return;
+  }
+  els.forceListEmpty.style.display = 'none';
+
+  for (const entry of forceList) {
+    const li = document.createElement('li');
+    li.className = 'whitelist-item';
+
+    const span = document.createElement('span');
+    span.textContent = getEntryDisplayLabel(entry);
+    span.title = entry;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn--danger';
+    btn.innerHTML = '<i data-lucide="x" class="lucide btn-icon"></i> Remove';
+    btn.addEventListener('click', () => removeForceListEntry(entry));
+
+    li.appendChild(span);
+    li.appendChild(btn);
+    els.forceListList.appendChild(li);
+  }
+
+  if (typeof lucide !== 'undefined' && lucide.createIcons) {
+    lucide.createIcons();
+  }
 }
 
 function showPageAccessHint(message, isError = false) {
@@ -388,11 +414,11 @@ async function importData(file) {
       'protectMeetingSites', 'protectMusicSites', 'protectLiveTitles',
       'protectInteraction',
       'theme', 'autoRestore', 'badgeCountEnabled',
-      'changeTabIconWhenSuspended', 'whitelist'
+      'changeTabIconWhenSuspended', 'whitelist', 'forceList'
     ]);
     const knownLocalKeys = new Set([
       'suspensionHistory', 'savedMemoryAllTime', 'savedMemoryToday', 'tabLastActive',
-      'lightThemeFlavor', 'darkThemeFlavor'
+      'lightThemeFlavor', 'darkThemeFlavor', 'smartFreezeSnoozeUntil'
     ]);
 
     function validateKeys(obj, allowed) {
@@ -588,6 +614,15 @@ function bindEvents() {
     if (e.key === 'Enter') {
       e.preventDefault();
       addWhitelistEntry();
+    }
+  });
+
+  // Force list events
+  els.forceListAdd.addEventListener('click', addForceListEntry);
+  els.forceListInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addForceListEntry();
     }
   });
 

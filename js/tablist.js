@@ -7,7 +7,7 @@
 import { getSettings, localGet, localSet, syncGet } from './storage.js';
 import { analyzeTab, getKeptAwakeIds } from './tabs.js';
 import { isFrozen } from './suspension.js';
-import { normalizeDomain, ESTIMATED_BYTES_PER_TAB, gateSmartChecks } from './utils.js';
+import { normalizeListEntry, matchesEntryList, ESTIMATED_BYTES_PER_TAB, gateSmartChecks } from './utils.js';
 import { getSavedMemoryToday } from './memory.js';
 
 export const SESSIONS_KEY = 'tabSessions';
@@ -72,10 +72,11 @@ function formatAsleepFor(ms) {
  * @returns {Promise<{ items: Array, summary: Object }>}
  */
 export async function buildTabList() {
-  const [tabs, rawSettings, whitelistRaw, lastActiveRaw, savedTodayBytes, keptAwake, frozenTabsRaw] = await Promise.all([
+  const [tabs, rawSettings, whitelistRaw, forceListRaw, lastActiveRaw, savedTodayBytes, keptAwake, frozenTabsRaw] = await Promise.all([
     getWindowTabs(),
     getSettings(),
     syncGet('whitelist'),
+    syncGet('forceList'),
     localGet('tabLastActive'),
     getSavedMemoryToday(),
     getKeptAwakeIds(),
@@ -86,7 +87,8 @@ export async function buildTabList() {
   const frozenTabs = frozenTabsRaw || {};
   const now = Date.now();
 
-  const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
+  const whitelist = (whitelistRaw || []).map((d) => normalizeListEntry(d));
+  const forceList = (forceListRaw || []).map((d) => normalizeListEntry(d));
   const lastActive = lastActiveRaw || {};
   const thresholdMs = (settings.suspendAfterMinutes || 60) * 60 * 1000;
   const activeTabIds = new Set(tabs.filter((t) => t.active).map((t) => t.id));
@@ -133,7 +135,8 @@ export async function buildTabList() {
       protectMusicSites: settings.protectMusicSites,
       activeTabIds,
       whitelist,
-      keptAwake: new Set(keptAwake)
+      keptAwake: new Set(keptAwake),
+      forced: forceList.length > 0 && matchesEntryList(tab.url, forceList)
     });
 
     // Chrome discarded this tab on its own — same asleep semantics for the UI
@@ -347,16 +350,18 @@ export async function exportTabsToText() {
  * @returns {Promise<chrome.tabs.Tab[]>}
  */
 export async function getSuspendableTabs(excludeTabId) {
-  const [tabs, rawSettings, whitelistRaw, keptAwake] = await Promise.all([
+  const [tabs, rawSettings, whitelistRaw, forceListRaw, keptAwake] = await Promise.all([
     getWindowTabs(),
     getSettings(),
     syncGet('whitelist'),
+    syncGet('forceList'),
     getKeptAwakeIds()
   ]);
 
   const settings = gateSmartChecks(rawSettings);
 
-  const whitelist = (whitelistRaw || []).map((d) => normalizeDomain(d));
+  const whitelist = (whitelistRaw || []).map((d) => normalizeListEntry(d));
+  const forceList = (forceListRaw || []).map((d) => normalizeListEntry(d));
   const held = new Set(keptAwake);
   const activeTabIds = new Set(tabs.filter((t) => t.active).map((t) => t.id));
 
@@ -372,7 +377,8 @@ export async function getSuspendableTabs(excludeTabId) {
       protectMusicSites: settings.protectMusicSites,
       activeTabIds,
       whitelist,
-      keptAwake: held
+      keptAwake: held,
+      forced: forceList.length > 0 && matchesEntryList(tab.url, forceList)
     }).ok;
   });
 }

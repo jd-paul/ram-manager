@@ -43,13 +43,83 @@ export function normalizeDomain(input) {
   return input.trim().toLowerCase().replace(/^www\./, '');
 }
 
+/* -------------------------------------------------------------------------- */
+/* List entries (whitelist / force list)                                      */
+/*                                                                            */
+/* Three entry shapes, matched against the full URL:                          */
+/*   /pattern/        — regex (case-insensitive), e.g. /\/(login|checkout)\// */
+/*   https://…        — URL prefix match                                      */
+/*   example.com      — exact domain or parent domain                         */
+/* -------------------------------------------------------------------------- */
+
+export function isRegexEntry(entry) {
+  return entry.length > 2 && entry.startsWith('/') && entry.endsWith('/');
+}
+
+export function isValidListEntry(input) {
+  if (!input || typeof input !== 'string') return false;
+  const trimmed = input.trim();
+  if (!trimmed) return false;
+  if (isRegexEntry(trimmed)) {
+    try {
+      new RegExp(trimmed.slice(1, -1), 'i');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  if (/^https?:\/\//.test(trimmed)) {
+    try {
+      new URL(trimmed);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  if (/[\/\?:#@]/.test(trimmed)) return false;
+  return trimmed.includes('.');
+}
+
+export function normalizeListEntry(input) {
+  const trimmed = input.trim();
+  // Regex entries are stored verbatim — lowercasing would mangle escapes
+  // like \W → \w
+  if (isRegexEntry(trimmed)) return trimmed;
+  if (/^https?:\/\//.test(trimmed)) return trimmed.toLowerCase();
+  return trimmed.toLowerCase().replace(/^www\./, '');
+}
+
+export function getEntryDisplayLabel(entry) {
+  if (isRegexEntry(entry)) return entry;
+  if (/^https?:\/\//.test(entry)) {
+    try {
+      const url = new URL(entry);
+      const path = url.pathname + url.search;
+      if (path.length > 30) return url.hostname + path.slice(0, 30) + '...';
+      return url.hostname + path;
+    } catch {
+      return entry;
+    }
+  }
+  return entry;
+}
+
 export function isWhitelisted(url, whitelist) {
   if (!url || !whitelist || !whitelist.length) return false;
 
   const lowerUrl = url.toLowerCase();
 
-  for (const entry of whitelist) {
-    const e = entry.toLowerCase();
+  for (const rawEntry of whitelist) {
+    if (isRegexEntry(rawEntry)) {
+      try {
+        if (new RegExp(rawEntry.slice(1, -1), 'i').test(url)) return true;
+      } catch {
+        // Invalid regex never matches
+      }
+      continue;
+    }
+
+    const e = rawEntry.toLowerCase();
 
     // If entry is a full URL, check if the tab URL starts with it (prefix match)
     if (/^https?:\/\//.test(e)) {
@@ -69,6 +139,10 @@ export function isWhitelisted(url, whitelist) {
 
   return false;
 }
+
+// Canonical name for engine code matching against any entry list (the
+// force list included); isWhitelisted is the historical alias.
+export const matchesEntryList = isWhitelisted;
 
 /* -------------------------------------------------------------------------- */
 /* Site-category heuristics                                                   */

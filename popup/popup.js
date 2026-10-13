@@ -1,6 +1,6 @@
 // Popup logic
 
-import { getSettings, syncGet, syncSet } from "../js/storage.js";
+import { getSettings, syncGet, syncSet, localGet, localSet, localRemove } from "../js/storage.js";
 import {
   getCurrentTab,
   analyzeTab,
@@ -12,7 +12,7 @@ import { freezeTab, restoreTab, restoreAll } from "../js/suspension.js";
 import { formatBytes } from "../js/memory.js";
 import { initTheme } from "../js/theme.js";
 import { logHistory, updateBadge } from "../js/history.js";
-import { parseShortcut, ESTIMATED_BYTES_PER_TAB, gateSmartChecks } from "../js/utils.js";
+import { parseShortcut, ESTIMATED_BYTES_PER_TAB, gateSmartChecks, isValidListEntry, normalizeListEntry, getEntryDisplayLabel } from "../js/utils.js";
 import {
   loadSettingsIntoUI,
   bindToggle,
@@ -69,11 +69,14 @@ const REASON_TO_TOGGLE = {
 
 const SECTION_STATE_KEY = "ram-manager-popup-sections";
 const POLL_INTERVAL_MS = 5000;
+const SNOOZE_KEY = "smartFreezeSnoozeUntil";
+const SNOOZE_BUCKETS_H = [1, 6, 12, 24];
 
 let pollTimer = null;
 let refreshInFlight = false;
 let lastTabSignature = "";
 let toastTimer = null;
+let snoozeUntil = null;
 
 /* -------------------------------------------------------------------------- */
 /* Element refs                                                               */
@@ -132,6 +135,7 @@ function initElements() {
   els.smartSubToggles = document.getElementById("smart-sub-toggles");
   els.suspendTimer = document.getElementById("suspend-timer");
   els.suspendTimerRow = document.getElementById("suspend-timer-row");
+  els.snoozeSelect = document.getElementById("snooze-select");
   els.protectMedia = document.getElementById("protect-media");
   els.protectPinned = document.getElementById("protect-pinned");
   els.protectActive = document.getElementById("protect-active");
@@ -194,16 +198,62 @@ async function refresh() {
   if (refreshInFlight) return;
   refreshInFlight = true;
   try {
+    snoozeUntil = (await localGet(SNOOZE_KEY)) || null;
     const { items, summary } = await buildTabList();
     renderStats(summary);
     renderCurrentTab(items);
     renderTabList(items);
+    updateSnoozeSelect();
     updateSmartStatus(items);
   } catch (err) {
     console.error("Popup refresh failed:", err);
   } finally {
     refreshInFlight = false;
   }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Snooze                                                                     */
+/* -------------------------------------------------------------------------- */
+
+function snoozeRemainingMs() {
+  if (typeof snoozeUntil !== "number") return 0;
+  return Math.max(0, snoozeUntil - Date.now());
+}
+
+function updateSnoozeSelect() {
+  if (!els.snoozeSelect) return;
+  // Don't yank the value while the user is mid-selection
+  if (document.activeElement === els.snoozeSelect) return;
+  const remainingMs = snoozeRemainingMs();
+  if (remainingMs <= 0) {
+    els.snoozeSelect.value = "0";
+    return;
+  }
+  // Show the smallest bucket that covers the remaining time
+  const remainingH = remainingMs / 3600000;
+  const bucket = SNOOZE_BUCKETS_H.find((h) => h >= remainingH) || 24;
+  els.snoozeSelect.value = String(bucket);
+}
+
+function bindSnooze() {
+  if (!els.snoozeSelect) return;
+  els.snoozeSelect.addEventListener("change", async (e) => {
+    const hours = Number(e.target.value);
+    try {
+      if (hours > 0) {
+        await localSet(SNOOZE_KEY, Date.now() + hours * 3600000);
+        showToast(`Smart freezing snoozed for ${hours} hour${hours === 1 ? "" : "s"}`);
+      } else {
+        await localRemove(SNOOZE_KEY);
+        showToast("Snooze cleared");
+      }
+    } catch (err) {
+      console.error("Snooze update failed:", err);
+      showToast("Couldn't update snooze");
+    }
+    await refresh();
+  });
 }
 
 function renderStats(summary) {
@@ -850,47 +900,17 @@ function handleCurrentTabClick() {
 
 let popupWhitelist = [];
 
-function isValidWhitelistEntry(input) {
-  if (!input || typeof input !== 'string') return false;
-  const trimmed = input.trim();
-  if (!trimmed) return false;
-  if (/^https?:\/\//.test(trimmed)) {
-    try { new URL(trimmed); return true; } catch { return false; }
-  }
-  if (/[\/\?:#@]/.test(trimmed)) return false;
-  if (!trimmed.includes('.')) return false;
-  return true;
-}
-
-function normalizeWhitelistEntry(input) {
-  const trimmed = input.trim();
-  if (/^https?:\/\//.test(trimmed)) return trimmed.toLowerCase();
-  return trimmed.toLowerCase().replace(/^www\./, '');
-}
-
-function getWhitelistDisplayLabel(entry) {
-  if (/^https?:\/\//.test(entry)) {
-    try {
-      const url = new URL(entry);
-      const path = url.pathname + url.search;
-      if (path.length > 30) return url.hostname + path.slice(0, 30) + '...';
-      return url.hostname + path;
-    } catch { return entry; }
-  }
-  return entry;
-}
-
 function showWhitelistHint(message) {
   if (els.whitelistHint) els.whitelistHint.textContent = message;
 }
 
 async function addPopupWhitelistEntry() {
   const raw = els.whitelistInput.value;
-  if (!isValidWhitelistEntry(raw)) {
-    showWhitelistHint('Enter a valid domain or URL');
+  if (!isValidListEntry(raw)) {
+    showWhitelistHint('Enter a domain, URL, or /regex/');
     return;
   }
-  const entry = normalizeWhitelistEntry(raw);
+  const entry = normalizeListEntry(raw);
   if (popupWhitelist.includes(entry)) {
     showWhitelistHint('Already whitelisted');
     return;
@@ -920,7 +940,7 @@ function renderPopupWhitelist() {
     const li = document.createElement('li');
     li.className = 'whitelist-item';
     const span = document.createElement('span');
-    span.textContent = getWhitelistDisplayLabel(entry);
+    span.textContent = getEntryDisplayLabel(entry);
     span.title = entry;
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -975,6 +995,13 @@ function updateSmartStatus(items) {
   const on = els.smartFreezingToggle ? els.smartFreezingToggle.checked : false;
   if (!on) {
     els.smartStatus.textContent = "Off — idle tabs stay awake";
+    return;
+  }
+  const snoozeMs = snoozeRemainingMs();
+  if (snoozeMs > 0) {
+    const resumes = new Date(Date.now() + snoozeMs);
+    const time = resumes.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    els.smartStatus.textContent = `Snoozed — resumes at ${time}`;
     return;
   }
   const next = items
@@ -1186,6 +1213,7 @@ async function init() {
   });
 
   bindTabTools();
+  bindSnooze();
 
   await refresh();
   startPolling();

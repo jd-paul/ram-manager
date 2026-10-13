@@ -15,9 +15,9 @@ import {
   clearKeptAwake,
   getKeptAwakeIds
 } from './js/tabs.js';
-import { freezeTab, restoreTab, isFrozen } from './js/suspension.js';
+import { freezeTab, restoreTab, restoreAll, isFrozen } from './js/suspension.js';
 import { logHistory, updateBadge } from './js/history.js';
-import { normalizeDomain, isWhitelisted, gateSmartChecks } from './js/utils.js';
+import { normalizeListEntry, isWhitelisted, matchesEntryList, gateSmartChecks } from './js/utils.js';
 import {
   hasAllUrlsPermission,
   injectContentScript,
@@ -130,10 +130,11 @@ function protectionOptions(settings, activeTabIds) {
 }
 
 async function findSuspendableTabs() {
-  const [allTabs, settings, whitelistRaw, lastActiveRaw, keptAwake, activeTabIds] = await Promise.all([
+  const [allTabs, settings, whitelistRaw, forceListRaw, lastActiveRaw, keptAwake, activeTabIds] = await Promise.all([
     getAllTabs(),
     getSettings(),
     syncGet('whitelist'),
+    syncGet('forceList'),
     localGet('tabLastActive'),
     getKeptAwakeIds(),
     getActiveTabIds()
@@ -142,20 +143,26 @@ async function findSuspendableTabs() {
   const now = Date.now();
   const thresholdMs = (settings.suspendAfterMinutes || 60) * 60 * 1000;
   const lastActive = lastActiveRaw || {};
-  const whitelist = (whitelistRaw || []).map(d => normalizeDomain(d));
+  const whitelist = (whitelistRaw || []).map(d => normalizeListEntry(d));
+  const forceList = (forceListRaw || []).map(d => normalizeListEntry(d));
   const held = new Set(keptAwake);
 
   return allTabs.filter((tab) => {
     if (!tab.id || tab.discarded) return false;
 
+    // Force-listed tabs bypass every protection (and the whitelist) — only
+    // structural validity, keep-awake holds, and the active tab still apply
+    const forced = forceList.length > 0 && matchesEntryList(tab.url, forceList);
+
     if (!canSuspend(tab, {
       ...protectionOptions(settings, activeTabIds),
-      keptAwake: held
+      keptAwake: held,
+      forced
     })) {
       return false;
     }
 
-    if (isWhitelisted(tab.url, whitelist)) return false;
+    if (!forced && isWhitelisted(tab.url, whitelist)) return false;
 
     const last = lastActive[tab.id] ?? tab.lastAccessed;
     if (!last) return false;
@@ -183,10 +190,14 @@ async function runSuspendPass({ warn }) {
   // Smart pre-freeze checks: dirty forms, playing media, focused document,
   // live title changes. Unverifiable tabs are skipped —
   // when in doubt, never freeze. The smart-freezing master switch gates
-  // these checks off entirely when powered down.
+  // these checks off entirely when powered down; force-listed tabs skip
+  // them by definition.
   const settings = gateSmartChecks(await getSettings());
+  const forceList = ((await syncGet('forceList')) || []).map(d => normalizeListEntry(d));
+  const isForced = (tab) => forceList.length > 0 && matchesEntryList(tab.url, forceList);
   const blocked = new Set();
   const checks = candidates.map(async (tab) => {
+    if (isForced(tab)) return;
     const verdict = await checkTabSmart(tab, settings);
     if (!verdict.ok) blocked.add(tab.id);
   });
@@ -202,7 +213,7 @@ async function runSuspendPass({ warn }) {
     getActiveTabIds()
   ]);
   const lastActive = lastActiveRaw || {};
-  const whitelist = (whitelistRaw || []).map(d => normalizeDomain(d));
+  const whitelist = (whitelistRaw || []).map(d => normalizeListEntry(d));
   const held = new Set(keptAwake);
   const now = Date.now();
   const thresholdMs = (settings.suspendAfterMinutes || 60) * 60 * 1000;
@@ -210,10 +221,11 @@ async function runSuspendPass({ warn }) {
   const toSuspend = allTabs.filter((tab) => {
     if (!candidateIds.has(tab.id)) return false;
     if (blocked.has(tab.id)) return false;
-    if (!canSuspend(tab, { ...protectionOptions(settings, activeTabIds), keptAwake: held })) {
+    const forced = isForced(tab);
+    if (!canSuspend(tab, { ...protectionOptions(settings, activeTabIds), keptAwake: held, forced })) {
       return false;
     }
-    if (isWhitelisted(tab.url, whitelist)) return false;
+    if (!forced && isWhitelisted(tab.url, whitelist)) return false;
     const last = lastActive[tab.id] ?? tab.lastAccessed;
     if (!last || now - last < thresholdMs) return false;
     return true;
@@ -243,6 +255,10 @@ async function runSuspendPass({ warn }) {
 async function handleAutoSuspend() {
   const settings = await getSettings();
   if (!settings.autoSuspendEnabled) return;
+  // Global snooze from the popup — pauses only the idle-timer engine;
+  // manual suspends (popup, shortcut, context menu) still work
+  const snoozeUntil = await localGet('smartFreezeSnoozeUntil');
+  if (typeof snoozeUntil === 'number' && Date.now() < snoozeUntil) return;
   if (_suspendPassRunning) return;
   _suspendPassRunning = true;
   try {
@@ -309,10 +325,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 async function handleContextMenuClick(info, tab) {
-  const settings = gateSmartChecks(await getSettings());
-  const held = new Set(await getKeptAwakeIds());
-
   if (info.menuItemId === 'suspend-this-tab') {
+    const settings = gateSmartChecks(await getSettings());
+    const held = new Set(await getKeptAwakeIds());
     const targetTab = tab || await getCurrentTab();
     if (!targetTab || !targetTab.id) return;
 
@@ -337,37 +352,43 @@ async function handleContextMenuClick(info, tab) {
       console.error('Suspend this tab failed:', err);
     }
   } else if (info.menuItemId === 'suspend-all-other-tabs') {
-    const allTabs = await getAllTabs();
-    const targetTab = tab || await getCurrentTab();
-    if (!targetTab || !targetTab.id) return;
-    const activeTabIds = await getActiveTabIds();
+    await suspendOtherTabs(tab || await getCurrentTab());
+  }
+}
 
-    const toSuspend = allTabs.filter(t => t.id !== targetTab.id && canSuspend(t, {
-      protectActive: settings.protectActive,
-      protectPinned: settings.protectPinned,
-      protectMedia: settings.protectMedia,
-      protectLocalUrls: settings.protectLocalUrls,
-      protectForms: false,
-      protectMeetingSites: settings.protectMeetingSites,
-      protectMusicSites: settings.protectMusicSites,
-      activeTabIds,
-      keptAwake: held
-    }));
+// Shared by the context menu and the suspend-other-tabs keyboard command
+async function suspendOtherTabs(targetTab) {
+  if (!targetTab || !targetTab.id) return;
+  const settings = gateSmartChecks(await getSettings());
+  const held = new Set(await getKeptAwakeIds());
+  const allTabs = await getAllTabs();
+  const activeTabIds = await getActiveTabIds();
 
-    const BATCH_SIZE = 5;
-    for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
-      const batch = toSuspend.slice(i, i + BATCH_SIZE);
-      for (const t of batch) {
-        try {
-          await freezeTab(t);
-          await logHistory('suspend', t);
-        } catch (err) {
-          console.error('Suspend all other tabs failed for tab', t.id, err);
-        }
+  const toSuspend = allTabs.filter(t => t.id !== targetTab.id && canSuspend(t, {
+    protectActive: settings.protectActive,
+    protectPinned: settings.protectPinned,
+    protectMedia: settings.protectMedia,
+    protectLocalUrls: settings.protectLocalUrls,
+    protectForms: false,
+    protectMeetingSites: settings.protectMeetingSites,
+    protectMusicSites: settings.protectMusicSites,
+    activeTabIds,
+    keptAwake: held
+  }));
+
+  const BATCH_SIZE = 5;
+  for (let i = 0; i < toSuspend.length; i += BATCH_SIZE) {
+    const batch = toSuspend.slice(i, i + BATCH_SIZE);
+    for (const t of batch) {
+      try {
+        await freezeTab(t);
+        await logHistory('suspend', t);
+      } catch (err) {
+        console.error('Suspend all other tabs failed for tab', t.id, err);
       }
     }
-    await updateBadge();
   }
+  await updateBadge();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -377,6 +398,14 @@ async function handleContextMenuClick(info, tab) {
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'suspend-active-tab') {
     handleSuspendActiveTab().catch(err => console.error('commands error:', err));
+  } else if (command === 'suspend-other-tabs') {
+    getCurrentTab()
+      .then((tab) => suspendOtherTabs(tab))
+      .catch(err => console.error('commands error:', err));
+  } else if (command === 'restore-all-tabs') {
+    restoreAll()
+      .then(() => updateBadge())
+      .catch(err => console.error('commands error:', err));
   }
 });
 

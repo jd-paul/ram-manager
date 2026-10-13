@@ -45,6 +45,18 @@
         "default": "Alt+Shift+X"
       },
       "description": "Suspend the currently active tab"
+    },
+    "suspend-other-tabs": {
+      "suggested_key": {
+        "default": "Alt+Shift+O"
+      },
+      "description": "Suspend all other tabs in this window"
+    },
+    "restore-all-tabs": {
+      "suggested_key": {
+        "default": "Alt+Shift+R"
+      },
+      "description": "Restore all suspended tabs"
     }
   },
   "content_security_policy": {

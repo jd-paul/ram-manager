@@ -131,6 +131,16 @@
             <option value="60">60 min</option>
           </select>
         </div>
+        <div class="toggle-row toggle-row--inline" id="snooze-row">
+          <label for="snooze-select">Snooze</label>
+          <select id="snooze-select">
+            <option value="0">Off</option>
+            <option value="1">1 hour</option>
+            <option value="6">6 hours</option>
+            <option value="12">12 hours</option>
+            <option value="24">24 hours</option>
+          </select>
+        </div>
         <div class="smart-sub-toggles" id="smart-sub-toggles">
           <div class="toggle-row">
             <div class="toggle-info">
@@ -256,7 +266,7 @@
       <summary class="collapsible-summary">Whitelist</summary>
       <div class="collapsible-body">
         <div class="whitelist-input-row">
-          <input type="text" id="whitelist-input" placeholder="e.g. youtube.com" autocomplete="off">
+          <input type="text" id="whitelist-input" placeholder="Domain, URL, or /regex/" autocomplete="off">
           <button class="btn btn-small" id="whitelist-add" type="button">Add</button>
         </div>
         <p class="whitelist-hint" id="whitelist-hint"></p>
