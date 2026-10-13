@@ -78,8 +78,9 @@ The same three gates run locally (every commit) and in GitHub Actions (every
 push/PR, authoritative for merges):
 
 1. Syntax check on every tracked JS file
-2. `node audit-assets.cjs .` — asset integrity (no missing/broken references)
-3. `./build.sh` + audit of the packaged zip — verifies the exact bytes that
+2. `node smoke-test.mjs` — functional smoke tests (list matching, smart-freezing gate, analyzeTab rules, settings schema, manifest wiring) against a chrome.* stub
+3. `node audit-assets.cjs .` — asset integrity (no missing/broken references)
+4. `./build.sh` + audit of the packaged zip — verifies the exact bytes that
    would ship, which is the check that would have caught the v1.1.0
    `suspended/` packaging incident
 

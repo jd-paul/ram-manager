@@ -23,6 +23,12 @@ while IFS= read -r f; do
   esac
 done < <(git ls-files '*.js' | grep -v 'lucide')
 
+# Smoke tests are ESM — same .mjs syntax treatment
+node --check smoke-test.mjs || { echo "pre-commit: SYNTAX FAIL: smoke-test.mjs" >&2; fail=1; }
+
+# Functional smoke tests: real logic against a chrome.* stub
+node smoke-test.mjs || fail=1
+
 # Asset integrity: every referenced/injected/imported file must exist
 node audit-assets.cjs . || fail=1
 

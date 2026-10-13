@@ -31,7 +31,11 @@ jobs:
                 ;;
             esac
           done < <(git ls-files '*.js' | grep -v 'lucide')
+          node --check smoke-test.mjs || { echo "SYNTAX FAIL: smoke-test.mjs"; fail=1; }
           exit "$fail"
+
+      - name: Functional smoke tests
+        run: node smoke-test.mjs
 
       - name: Asset integrity audit
         run: node audit-assets.cjs .
